@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h1 class="display-1 fw-bold">500</h1>
+            <p class="fs-3">Server Error</p>
+            <p class="lead">Something went wrong on our end. Please try again later or contact support if the problem persists.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
