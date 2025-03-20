@@ -18,18 +18,18 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'mysql://root:password@localhost/car_sales_tracking_dev'
+        'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
 
 class TestingConfig(Config):
     """Testing configuration"""
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'mysql://root:password@localhost/car_sales_tracking_test'
+        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
 
 class ProductionConfig(Config):
     """Production configuration"""
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'mysql://root:password@localhost/car_sales_tracking'
+        'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 
 # Configuration dictionary
 config = {

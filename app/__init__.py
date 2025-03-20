@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from config import config
+import datetime
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -20,6 +21,11 @@ def create_app(config_name='default'):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    
+    # Add template context processor for datetime
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.datetime.now()}
 
     # Register blueprints
     from app.routes.main import main_bp

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Repair - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Edit Repair</h1>
+    
+    <form method="POST" class="card shadow">
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.car_id.label(class="form-label") }}
+                        {{ form.car_id(class="form-select") }}
+                        {% for error in form.car_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.provider_id.label(class="form-label") }}
+                        {{ form.provider_id(class="form-select") }}
+                        {% for error in form.provider_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.repair_type.label(class="form-label") }}
+                        {{ form.repair_type(class="form-control") }}
+                        {% for error in form.repair_type.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.repair_cost.label(class="form-label") }}
+                        {{ form.repair_cost(class="form-control") }}
+                        {% for error in form.repair_cost.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.start_date.label(class="form-label") }}
+                        {{ form.start_date(class="form-control", type="date") }}
+                        {% for error in form.start_date.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.end_date.label(class="form-label") }}
+                        {{ form.end_date(class="form-control", type="date") }}
+                        {% for error in form.end_date.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-text text-muted">Leave blank if repair is still in progress</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                {{ form.notes.label(class="form-label") }}
+                {{ form.notes(class="form-control", rows=4) }}
+                {% for error in form.notes.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('repairs.view', repair_id=repair.repair_id) }}" class="btn btn-secondary">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </form>
+    
+    <div class="mt-4">
+        <form action="{{ url_for('repairs.delete', repair_id=repair.repair_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this repair? This action cannot be undone.');">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete Repair
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %} 

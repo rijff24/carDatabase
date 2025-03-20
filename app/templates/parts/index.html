@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Parts{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Parts Management</h1>
+        <a href="{{ url_for('parts.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Part
+        </a>
+    </div>
+    
+    {% if parts %}
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Parts Inventory</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="{{ url_for('parts.index', sort_by='part_id', sort_dir='asc' if current_sort == 'part_id' and current_sort_dir == 'desc' else 'desc') }}">
+                                ID
+                                {% if current_sort == 'part_id' %}
+                                    <i class="fas fa-sort-{{ 'up' if current_sort_dir == 'asc' else 'down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ url_for('parts.index', sort_by='part_name', sort_dir='asc' if current_sort == 'part_name' and current_sort_dir == 'desc' else 'desc') }}">
+                                Part Name
+                                {% if current_sort == 'part_name' %}
+                                    <i class="fas fa-sort-{{ 'up' if current_sort_dir == 'asc' else 'down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ url_for('parts.index', sort_by='manufacturer', sort_dir='asc' if current_sort == 'manufacturer' and current_sort_dir == 'desc' else 'desc') }}">
+                                Manufacturer
+                                {% if current_sort == 'manufacturer' %}
+                                    <i class="fas fa-sort-{{ 'up' if current_sort_dir == 'asc' else 'down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ url_for('parts.index', sort_by='standard_price', sort_dir='asc' if current_sort == 'standard_price' and current_sort_dir == 'desc' else 'desc') }}">
+                                Standard Price
+                                {% if current_sort == 'standard_price' %}
+                                    <i class="fas fa-sort-{{ 'up' if current_sort_dir == 'asc' else 'down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                    <tr>
+                        <td>{{ part.part_id }}</td>
+                        <td>{{ part.part_name }}</td>
+                        <td>{{ part.manufacturer or 'N/A' }}</td>
+                        <td>{% if part.standard_price %}${{ "%.2f"|format(part.standard_price) }}{% else %}N/A{% endif %}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('parts.view', part_id=part.part_id) }}" class="btn btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('parts.edit', part_id=part.part_id) }}" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No parts have been added yet. Click "Add New Part" to create one.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

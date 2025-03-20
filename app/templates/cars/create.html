@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Car - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Add New Car</h1>
+    
+    <form method="POST" class="card shadow">
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.vehicle_name.label(class="form-label") }}
+                        {{ form.vehicle_name(class="form-control") }}
+                        {% for error in form.vehicle_name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.source.label(class="form-label") }}
+                        {{ form.source(class="form-control") }}
+                        {% for error in form.source.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.vehicle_make.label(class="form-label") }}
+                        {{ form.vehicle_make(class="form-control") }}
+                        {% for error in form.vehicle_make.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.vehicle_model.label(class="form-label") }}
+                        {{ form.vehicle_model(class="form-control") }}
+                        {% for error in form.vehicle_model.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.year.label(class="form-label") }}
+                        {{ form.year(class="form-control") }}
+                        {% for error in form.year.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.colour.label(class="form-label") }}
+                        {{ form.colour(class="form-control") }}
+                        {% for error in form.colour.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.licence_number.label(class="form-label") }}
+                        {{ form.licence_number(class="form-control") }}
+                        {% for error in form.licence_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.registration_number.label(class="form-label") }}
+                        {{ form.registration_number(class="form-control") }}
+                        {% for error in form.registration_number.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.dekra_condition.label(class="form-label") }}
+                        {{ form.dekra_condition(class="form-select") }}
+                        {% for error in form.dekra_condition.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.purchase_price.label(class="form-label") }}
+                        {{ form.purchase_price(class="form-control") }}
+                        {% for error in form.purchase_price.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.refuel_cost.label(class="form-label") }}
+                        {{ form.refuel_cost(class="form-control") }}
+                        {% for error in form.refuel_cost.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.date_bought.label(class="form-label") }}
+                        {{ form.date_bought(class="form-control", type="date") }}
+                        {% for error in form.date_bought.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.repair_status.label(class="form-label") }}
+                        {{ form.repair_status(class="form-select") }}
+                        {% for error in form.repair_status.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        {{ form.current_location.label(class="form-label") }}
+                        {{ form.current_location(class="form-control") }}
+                        {% for error in form.current_location.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('cars.index') }}" class="btn btn-secondary">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %} 

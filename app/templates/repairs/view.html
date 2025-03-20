@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Repair Details - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Repair Details</h1>
+        <div>
+            <a href="{{ url_for('repairs.edit', repair_id=repair.repair_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            
+            {% if not repair.end_date %}
+            <form action="{{ url_for('repairs.complete', repair_id=repair.repair_id) }}" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check"></i> Mark as Complete
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Repair Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Car</h6>
+                        <p>
+                            <a href="{{ url_for('cars.view', car_id=repair.car_id) }}">
+                                {{ repair.car.vehicle_make }} {{ repair.car.vehicle_model }} ({{ repair.car.year }})
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Repair Type</h6>
+                        <p>{{ repair.repair_type }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Service Provider</h6>
+                        <p>{{ repair.provider.provider_name if repair.provider else 'N/A' }}</p>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Start Date</h6>
+                            <p>{{ repair.start_date.strftime('%Y-%m-%d') }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>End Date</h6>
+                            <p>{{ repair.end_date.strftime('%Y-%m-%d') if repair.end_date else 'In Progress' }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Status</h6>
+                        <p>
+                            {% if repair.end_date %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-warning">In Progress</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Cost</h6>
+                        <p>R {{ repair.repair_cost }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Additional Notes</h6>
+                        <p>{{ repair.additional_notes or 'No additional notes' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Parts Used</h5>
+                </div>
+                <div class="card-body">
+                    {% if repair_parts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Part Name</th>
+                                    <th>Purchase Date</th>
+                                    <th>Cost</th>
+                                    <th>Vendor</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for part in repair_parts %}
+                                <tr>
+                                    <td>{{ part.part.part_name }}</td>
+                                    <td>{{ part.purchase_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>R {{ part.purchase_price }}</td>
+                                    <td>{{ part.vendor }}</td>
+                                    <td>
+                                        <form action="{{ url_for('repairs.remove_part', record_id=part.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="2" class="text-end">Total Parts Cost:</th>
+                                    <th>R {{ repair_parts|sum(attribute='purchase_price') }}</th>
+                                    <th colspan="2"></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No parts have been added to this repair.</p>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <h6>Add Part</h6>
+                    <form method="POST" action="{{ url_for('repairs.add_part', repair_id=repair.repair_id) }}">
+                        {{ part_form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ part_form.part_id.label(class="form-label") }}
+                                    {{ part_form.part_id(class="form-select") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ part_form.purchase_price.label(class="form-label") }}
+                                    {{ part_form.purchase_price(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ part_form.purchase_date.label(class="form-label") }}
+                                    {{ part_form.purchase_date(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ part_form.vendor.label(class="form-label") }}
+                                    {{ part_form.vendor(class="form-control") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {{ part_form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

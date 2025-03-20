@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Service Provider - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Edit Service Provider: {{ provider.provider_name }}</h1>
+    
+    <form method="POST" class="card shadow">
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="mb-3">
+                {{ form.provider_name.label(class="form-label") }}
+                {{ form.provider_name(class="form-control") }}
+                {% for error in form.provider_name.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.service_type.label(class="form-label") }}
+                {{ form.service_type(class="form-control") }}
+                {% for error in form.service_type.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+                <small class="form-text text-muted">E.g., Mechanic, Paint Shop, Body Work, etc.</small>
+            </div>
+            
+            <div class="mb-3">
+                {{ form.contact_info.label(class="form-label") }}
+                {{ form.contact_info(class="form-control", rows=3, placeholder="Phone numbers, email addresses, physical address, etc.") }}
+                {% for error in form.contact_info.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.notes.label(class="form-label") }}
+                {{ form.notes(class="form-control", rows=4) }}
+                {% for error in form.notes.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('providers.view', provider_id=provider.provider_id) }}" class="btn btn-secondary">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </form>
+    
+    <div class="mt-4">
+        <form action="{{ url_for('providers.delete', provider_id=provider.provider_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this service provider? This action cannot be undone.');">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Delete Provider
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Record Sale for {{ car.vehicle_make }} {{ car.vehicle_model }} - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Record Sale for {{ car.vehicle_make }} {{ car.vehicle_model }}</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Car Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th class="w-25">Make/Model:</th>
+                            <td>{{ car.vehicle_make }} {{ car.vehicle_model }}</td>
+                        </tr>
+                        <tr>
+                            <th>Year:</th>
+                            <td>{{ car.year }}</td>
+                        </tr>
+                        <tr>
+                            <th>Condition:</th>
+                            <td>{{ car.dekra_condition }}</td>
+                        </tr>
+                        <tr>
+                            <th>Purchase Price:</th>
+                            <td>{{ car.purchase_price|currency }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Repair Cost:</th>
+                            <td>{{ total_repair_cost|currency }}</td>
+                        </tr>
+                        <tr>
+                            <th>Refuel Cost:</th>
+                            <td>{{ car.refuel_cost|currency }}</td>
+                        </tr>
+                        <tr class="table-light">
+                            <th>Total Cost:</th>
+                            <td class="fw-bold">{{ total_cost|currency }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <form method="POST" class="card shadow-sm">
+                {{ form.hidden_tag() }}
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Sale Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.dealer_id.label(class="form-label") }}
+                        {{ form.dealer_id(class="form-select") }}
+                        {% for error in form.dealer_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.sale_price.label(class="form-label") }}
+                        {{ form.sale_price(class="form-control") }}
+                        {% for error in form.sale_price.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <div id="profitPreview" class="form-text mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.commission_percentage.label(class="form-label") }}
+                        {{ form.commission_percentage(class="form-control") }}
+                        {% for error in form.commission_percentage.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <div id="commissionPreview" class="form-text mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.sale_date.label(class="form-label") }}
+                        {{ form.sale_date(class="form-control", type="date") }}
+                        {% for error in form.sale_date.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows=3) }}
+                        {% for error in form.notes.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('cars.view', car_id=car.car_id) }}" class="btn btn-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const totalCost = {{ total_cost }};
+    const saleInput = document.getElementById('sale_price');
+    const commissionInput = document.getElementById('commission_percentage');
+    const profitPreview = document.getElementById('profitPreview');
+    const commissionPreview = document.getElementById('commissionPreview');
+    
+    function updatePreviews() {
+        const salePrice = parseFloat(saleInput.value) || 0;
+        const commissionPercent = parseFloat(commissionInput.value) || 0;
+        
+        const profit = salePrice - totalCost;
+        const commission = salePrice * (commissionPercent / 100);
+        const netProfit = profit - commission;
+        
+        profitPreview.innerHTML = `Profit before commission: <strong>${profit.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</strong>`;
+        commissionPreview.innerHTML = `Commission: <strong>${commission.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</strong><br>Net profit: <strong>${netProfit.toLocaleString('en-US', {style: 'currency', currency: 'USD'})}</strong>`;
+        
+        if (profit < 0) {
+            profitPreview.classList.add('text-danger');
+        } else {
+            profitPreview.classList.remove('text-danger');
+        }
+        
+        if (netProfit < 0) {
+            commissionPreview.classList.add('text-danger');
+        } else {
+            commissionPreview.classList.remove('text-danger');
+        }
+    }
+    
+    saleInput.addEventListener('input', updatePreviews);
+    commissionInput.addEventListener('input', updatePreviews);
+    
+    // Initial calculation
+    if (saleInput.value) {
+        updatePreviews();
+    }
+});
+</script>
+{% endblock %} 

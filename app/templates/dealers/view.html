@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ dealer.dealer_name }} - Dealer Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ dealer.dealer_name }}</h1>
+        <div>
+            <a href="{{ url_for('dealers.edit', dealer_id=dealer.dealer_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Dealer
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Dealer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Commission Rate:</strong> {{ dealer.commission_rate }}%
+                    </div>
+                    <div class="mb-3">
+                        <strong>Contact Information:</strong>
+                        <p class="pre-wrap mt-2">{{ dealer.contact_info }}</p>
+                    </div>
+                    {% if dealer.notes %}
+                    <div>
+                        <strong>Notes:</strong>
+                        <p class="pre-wrap mt-2">{{ dealer.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Sales History</h5>
+                </div>
+                <div class="card-body">
+                    {% if dealer.sales %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Car</th>
+                                    <th>Sale Price</th>
+                                    <th>Commission</th>
+                                    <th>Profit</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sale in dealer.sales %}
+                                <tr>
+                                    <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ sale.car.vehicle_make }} {{ sale.car.vehicle_model }} ({{ sale.car.year }})</td>
+                                    <td>{{ sale.sale_price|currency }}</td>
+                                    <td>{{ sale.commission_amount|currency }} ({{ sale.commission_percentage }}%)</td>
+                                    <td>{{ sale.profit|currency }}</td>
+                                    <td>
+                                        <a href="{{ url_for('cars.view', car_id=sale.car.car_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View Car
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <th colspan="2">Total</th>
+                                    <th>{{ total_sales|currency }}</th>
+                                    <th>{{ total_commission|currency }}</th>
+                                    <th>{{ total_profit|currency }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="text-muted mb-3">No sales recorded for this dealer yet</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>{{ dealer.sales|length }}</h5>
+                                    <div class="text-muted">Total Sales</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>{{ avg_sale_price|currency }}</h5>
+                                    <div class="text-muted">Avg. Sale Price</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <h5>{{ avg_profit|currency }}</h5>
+                                    <div class="text-muted">Avg. Profit</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.pre-wrap {
+    white-space: pre-wrap;
+}
+</style>
+{% endblock %} 

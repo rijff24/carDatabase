@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ car.vehicle_make }} {{ car.vehicle_model }} - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ car.vehicle_make }} {{ car.vehicle_model }} ({{ car.year }})</h1>
+        <div>
+            <a href="{{ url_for('cars.edit', car_id=car.car_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('repairs.create') }}?car_id={{ car.car_id }}" class="btn btn-success">
+                <i class="fas fa-tools"></i> Create Repair
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Car Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Vehicle Name:</strong> {{ car.vehicle_name }}</p>
+                            <p><strong>Make:</strong> {{ car.vehicle_make }}</p>
+                            <p><strong>Model:</strong> {{ car.vehicle_model }}</p>
+                            <p><strong>Year:</strong> {{ car.year }}</p>
+                            <p><strong>Colour:</strong> {{ car.colour }}</p>
+                            <p><strong>Dekra Condition:</strong> {{ car.dekra_condition }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Licence Number:</strong> {{ car.licence_number }}</p>
+                            <p><strong>Registration Number:</strong> {{ car.registration_number }}</p>
+                            <p><strong>Source:</strong> {{ car.source }}</p>
+                            <p><strong>Purchase Date:</strong> {{ car.date_bought.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>Current Location:</strong> {{ car.current_location }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if car.repair_status == 'Purchased' %}
+                                    <span class="badge bg-secondary">Purchased</span>
+                                {% elif car.repair_status == 'Waiting for Repairs' %}
+                                    <span class="badge bg-info">Waiting for Repairs</span>
+                                {% elif car.repair_status == 'In Repair' %}
+                                    <span class="badge bg-warning">In Repair</span>
+                                {% elif car.repair_status == 'On Display' %}
+                                    <span class="badge bg-primary">On Display</span>
+                                {% elif car.repair_status == 'Waiting for Payment' %}
+                                    <span class="badge bg-success">Waiting for Payment</span>
+                                {% elif car.repair_status == 'Sold' %}
+                                    <span class="badge bg-dark">Sold</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Repairs</h5>
+                    <a href="{{ url_for('repairs.create') }}?car_id={{ car.car_id }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-plus"></i> Add Repair
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if car.repairs.count() > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Provider</th>
+                                    <th>Start Date</th>
+                                    <th>Status</th>
+                                    <th>Cost</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for repair in car.repairs %}
+                                <tr>
+                                    <td>{{ repair.repair_type }}</td>
+                                    <td>{{ repair.provider.provider_name if repair.provider else 'N/A' }}</td>
+                                    <td>{{ repair.start_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if repair.end_date %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">In Progress</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>R {{ repair.repair_cost }}</td>
+                                    <td>
+                                        <a href="{{ url_for('repairs.view', repair_id=repair.repair_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No repairs recorded for this car.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Financial Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Purchase Price:</strong> R {{ car.purchase_price }}</p>
+                    <p><strong>Refuel Cost:</strong> R {{ car.refuel_cost }}</p>
+                    <p><strong>Total Repair Cost:</strong> R {{ car.total_repair_cost }}</p>
+                    <hr>
+                    <p><strong>Total Cost:</strong> R {{ car.purchase_price + car.refuel_cost + car.total_repair_cost }}</p>
+                    
+                    {% if car.date_sold %}
+                    <hr>
+                    <p><strong>Sale Price:</strong> R {{ car.sale_price }}</p>
+                    <p><strong>Profit:</strong> R {{ car.profit }}</p>
+                    <p><strong>Commission:</strong> R {{ car.commission }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if car.repair_status == 'Waiting for Repairs' or car.repair_status == 'In Repair' %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Move to Stand</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('cars.move_to_stand', car_id=car.car_id) }}">
+                        <div class="mb-3">
+                            <label for="stand_id" class="form-label">Select Stand</label>
+                            <select name="stand_id" id="stand_id" class="form-select" required>
+                                <option value="">-- Select Stand --</option>
+                                <!-- Stands would be populated here -->
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Move to Stand</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if car.repair_status == 'On Display' and not car.date_sold and sale_form %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Record Sale</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('cars.record_sale', car_id=car.car_id) }}">
+                        {{ sale_form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ sale_form.date_sold.label(class="form-label") }}
+                            {{ sale_form.date_sold(class="form-control", type="date") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ sale_form.sale_price.label(class="form-label") }}
+                            {{ sale_form.sale_price(class="form-control") }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ sale_form.dealer_id.label(class="form-label") }}
+                            {{ sale_form.dealer_id(class="form-select") }}
+                        </div>
+                        
+                        {{ sale_form.submit(class="btn btn-success w-100") }}
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

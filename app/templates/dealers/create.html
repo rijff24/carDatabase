@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Dealer - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Add New Dealer</h1>
+    
+    <form method="POST" class="card shadow">
+        {{ form.hidden_tag() }}
+        <div class="card-body">
+            <div class="mb-3">
+                {{ form.dealer_name.label(class="form-label") }}
+                {{ form.dealer_name(class="form-control") }}
+                {% for error in form.dealer_name.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.contact_info.label(class="form-label") }}
+                {{ form.contact_info(class="form-control", rows=4, placeholder="Phone numbers, email addresses, etc.") }}
+                {% for error in form.contact_info.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.commission_rate.label(class="form-label") }}
+                {{ form.commission_rate(class="form-control") }}
+                {% for error in form.commission_rate.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+                <small class="form-text text-muted">Default commission percentage for this dealer.</small>
+            </div>
+            
+            <div class="mb-3">
+                {{ form.notes.label(class="form-label") }}
+                {{ form.notes(class="form-control", rows=4) }}
+                {% for error in form.notes.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('dealers.index') }}" class="btn btn-secondary">Cancel</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %} 

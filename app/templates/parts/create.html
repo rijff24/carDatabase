@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Part{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Add New Part</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('parts.create') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.part_name.label(class="form-label") }}
+                            {{ form.part_name(class="form-control") }}
+                            {% if form.part_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.part_name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=4) }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.manufacturer.label(class="form-label") }}
+                            {{ form.manufacturer(class="form-control") }}
+                            {% if form.manufacturer.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.manufacturer.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.standard_price.label(class="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.standard_price(class="form-control") }}
+                            </div>
+                            {% if form.standard_price.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.standard_price.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('parts.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Parts
+                            </a>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Part Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <!-- Part Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Part Details</h5>
+                    <div class="btn-group">
+                        <a href="{{ url_for('parts.edit', part_id=part.part_id) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deletePartModal">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <tbody>
+                            <tr>
+                                <th width="30%">ID</th>
+                                <td>{{ part.part_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Part Name</th>
+                                <td>{{ part.part_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Manufacturer</th>
+                                <td>{{ part.manufacturer or 'Not specified' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Standard Price</th>
+                                <td>{% if part.standard_price %}${{ "%.2f"|format(part.standard_price) }}{% else %}Not specified{% endif %}</td>
+                            </tr>
+                            {% if part.description %}
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ part.description }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ url_for('parts.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Parts List
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Usage in Repairs -->
+            {% if part.repair_parts %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Part Usage in Repairs</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Repair ID</th>
+                                <th>Purchase Date</th>
+                                <th>Vendor</th>
+                                <th>Purchase Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for repair_part in part.repair_parts %}
+                            <tr>
+                                <td>{{ repair_part.repair_id }}</td>
+                                <td>{{ repair_part.purchase_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ repair_part.vendor }}</td>
+                                <td>${{ "%.2f"|format(repair_part.purchase_price) }}</td>
+                                <td>
+                                    <a href="{{ url_for('repairs.view', repair_id=repair_part.repair_id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> View Repair
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deletePartModal" tabindex="-1" aria-labelledby="deletePartModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deletePartModalLabel">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the part <strong>{{ part.part_name }}</strong>?</p>
+                    {% if part.repair_parts %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> This part is currently used in {{ part.repair_parts|length }} repair(s). You cannot delete it until it is removed from all repairs.
+                    </div>
+                    {% else %}
+                    <p>This action cannot be undone.</p>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    {% if not part.repair_parts %}
+                    <form action="{{ url_for('parts.delete', part_id=part.part_id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete Part</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
