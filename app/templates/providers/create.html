@@ -35,6 +35,22 @@
             </div>
             
             <div class="mb-3">
+                {{ form.location.label(class="form-label") }}
+                {{ form.location(class="form-control", placeholder="City, area, or full address") }}
+                {% for error in form.location.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.rating.label(class="form-label") }}
+                {{ form.rating(class="form-select") }}
+                {% for error in form.rating.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="mb-3">
                 {{ form.notes.label(class="form-label") }}
                 {{ form.notes(class="form-control", rows=4) }}
                 {% for error in form.notes.errors %}

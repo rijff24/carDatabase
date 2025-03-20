@@ -102,6 +102,11 @@ class RepairProviderForm(FlaskForm):
     service_type = StringField('Service Type', validators=[DataRequired(), Length(1, 50)])
     contact_info = StringField('Contact Information', validators=[DataRequired(), Length(1, 150)])
     location = StringField('Location', validators=[DataRequired(), Length(1, 100)])
+    notes = TextAreaField('Notes', validators=[Optional(), Length(max=1000)])
+    rating = SelectField('Rating', validators=[Optional()], 
+                        choices=[('', 'Not Rated'), ('1', '1 Star'), ('2', '2 Stars'), 
+                                ('3', '3 Stars'), ('4', '4 Stars'), ('5', '5 Stars')],
+                        coerce=lambda x: int(x) if x else None)
     submit = SubmitField('Submit')
 
 class CarSaleForm(FlaskForm):

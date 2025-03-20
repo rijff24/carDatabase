@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ provider.provider_name }} - Service Provider Details - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ provider.provider_name }}</h1>
+        <div>
+            <a href="{{ url_for('providers.edit', provider_id=provider.provider_id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit Provider
+            </a>
+            <a href="{{ url_for('providers.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> All Providers
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Provider Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Service Type</dt>
+                        <dd class="col-sm-8">{{ provider.service_type }}</dd>
+                        
+                        <dt class="col-sm-4">Contact Info</dt>
+                        <dd class="col-sm-8">{{ provider.contact_info|nl2br }}</dd>
+                        
+                        <dt class="col-sm-4">Location</dt>
+                        <dd class="col-sm-8">{{ provider.location }}</dd>
+                        
+                        <dt class="col-sm-4">Added on</dt>
+                        <dd class="col-sm-8">{{ provider.date_added.strftime('%d %b, %Y') }}</dd>
+                        
+                        {% if provider.rating %}
+                        <dt class="col-sm-4">Rating</dt>
+                        <dd class="col-sm-8">
+                            {% for i in range(provider.rating) %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - provider.rating) %}
+                            <i class="far fa-star text-muted"></i>
+                            {% endfor %}
+                        </dd>
+                        {% endif %}
+                    </dl>
+                    
+                    {% if provider.notes %}
+                    <hr>
+                    <h6>Notes</h6>
+                    <p class="card-text">{{ provider.notes|nl2br }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>{{ provider.total_repairs }}</h2>
+                                    <p class="text-muted mb-0">Total Repairs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>${{ '%.2f'|format(provider.total_repair_cost) }}</h2>
+                                    <p class="text-muted mb-0">Total Cost</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>
+                                        {% if provider.average_repair_duration is not none %}
+                                            {{ '%.1f'|format(provider.average_repair_duration) }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </h2>
+                                    <p class="text-muted mb-0">Avg. Days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if provider.repairs %}
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Recent Repairs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Car</th>
+                                    <th>Repair Type</th>
+                                    <th>Date</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for repair in provider.repairs|sort(attribute='start_date', reverse=True)[:5] %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('cars.view', car_id=repair.car_id) }}">
+                                            {{ repair.car.vehicle_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ repair.repair_type }}</td>
+                                    <td>{{ repair.start_date.strftime('%d %b, %Y') }}</td>
+                                    <td>${{ '%.2f'|format(repair.repair_cost) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if provider.repairs|length > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('repairs.index', provider_id=provider.provider_id) }}" class="btn btn-outline-primary btn-sm">
+                            View All {{ provider.repairs|length }} Repairs
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No repairs have been recorded for this provider yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
