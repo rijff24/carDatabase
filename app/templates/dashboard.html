@@ -43,6 +43,25 @@
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
+                        <h6 class="text-muted fw-normal mt-0">Cars in Repair</h6>
+                        <h3 class="mt-1 mb-0">{{ cars_in_repair }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                </div>
+                <p class="mb-0 text-muted">
+                    <span class="text-warning me-2"><i class="fas fa-wrench"></i></span>
+                    <span class="text-nowrap">Currently being repaired</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card h-100 stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
                         <h6 class="text-muted fw-normal mt-0">Cars For Sale</h6>
                         <h3 class="mt-1 mb-0">{{ cars_on_stand }}</h3>
                     </div>
@@ -76,7 +95,10 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-4">
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 col-sm-6 mb-4">
         <div class="card h-100 stat-card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
@@ -90,6 +112,25 @@
                 </div>
                 <p class="mb-0 text-muted">
                     <span class="text-success me-2"><i class="fas fa-arrow-up"></i></span>
+                    <span class="text-nowrap">Last 30 days</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-6 mb-4">
+        <div class="card h-100 stat-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted fw-normal mt-0">Sales Value</h6>
+                        <h3 class="mt-1 mb-0">{{ '%.2f'|format(recent_sales_value|float) }}</h3>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                </div>
+                <p class="mb-0 text-muted">
+                    <span class="text-success me-2"><i class="fas fa-calendar-alt"></i></span>
                     <span class="text-nowrap">Last 30 days</span>
                 </p>
             </div>
@@ -125,7 +166,7 @@
                                     </a>
                                 </td>
                                 <td>{{ car.date_bought.strftime('%d %b %Y') }}</td>
-                                <td>{{ (now().date() - car.date_bought).days }}</td>
+                                <td>{{ (now.date() - car.date_bought).days }}</td>
                                 <td>
                                     <a href="{{ url_for('repairs.create') }}?car_id={{ car.car_id }}" class="btn btn-sm btn-primary">Create Repair</a>
                                 </td>
@@ -168,7 +209,7 @@
                                     </a>
                                 </td>
                                 <td>{{ car.stand.stand_name if car.stand else '-' }}</td>
-                                <td>{{ (now().date() - car.date_added_to_stand).days }}</td>
+                                <td>{{ (now.date() - car.date_added_to_stand).days }}</td>
                                 <td>
                                     {% if not car.date_sold %}
                                     <a href="{{ url_for('cars.view', car_id=car.car_id) }}" class="btn btn-sm btn-success">Record Sale</a>

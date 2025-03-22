@@ -70,8 +70,13 @@
                     </div>
                     
                     <div class="mb-3">
-                        <h6>Cost</h6>
+                        <h6>Labor Cost</h6>
                         <p>R {{ repair.repair_cost }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Total Cost (Labor + Parts)</h6>
+                        <p>R {{ repair.total_cost }}</p>
                     </div>
                     
                     <div class="mb-3">
@@ -108,7 +113,7 @@
                                     <td>R {{ part.purchase_price }}</td>
                                     <td>{{ part.vendor }}</td>
                                     <td>
-                                        <form action="{{ url_for('repairs.remove_part', record_id=part.id) }}" method="POST" class="d-inline">
+                                        <form action="{{ url_for('repairs.remove_part', record_id=part.record_id) }}" method="POST" class="d-inline">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -119,7 +124,7 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th colspan="2" class="text-end">Total Parts Cost:</th>
+                                    <th colspan="2" class="text-end">Parts Cost Subtotal:</th>
                                     <th>R {{ repair_parts|sum(attribute='purchase_price') }}</th>
                                     <th colspan="2"></th>
                                 </tr>

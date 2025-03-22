@@ -3,6 +3,7 @@ from flask_login import login_required
 from app.models.car import Car
 from app.models.stand import Stand
 from app.models.dealer import Dealer
+from app.models.repair_provider import RepairProvider
 from app.utils.forms import CarForm, CarSaleForm
 from app import db
 from datetime import datetime
@@ -15,11 +16,23 @@ def index():
     """List all cars"""
     # Get filter parameters
     status = request.args.get('status', 'All')
+    search = request.args.get('search', '')
     
     # Base query
     query = Car.query
     
-    # Apply filters
+    # Apply search filter
+    if search:
+        query = query.filter(
+            (Car.vehicle_name.ilike(f'%{search}%')) |
+            (Car.vehicle_make.ilike(f'%{search}%')) |
+            (Car.vehicle_model.ilike(f'%{search}%')) |
+            (Car.colour.ilike(f'%{search}%')) |
+            (Car.licence_number.ilike(f'%{search}%')) |
+            (Car.registration_number.ilike(f'%{search}%'))
+        )
+    
+    # Apply status filter
     if status != 'All':
         query = query.filter(Car.repair_status == status)
     
@@ -48,7 +61,25 @@ def create():
     """Create a new car"""
     form = CarForm()
     
+    # Populate the source field with dealers
+    dealers = Dealer.query.all()
+    form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
+    
     if form.validate_on_submit():
+        # Set the current location based on repair status
+        current_location = form.current_location.data
+        if form.repair_status.data == 'Purchased':
+            current_location = "Dealer's Lot"
+        elif form.repair_status.data == 'Waiting for Repairs':
+            current_location = 'Base (Awaiting Repairs)'
+        elif form.repair_status.data == 'In Repair':
+            provider = RepairProvider.query.first()
+            current_location = f"Repair: {provider.location if provider else 'Unknown'}"
+        elif form.repair_status.data == 'On Display':
+            # Get all stands and use the first one found
+            stand = Stand.query.first()
+            current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
+        
         car = Car(
             vehicle_name=form.vehicle_name.data,
             vehicle_make=form.vehicle_make.data,
@@ -59,10 +90,13 @@ def create():
             licence_number=form.licence_number.data,
             registration_number=form.registration_number.data,
             purchase_price=form.purchase_price.data,
-            source=form.source.data,
+            source=Dealer.query.get(form.source.data).dealer_name,
+            dealer_id=form.source.data,  # Set the dealer ID from the source field
             date_bought=form.date_bought.data,
+            date_added_to_stand=form.date_added_to_stand.data,
+            date_sold=form.date_sold.data,
             refuel_cost=form.refuel_cost.data or 0.00,
-            current_location=form.current_location.data,
+            current_location=current_location,
             repair_status=form.repair_status.data
         )
         
@@ -81,12 +115,14 @@ def view(car_id):
     car = Car.query.get_or_404(car_id)
     sale_form = None
     
+    # Get all stands for the dropdown
+    stands = Stand.query.all()
+    
     # If car is on display but not sold, prepare sale form
     if car.repair_status == 'On Display' and not car.date_sold:
         sale_form = CarSaleForm(car_id=car.car_id)
-        sale_form.dealer_id.choices = [(d.dealer_id, d.dealer_name) for d in Dealer.query.all()]
     
-    return render_template('cars/view.html', car=car, sale_form=sale_form)
+    return render_template('cars/view.html', car=car, sale_form=sale_form, stands=stands)
 
 @cars_bp.route('/<int:car_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -95,8 +131,37 @@ def edit(car_id):
     car = Car.query.get_or_404(car_id)
     form = CarForm(obj=car)
     
+    # Populate the source field with dealers
+    dealers = Dealer.query.all()
+    form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
+    
+    # Set the current dealer as selected if it exists
+    if car.dealer_id:
+        form.source.data = car.dealer_id
+    
     if form.validate_on_submit():
+        # Set the current location based on repair status
+        current_location = form.current_location.data
+        if form.repair_status.data == 'Purchased':
+            current_location = "Dealer's Lot"
+        elif form.repair_status.data == 'Waiting for Repairs':
+            current_location = 'Base (Awaiting Repairs)'
+        elif form.repair_status.data == 'In Repair':
+            provider = RepairProvider.query.first()
+            current_location = f"Repair: {provider.location if provider else 'Unknown'}"
+        elif form.repair_status.data == 'On Display':
+            # Get all stands and use the first one found
+            stand = Stand.query.first()
+            current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
+            
+        # Update car fields
         form.populate_obj(car)
+        
+        # Set fields that are not directly mapped
+        car.source = Dealer.query.get(form.source.data).dealer_name
+        car.dealer_id = form.source.data
+        car.current_location = current_location
+        
         db.session.commit()
         
         flash('Car updated successfully', 'success')
@@ -124,8 +189,13 @@ def move_to_stand(car_id):
     stand_id = request.form.get('stand_id', type=int)
     
     if not stand_id:
-        flash('Please select a stand', 'danger')
-        return redirect(url_for('cars.view', car_id=car_id))
+        # Try to get the first stand if none selected
+        first_stand = Stand.query.first()
+        if first_stand:
+            stand_id = first_stand.stand_id
+        else:
+            flash('Please select a stand. If no stands exist, please create one first.', 'danger')
+            return redirect(url_for('cars.view', car_id=car_id))
     
     stand = Stand.query.get_or_404(stand_id)
     
@@ -145,12 +215,12 @@ def record_sale(car_id):
     """Record a car sale"""
     car = Car.query.get_or_404(car_id)
     form = CarSaleForm(request.form)
-    form.dealer_id.choices = [(d.dealer_id, d.dealer_name) for d in Dealer.query.all()]
     
+    # Remove dealer_id validation since we'll use the car's existing dealer_id
     if form.validate():
         car.date_sold = form.date_sold.data
         car.sale_price = form.sale_price.data
-        car.dealer_id = form.dealer_id.data
+        # Keep the existing dealer_id that was set when the car was added
         car.repair_status = 'Sold'
         
         # Calculate final costs

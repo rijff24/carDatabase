@@ -31,7 +31,7 @@ class Car(db.Model):
     # Relationships
     repairs = db.relationship('Repair', backref='car', lazy='dynamic', cascade='all, delete-orphan')
     stand = db.relationship('Stand', backref='cars')
-    dealer = db.relationship('Dealer', backref='cars')
+    dealer = db.relationship('Dealer', foreign_keys=[dealer_id])
 
     def __repr__(self):
         return f'<Car {self.vehicle_make} {self.vehicle_model} ({self.year})>'
@@ -68,4 +68,14 @@ class Car(db.Model):
         profit = self.profit
         if profit is None:
             return None
-        return 10000 if profit > 30000 else 5000 
+        return 10000 if profit > 30000 else 5000
+    
+    @property
+    def total_investment(self):
+        """Calculate total investment in the car"""
+        return self.purchase_price + self.total_repair_cost + self.refuel_cost
+    
+    @property
+    def sold(self):
+        """Check if the car is sold"""
+        return self.date_sold is not None 

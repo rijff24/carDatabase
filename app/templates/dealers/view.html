@@ -1,136 +1,232 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ dealer.dealer_name }} - Dealer Details{% endblock %}
+{% block title %}Dealer Details - Car Sales Tracking{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ dealer.dealer_name }}</h1>
+        <h1>Dealer: {{ dealer.dealer_name }}</h1>
         <div>
-            <a href="{{ url_for('dealers.edit', dealer_id=dealer.dealer_id) }}" class="btn btn-primary">
+            <a href="{{ url_for('dealers.edit', dealer_id=dealer.dealer_id) }}" class="btn btn-primary me-2">
                 <i class="fas fa-edit"></i> Edit Dealer
+            </a>
+            <a href="{{ url_for('dealers.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dealers
             </a>
         </div>
     </div>
     
     <div class="row">
+        <!-- Dealer Information Card -->
         <div class="col-md-4 mb-4">
-            <div class="card shadow-sm h-100">
+            <div class="card shadow h-100">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Dealer Information</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <strong>Commission Rate:</strong> {{ dealer.commission_rate }}%
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Status:</span>
+                            <span class="badge {% if dealer.status == 'Active' %}bg-success{% elif dealer.status == 'Suspended' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ dealer.status }}
+                            </span>
+                        </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <strong>Contact Information:</strong>
-                        <p class="pre-wrap mt-2">{{ dealer.contact_info }}</p>
+                        <h6>Contact Information</h6>
+                        <div class="border p-2 rounded bg-light" style="white-space: pre-wrap;">{{ dealer.contact_info }}</div>
+                        {% if dealer.address %}
+                            <div class="mt-2"><i class="fas fa-map-marker-alt text-muted me-2"></i> {{ dealer.address }}</div>
+                        {% endif %}
                     </div>
-                    {% if dealer.notes %}
-                    <div>
-                        <strong>Notes:</strong>
-                        <p class="pre-wrap mt-2">{{ dealer.notes }}</p>
+                    
+                    <div class="mb-3">
+                        <h6>Additional Information</h6>
+                        <div class="text-muted mt-2">Date Joined:</div>
+                        <div class="fw-bold">{{ dealer.date_joined.strftime('%B %d, %Y') }}</div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
         
-        <div class="col-md-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Sales History</h5>
+        <!-- Performance Metrics Card -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Performance Metrics</h5>
+                    <button id="refreshMetrics" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
                 </div>
                 <div class="card-body">
-                    {% if dealer.sales %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Car</th>
-                                    <th>Sale Price</th>
-                                    <th>Commission</th>
-                                    <th>Profit</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for sale in dealer.sales %}
-                                <tr>
-                                    <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
-                                    <td>{{ sale.car.vehicle_make }} {{ sale.car.vehicle_model }} ({{ sale.car.year }})</td>
-                                    <td>{{ sale.sale_price|currency }}</td>
-                                    <td>{{ sale.commission_amount|currency }} ({{ sale.commission_percentage }}%)</td>
-                                    <td>{{ sale.profit|currency }}</td>
-                                    <td>
-                                        <a href="{{ url_for('cars.view', car_id=sale.car.car_id) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i> View Car
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                            <tfoot>
-                                <tr class="table-light">
-                                    <th colspan="2">Total</th>
-                                    <th>{{ total_sales|currency }}</th>
-                                    <th>{{ total_commission|currency }}</th>
-                                    <th>{{ total_profit|currency }}</th>
-                                    <th></th>
-                                </tr>
-                            </tfoot>
-                        </table>
+                    <div class="row mb-4">
+                        <div class="col-md-3 col-6 text-center mb-3">
+                            <div class="text-muted small">Total Sales</div>
+                            <div class="fs-3 fw-bold">{{ dealer.total_sales }}</div>
+                        </div>
+                        <div class="col-md-3 col-6 text-center mb-3">
+                            <div class="text-muted small">Total Revenue</div>
+                            <div class="fs-3 fw-bold">R{{ '{:,.2f}'.format(dealer.total_revenue) }}</div>
+                        </div>
+                        <div class="col-md-3 col-6 text-center mb-3">
+                            <div class="text-muted small">Avg. Days to Sell</div>
+                            <div class="fs-3 fw-bold">{{ '{:.1f}'.format(dealer.avg_days_to_sell) }}</div>
+                        </div>
+                        <div class="col-md-3 col-6 text-center mb-3">
+                            <div class="text-muted small">Last Sale</div>
+                            <div class="fs-3 fw-bold">{{ dealer.last_sale_date.strftime('%d %b') if dealer.last_sale_date else 'N/A' }}</div>
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <div class="text-muted mb-3">No sales recorded for this dealer yet</div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">Performance</h5>
-                </div>
-                <div class="card-body">
+                    
+                    <!-- Performance Charts -->
                     <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body text-center">
-                                    <h5>{{ dealer.sales|length }}</h5>
-                                    <div class="text-muted">Total Sales</div>
-                                </div>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-center">Monthly Sales</h6>
+                            <canvas id="salesChart" height="220"></canvas>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body text-center">
-                                    <h5>{{ avg_sale_price|currency }}</h5>
-                                    <div class="text-muted">Avg. Sale Price</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body text-center">
-                                    <h5>{{ avg_profit|currency }}</h5>
-                                    <div class="text-muted">Avg. Profit</div>
-                                </div>
-                            </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-center">Monthly Revenue</h6>
+                            <canvas id="revenueChart" height="220"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Sales History Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Sales History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date Sold</th>
+                            <th>Vehicle</th>
+                            <th>Sale Price</th>
+                            <th>Days to Sell</th>
+                            <th>Profit</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if sales_history %}
+                            {% for car in sales_history %}
+                            <tr>
+                                <td>{{ car.date_sold.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ car.vehicle_make }} {{ car.vehicle_model }} ({{ car.year }})</td>
+                                <td>R{{ '{:,.2f}'.format(car.sale_price) }}</td>
+                                <td>{{ car.days_on_stand }}</td>
+                                <td>
+                                    {% if car.profit %}
+                                        <span class="{% if car.profit > 0 %}text-success{% else %}text-danger{% endif %}">
+                                            R{{ '{:,.2f}'.format(car.profit) }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('cars.view', car_id=car.car_id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-3">
+                                    <div class="text-muted">No sales history found</div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
-<style>
-.pre-wrap {
-    white-space: pre-wrap;
-}
-</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch performance data on page load
+        fetchPerformanceData();
+        
+        // Set up refresh button
+        document.getElementById('refreshMetrics').addEventListener('click', function() {
+            fetchPerformanceData();
+        });
+        
+        function fetchPerformanceData() {
+            fetch('{{ url_for("dealers.performance", dealer_id=dealer.dealer_id) }}')
+                .then(response => response.json())
+                .then(data => {
+                    updateCharts(data);
+                })
+                .catch(error => console.error('Error fetching performance data:', error));
+        }
+        
+        function updateCharts(data) {
+            // Sales Chart
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            const salesChart = new Chart(salesCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Sales',
+                        data: data.sales,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Revenue (R)',
+                        data: data.revenue,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %} 

@@ -92,7 +92,7 @@
                                             <span class="badge bg-warning">In Progress</span>
                                         {% endif %}
                                     </td>
-                                    <td>R {{ repair.repair_cost }}</td>
+                                    <td>R {{ repair.total_cost }}</td>
                                     <td>
                                         <a href="{{ url_for('repairs.view', repair_id=repair.repair_id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i>
@@ -142,7 +142,9 @@
                             <label for="stand_id" class="form-label">Select Stand</label>
                             <select name="stand_id" id="stand_id" class="form-select" required>
                                 <option value="">-- Select Stand --</option>
-                                <!-- Stands would be populated here -->
+                                {% for stand in stands %}
+                                <option value="{{ stand.stand_id }}">{{ stand.stand_name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Move to Stand</button>
@@ -167,12 +169,10 @@
                         
                         <div class="mb-3">
                             {{ sale_form.sale_price.label(class="form-label") }}
-                            {{ sale_form.sale_price(class="form-control") }}
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ sale_form.dealer_id.label(class="form-label") }}
-                            {{ sale_form.dealer_id(class="form-select") }}
+                            <div class="input-group">
+                                <span class="input-group-text">R</span>
+                                {{ sale_form.sale_price(class="form-control") }}
+                            </div>
                         </div>
                         
                         {{ sale_form.submit(class="btn btn-success w-100") }}

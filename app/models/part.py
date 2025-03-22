@@ -27,7 +27,7 @@ class RepairPart(db.Model):
     vendor = db.Column(db.String(100), nullable=False)
 
     # Relationships
-    repair = db.relationship('Repair', backref='repair_parts')
+    repair = db.relationship('Repair', foreign_keys=[repair_id], overlaps="repair_parts,repair_ref")
     part = db.relationship('Part', backref='repair_parts')
 
     def __repr__(self):

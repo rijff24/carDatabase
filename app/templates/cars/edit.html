@@ -91,28 +91,25 @@
             </div>
             
             <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.dekra_condition.label(class="form-label") }}
-                        {{ form.dekra_condition(class="form-select") }}
-                        {% for error in form.dekra_condition.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="mb-3">
                         {{ form.purchase_price.label(class="form-label") }}
-                        {{ form.purchase_price(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text">R</span>
+                            {{ form.purchase_price(class="form-control", type="number", step="0.01", min="0") }}
+                        </div>
                         {% for error in form.purchase_price.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="mb-3">
                         {{ form.refuel_cost.label(class="form-label") }}
-                        {{ form.refuel_cost(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text">R</span>
+                            {{ form.refuel_cost(class="form-control", type="number", step="0.01", min="0") }}
+                        </div>
                         {% for error in form.refuel_cost.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
@@ -132,17 +129,42 @@
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
-                        {{ form.repair_status.label(class="form-label") }}
-                        {{ form.repair_status(class="form-select") }}
-                        {% for error in form.repair_status.errors %}
+                        {{ form.date_added_to_stand.label(class="form-label") }}
+                        {{ form.date_added_to_stand(class="form-control", type="date") }}
+                        <div class="form-text">Leave empty if not on stand yet</div>
+                        {% for error in form.date_added_to_stand.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
+                        {{ form.date_sold.label(class="form-label") }}
+                        {{ form.date_sold(class="form-control", type="date") }}
+                        <div class="form-text">Leave empty if not sold yet</div>
+                        {% for error in form.date_sold.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.repair_status.label(class="form-label") }}
+                        {{ form.repair_status(class="form-select") }}
+                        <div class="form-text">Current location will be set automatically based on status</div>
+                        {% for error in form.repair_status.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
                         {{ form.current_location.label(class="form-label") }}
-                        {{ form.current_location(class="form-control") }}
+                        {{ form.current_location(class="form-control", readonly=true) }}
+                        <div class="form-text">This is automatically updated based on repair status</div>
                         {% for error in form.current_location.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}

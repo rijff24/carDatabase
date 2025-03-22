@@ -43,7 +43,11 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         {{ form.repair_cost.label(class="form-label") }}
-                        {{ form.repair_cost(class="form-control") }}
+                        <div class="input-group">
+                            <span class="input-group-text">R</span>
+                            {{ form.repair_cost(class="form-control") }}
+                        </div>
+                        <small class="text-muted">Labor cost only - parts can be added separately</small>
                         {% for error in form.repair_cost.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
@@ -74,9 +78,9 @@
             </div>
             
             <div class="mb-3">
-                {{ form.notes.label(class="form-label") }}
-                {{ form.notes(class="form-control", rows=4) }}
-                {% for error in form.notes.errors %}
+                {{ form.additional_notes.label(class="form-label") }}
+                {{ form.additional_notes(class="form-control", rows=4) }}
+                {% for error in form.additional_notes.errors %}
                 <div class="text-danger small">{{ error }}</div>
                 {% endfor %}
             </div>

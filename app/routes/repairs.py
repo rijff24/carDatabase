@@ -162,6 +162,10 @@ def delete(repair_id):
             car.repair_status = 'Waiting for Repairs'
             car.current_location = 'Base (Awaiting Next Step)'
     
+    # First delete all repair parts
+    RepairPart.query.filter_by(repair_id=repair_id).delete()
+    
+    # Then delete the repair
     db.session.delete(repair)
     db.session.commit()
     
@@ -233,6 +237,10 @@ def remove_part(record_id):
     repair_part = RepairPart.query.get_or_404(record_id)
     repair_id = repair_part.repair_id
     
+    # First fetch the record
+    db.session.refresh(repair_part)
+    
+    # Then delete it
     db.session.delete(repair_part)
     db.session.commit()
     

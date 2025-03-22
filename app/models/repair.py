@@ -17,6 +17,7 @@ class Repair(db.Model):
     # Relationships
     provider = db.relationship('RepairProvider', backref='repairs')
     parts = db.relationship('Part', secondary='repair_parts', backref='repairs')
+    repair_parts = db.relationship('RepairPart', backref='repair_ref', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Repair {self.repair_type} for Car ID {self.car_id}>'
@@ -26,4 +27,12 @@ class Repair(db.Model):
         """Calculate repair duration in days"""
         if not self.end_date:
             return None
-        return (self.end_date - self.start_date).days 
+        return (self.end_date - self.start_date).days
+        
+    @property
+    def total_cost(self):
+        """Calculate total repair cost (labor + parts)"""
+        # Get the sum of all parts costs
+        parts_cost = sum(float(part.purchase_price) for part in self.repair_parts)
+        # Add labor cost (repair_cost)
+        return float(self.repair_cost) + parts_cost 

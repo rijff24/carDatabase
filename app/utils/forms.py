@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
 from wtforms import IntegerField, DateField, FloatField, TextAreaField, HiddenField
-from wtforms.validators import DataRequired, Length, Email, NumberRange, Optional, ValidationError
+from wtforms.validators import DataRequired, Length, Email, NumberRange, Optional, ValidationError, Regexp
 from datetime import datetime
 
 class LoginForm(FlaskForm):
@@ -28,13 +28,21 @@ class CarForm(FlaskForm):
                                         ('Gold', 'Gold'),
                                         ('Green', 'Green'),
                                         ('Other', 'Other')])
-    licence_number = StringField('Licence Number', validators=[DataRequired(), Length(1, 20)])
-    registration_number = StringField('Registration Number', validators=[DataRequired(), Length(1, 20)])
-    purchase_price = FloatField('Purchase Price', validators=[DataRequired(), NumberRange(min=0)])
-    source = StringField('Source', validators=[DataRequired(), Length(1, 50)])
-    date_bought = DateField('Date Bought', validators=[DataRequired()], format='%Y-%m-%d')
-    refuel_cost = FloatField('Refuel Cost', validators=[Optional(), NumberRange(min=0)])
-    current_location = StringField('Current Location', validators=[DataRequired(), Length(1, 100)])
+    licence_number = StringField('Licence Number', validators=[
+        DataRequired(), 
+        Length(1, 20),
+        Regexp(r'^[A-Z0-9 ]{5,20}$', message='Licence number must be in South African format')
+    ])
+    registration_number = StringField('Registration Number', validators=[
+        DataRequired(), 
+        Length(1, 20),
+        Regexp(r'^[A-Z0-9 ]{5,20}$', message='Registration number must be in South African format')
+    ])
+    purchase_price = FloatField('Purchase Price (R)', validators=[DataRequired(), NumberRange(min=0)])
+    source = SelectField('Source (Dealer)', validators=[DataRequired()], coerce=int)
+    date_bought = DateField('Date Bought', validators=[DataRequired()], format='%Y-%m-%d', default=datetime.now().date())
+    refuel_cost = FloatField('Refuel Cost (R)', validators=[Optional(), NumberRange(min=0)])
+    current_location = StringField('Current Location', validators=[Optional(), Length(max=100)])
     repair_status = SelectField('Repair Status', validators=[DataRequired()],
                                choices=[('Purchased', 'Purchased (awaiting collection)'),
                                        ('Waiting for Repairs', 'Waiting for Repairs'),
@@ -42,7 +50,24 @@ class CarForm(FlaskForm):
                                        ('On Display', 'On Display at Stand'),
                                        ('Waiting for Payment', 'Waiting for Payment/Paperwork'),
                                        ('Sold', 'Sold')])
+    date_added_to_stand = DateField('Date Added to Stand (leave empty if not on stand yet)', validators=[Optional()], format='%Y-%m-%d')
+    date_sold = DateField('Date Sold (leave empty if not sold yet)', validators=[Optional()], format='%Y-%m-%d')
     submit = SubmitField('Submit')
+
+    def validate_date_bought(self, field):
+        """Ensure date_bought is not in the future"""
+        if field.data > datetime.now().date():
+            raise ValidationError('Purchase date cannot be in the future')
+
+    def validate_date_added_to_stand(self, field):
+        """Ensure date_added_to_stand is after date_bought"""
+        if field.data and self.date_bought.data and field.data < self.date_bought.data:
+            raise ValidationError('Date added to stand must be after purchase date')
+    
+    def validate_date_sold(self, field):
+        """Ensure date_sold is after date_added_to_stand"""
+        if field.data and hasattr(self, 'date_added_to_stand') and self.date_added_to_stand.data and field.data < self.date_added_to_stand.data:
+            raise ValidationError('Sale date must be after date added to stand')
 
 class RepairForm(FlaskForm):
     """Form for adding or editing a repair"""
@@ -62,7 +87,7 @@ class RepairForm(FlaskForm):
     provider_id = SelectField('Service Provider', validators=[DataRequired()], coerce=int)
     start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d')
     end_date = DateField('End Date', validators=[Optional()], format='%Y-%m-%d')
-    repair_cost = FloatField('Repair Cost', validators=[DataRequired(), NumberRange(min=0)])
+    repair_cost = FloatField('Labor Cost', validators=[DataRequired(), NumberRange(min=0)])
     additional_notes = TextAreaField('Additional Notes', validators=[Optional(), Length(max=1000)])
     submit = SubmitField('Submit')
 
@@ -114,7 +139,6 @@ class CarSaleForm(FlaskForm):
     car_id = HiddenField('Car ID', validators=[DataRequired()])
     date_sold = DateField('Sale Date', validators=[DataRequired()], format='%Y-%m-%d')
     sale_price = FloatField('Sale Price', validators=[DataRequired(), NumberRange(min=0)])
-    dealer_id = SelectField('Dealer', validators=[DataRequired()], coerce=int)
     submit = SubmitField('Record Sale')
 
 class DateRangeForm(FlaskForm):
