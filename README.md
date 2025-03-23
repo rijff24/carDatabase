@@ -14,7 +14,7 @@ A full-stack web application for tracking the entire lifecycle of cars—from pu
 ## Tech Stack
 
 - **Backend**: Python with Flask web framework
-- **Database**: MySQL
+- **Database**: SQLite (with support for different environments)
 - **Frontend**: HTML, CSS (Bootstrap 5), JavaScript
 
 ## Installation and Setup
@@ -22,22 +22,7 @@ A full-stack web application for tracking the entire lifecycle of cars—from pu
 ### Prerequisites
 
 - Python 3.8+
-- MySQL 8.0+
 - pip (Python package manager)
-
-### Database Setup
-
-1. Create the necessary databases:
-
-```sql
-CREATE DATABASE car_sales_tracking;
-CREATE DATABASE car_sales_tracking_dev;
-CREATE DATABASE car_sales_tracking_test;
-```
-
-2. Create a database user or use an existing one with appropriate permissions.
-
-3. Update the `.env` file with your database credentials.
 
 ### Application Setup
 
@@ -68,18 +53,16 @@ pip install -r requirements.txt
 
 ```bash
 flask create-db
+# Or alternatively run:
+python init_db.py
 ```
 
-5. Create an admin user:
-
-```bash
-flask create-admin
-```
-
-6. Run the application:
+5. Run the application:
 
 ```bash
 flask run
+# Or alternatively:
+python app.py
 ```
 
 The application will be available at http://localhost:5000
@@ -95,12 +78,21 @@ The application will be available at http://localhost:5000
 │   ├── templates/     # HTML templates
 │   ├── utils/         # Utility functions and forms
 │   └── __init__.py    # Application factory
-├── tests/             # Test cases
 ├── .env               # Environment variables
 ├── app.py             # Application entry point
 ├── config.py          # Configuration
+├── init_db.py         # Database initialization script
 └── requirements.txt   # Dependencies
 ```
+
+## Environment Configuration
+
+The application supports three environments:
+- Development (default)
+- Testing
+- Production
+
+Configuration is done through the `.env` file and `config.py`. Each environment uses a separate SQLite database file.
 
 ## Usage
 
@@ -110,6 +102,19 @@ The application will be available at http://localhost:5000
 4. Track repairs and parts used
 5. Move cars to stands when ready for sale
 6. Record sales and view reports
+
+## Available Commands
+
+```bash
+# Create database tables
+flask create-db
+
+# Drop all database tables
+flask drop-db
+
+# Create admin user
+flask create-admin
+```
 
 ## License
 

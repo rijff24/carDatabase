@@ -1,9 +1,21 @@
+"""
+Application package for Car Repair and Sales Tracking Web Application.
+
+This module:
+1. Initializes Flask extensions
+2. Provides the application factory function
+3. Registers blueprints for different application components
+4. Sets up Jinja2 filters and context processors
+"""
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from config import config
 import datetime
+import jinja2
+import markupsafe
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -12,7 +24,16 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
 def create_app(config_name='default'):
-    """Application factory function"""
+    """
+    Application factory function that creates and configures the Flask app.
+    
+    Args:
+        config_name (str): Configuration environment to use (default, development, 
+                          testing, or production)
+                          
+    Returns:
+        Flask: The configured Flask application instance
+    """
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
@@ -22,9 +43,31 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)
     login_manager.init_app(app)
     
+    # Add custom Jinja2 filters
+    @app.template_filter('nl2br')
+    def nl2br(value):
+        """
+        Convert newlines to HTML line breaks.
+        
+        Args:
+            value (str): Text containing newlines
+            
+        Returns:
+            str: HTML with <br> tags replacing newlines
+        """
+        if value:
+            return markupsafe.Markup(value.replace('\n', '<br>'))
+        return ''
+    
     # Add template context processor for datetime
     @app.context_processor
     def inject_now():
+        """
+        Make current datetime available in all templates.
+        
+        Returns:
+            dict: Dictionary with 'now' key containing current datetime
+        """
         return {'now': datetime.datetime.now()}
 
     # Register blueprints

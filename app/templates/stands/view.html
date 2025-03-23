@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ stand.stand_name }} - Stand Details - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ stand.stand_name }}</h1>
+        <div>
+            <a href="{{ url_for('stands.edit', stand_id=stand.stand_id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Edit Stand
+            </a>
+            <a href="{{ url_for('stands.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> All Stands
+            </a>
+        </div>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Stand Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Location</dt>
+                        <dd class="col-sm-8">{{ stand.location }}</dd>
+                        
+                        <dt class="col-sm-4">Capacity</dt>
+                        <dd class="col-sm-8">{{ stand.capacity }} cars</dd>
+                        
+                        <dt class="col-sm-4">Date Created</dt>
+                        <dd class="col-sm-8">{{ stand.date_created.strftime('%d %b, %Y') }}</dd>
+                        
+                        <dt class="col-sm-4">Last Updated</dt>
+                        <dd class="col-sm-8">{{ stand.last_updated.strftime('%d %b, %Y') }}</dd>
+                    </dl>
+                    
+                    {% if stand.additional_info %}
+                    <hr>
+                    <h6>Additional Information</h6>
+                    <p class="card-text">{{ stand.additional_info|nl2br }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-7">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>{{ metrics.current_car_count }}</h2>
+                                    <p class="text-muted mb-0">Current Cars</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>{{ '%.1f'|format(metrics.occupancy_rate) }}%</h2>
+                                    <p class="text-muted mb-0">Occupancy Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>{{ metrics.cars_sold_count }}</h2>
+                                    <p class="text-muted mb-0">Cars Sold</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>{{ '%.1f'|format(metrics.avg_days_on_stand) }}</h2>
+                                    <p class="text-muted mb-0">Avg. Days on Stand</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2>${{ '%.2f'|format(metrics.total_profit) }}</h2>
+                                    <p class="text-muted mb-0">Total Profit</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if cars %}
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Cars Currently on Stand</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Car</th>
+                                    <th>Date Added</th>
+                                    <th>Days on Stand</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for car in cars %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('cars.view', car_id=car.car_id) }}">
+                                            {{ car.vehicle_make }} {{ car.vehicle_model }} ({{ car.year }})
+                                        </a>
+                                    </td>
+                                    <td>{{ car.date_added_to_stand.strftime('%d %b, %Y') }}</td>
+                                    <td>
+                                        {% if car.date_added_to_stand %}
+                                            {{ (today - car.date_added_to_stand).days }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('cars.view', car_id=car.car_id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No cars are currently on this stand.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

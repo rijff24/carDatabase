@@ -1,3 +1,18 @@
+"""
+Main application file for the Car Repair and Sales Tracking Web Application.
+
+This file:
+1. Creates the Flask application
+2. Registers CLI commands for database management
+3. Sets up the Python shell context
+
+The application can be run directly with:
+    python app.py
+
+Or through Flask:
+    flask run
+"""
+
 import os
 from app import create_app, db
 from app.models.car import Car
@@ -9,13 +24,16 @@ from app.models.dealer import Dealer
 from app.models.user import User
 from flask_migrate import Migrate
 
-# Create app instance
+# Create app instance based on environment setting from .env file
 app = create_app(os.getenv('FLASK_ENV') or 'default')
 migrate = Migrate(app, db)
 
 @app.shell_context_processor
 def make_shell_context():
-    """Make additional objects available in the shell context"""
+    """
+    Make additional objects available in the shell context.
+    Allows for easy database queries and manipulation in the Flask shell.
+    """
     return dict(
         db=db, 
         Car=Car, 
@@ -30,25 +48,36 @@ def make_shell_context():
 
 @app.cli.command("create-db")
 def create_db():
-    """Create database tables"""
+    """
+    Create all database tables.
+    Usage: flask create-db
+    """
     db.create_all()
     print("Database tables created")
 
 @app.cli.command("drop-db")
 def drop_db():
-    """Drop all database tables"""
+    """
+    Drop all database tables.
+    Usage: flask drop-db
+    """
     db.drop_all()
     print("Database tables dropped")
 
 @app.cli.command("create-admin")
 def create_admin():
-    """Create admin user"""
+    """
+    Create admin user with default credentials.
+    Username: admin
+    Password: admin123
+    Usage: flask create-admin
+    """
     admin = User(
         username='admin',
         full_name='Administrator',
         role='admin'
     )
-    admin.password = 'admin123'
+    admin.password = 'admin123'  # Password will be hashed by the model
     db.session.add(admin)
     db.session.commit()
     print("Admin user created")

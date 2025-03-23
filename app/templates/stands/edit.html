@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Stand - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Edit Stand: {{ stand.stand_name }}</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" class="card shadow">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="stand_name" class="form-label">Stand Name</label>
+                <input type="text" class="form-control" id="stand_name" name="stand_name" value="{{ stand.stand_name }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{ stand.location }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="capacity" class="form-label">Capacity</label>
+                <input type="number" class="form-control" id="capacity" name="capacity" value="{{ stand.capacity }}" min="1">
+                <small class="form-text text-muted">The maximum number of cars this stand can hold</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="additional_info" class="form-label">Additional Information</label>
+                <textarea class="form-control" id="additional_info" name="additional_info" rows="4">{{ stand.additional_info }}</textarea>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('stands.view', stand_id=stand.stand_id) }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Update Stand</button>
+            </div>
+        </div>
+    </form>
+    
+    <div class="mt-4">
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="fas fa-trash"></i> Delete Stand
+        </button>
+        
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to delete the stand "{{ stand.stand_name }}"? This action cannot be undone.
+                        <p class="text-danger mt-2">
+                            <strong>Note:</strong> Stands with associated cars cannot be deleted.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form action="{{ url_for('stands.delete', stand_id=stand.stand_id) }}" method="post">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
