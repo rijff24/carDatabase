@@ -44,4 +44,4 @@ class User(UserMixin, db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     """User loader function for Flask-Login"""
-    return User.query.get(int(user_id)) 
+    return User.query.get_or_404(int(user_id)) if user_id else None 

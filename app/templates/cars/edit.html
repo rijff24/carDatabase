@@ -153,7 +153,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         {{ form.repair_status.label(class="form-label") }}
-                        {{ form.repair_status(class="form-select") }}
+                        {{ form.repair_status(class="form-select", id="repair_status") }}
                         <div class="form-text">Current location will be set automatically based on status</div>
                         {% for error in form.repair_status.errors %}
                         <div class="text-danger small">{{ error }}</div>
@@ -163,8 +163,8 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         {{ form.current_location.label(class="form-label") }}
-                        {{ form.current_location(class="form-control", readonly=true) }}
-                        <div class="form-text">This is automatically updated based on repair status</div>
+                        {{ form.current_location(class="form-control", id="current_location") }}
+                        <div class="form-text">This field will be updated automatically on form submit</div>
                         {% for error in form.current_location.errors %}
                         <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
@@ -188,4 +188,47 @@
         </form>
     </div>
 </div>
+
+<script>
+// Remove the readonly attribute from current_location to allow form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const currentLocationField = document.getElementById('current_location');
+    
+    // On form submit, make the field editable so it can be submitted
+    document.querySelector('form').addEventListener('submit', function() {
+        currentLocationField.removeAttribute('readonly');
+    });
+    
+    // Optional: Update location preview when repair status changes
+    document.getElementById('repair_status').addEventListener('change', function() {
+        const status = this.value;
+        let newLocation = '';
+        
+        switch(status) {
+            case 'Purchased':
+                newLocation = "Dealer's Lot";
+                break;
+            case 'Waiting for Repairs':
+                newLocation = 'Base (Awaiting Repairs)';
+                break;
+            case 'In Repair':
+                newLocation = 'Repair: Service Provider';
+                break;
+            case 'On Display':
+                newLocation = 'On Display at Stand';
+                break;
+            case 'Waiting for Payment':
+                newLocation = 'Paperwork Processing';
+                break;
+            case 'Sold':
+                newLocation = 'Sold - No Longer at Facility';
+                break;
+            default:
+                newLocation = currentLocationField.value;
+        }
+        
+        currentLocationField.value = newLocation;
+    });
+});
+</script>
 {% endblock %} 

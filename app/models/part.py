@@ -9,6 +9,10 @@ class Part(db.Model):
     description = db.Column(db.Text, nullable=True)
     manufacturer = db.Column(db.String(100), nullable=True)
     standard_price = db.Column(db.Numeric(10, 2), nullable=True)
+    
+    # Relationships
+    repairs = db.relationship('Repair', secondary='repair_parts', back_populates='parts', overlaps="repair_parts")
+    repair_parts = db.relationship('RepairPart', back_populates='part', overlaps="repairs")
 
     def __repr__(self):
         return f'<Part {self.part_name}>'
@@ -27,8 +31,8 @@ class RepairPart(db.Model):
     vendor = db.Column(db.String(100), nullable=False)
 
     # Relationships
-    repair = db.relationship('Repair', foreign_keys=[repair_id], overlaps="repair_parts,repair_ref")
-    part = db.relationship('Part', backref='repair_parts')
+    repair = db.relationship('Repair', foreign_keys=[repair_id], back_populates='repair_parts', overlaps="parts,repairs")
+    part = db.relationship('Part', back_populates='repair_parts', overlaps="repairs")
 
     def __repr__(self):
         return f'<RepairPart {self.part_id} for Repair {self.repair_id}>' 

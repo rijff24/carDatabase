@@ -3,59 +3,116 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.dealer import Dealer
 from app.models.car import Car
+from app.utils.forms import DealerForm
+from app.utils.validators import validate_params, validate_form
+from app.utils.helpers import safe_get_or_404
 from datetime import datetime
 
 dealers_bp = Blueprint('dealers', __name__)
 
+VALID_SORT_FIELDS = ['dealer_name', 'date_joined', 'cars_supplied', 'total_revenue']
+VALID_SORT_DIRS = ['asc', 'desc']
+
 @dealers_bp.route('/')
 @login_required
+@validate_params(
+    search=(str, False, None),
+    min_cars=(int, False, None, lambda x: x >= 0),
+    min_revenue=(float, False, None, lambda x: x >= 0),
+    sort_by=(str, False, 'dealer_name', lambda x: x in VALID_SORT_FIELDS),
+    sort_dir=(str, False, 'asc', lambda x: x in VALID_SORT_DIRS)
+)
 def index():
+    # Get validated parameters
+    params = request.validated_params
+    search = params.get('search')
+    min_cars = params.get('min_cars')
+    min_revenue = params.get('min_revenue')
+    sort_by = params.get('sort_by', 'dealer_name')
+    sort_dir = params.get('sort_dir', 'asc')
+    
+    # Get all dealers
     dealers = Dealer.query.all()
+    
+    # Update metrics
     for dealer in dealers:
         dealer.update_performance_metrics()
     db.session.commit()
-    return render_template('dealers/index.html', dealers=dealers)
+    
+    # Apply search filter if provided
+    if search:
+        search_term = search.lower()
+        dealers = [d for d in dealers if 
+                  search_term in d.dealer_name.lower() or
+                  (d.contact_info and search_term in d.contact_info.lower()) or
+                  (d.address and search_term in d.address.lower())]
+    
+    # Apply filters
+    if min_cars is not None:
+        dealers = [d for d in dealers if d.cars_supplied >= min_cars]
+        
+    if min_revenue is not None:
+        dealers = [d for d in dealers if d.total_revenue >= min_revenue]
+    
+    # Apply sorting
+    reverse = sort_dir == 'desc'
+    dealers = sorted(dealers, key=lambda x: getattr(x, sort_by) or 0, reverse=reverse)
+    
+    return render_template(
+        'dealers/index.html', 
+        dealers=dealers,
+        current_search=search,
+        current_min_cars=min_cars,
+        current_min_revenue=min_revenue,
+        current_sort=sort_by,
+        current_sort_dir=sort_dir
+    )
 
 @dealers_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 def create():
     if request.method == 'POST':
-        dealer_name = request.form.get('dealer_name')
-        contact_info = request.form.get('contact_info')
-        address = request.form.get('address')
+        form = DealerForm(formdata=request.form)
         
-        if not dealer_name:
-            flash('Dealer name is required', 'danger')
-            return render_template('dealers/create.html')
-        
-        # Check if a dealer with the same name already exists
-        existing_dealer = Dealer.query.filter_by(dealer_name=dealer_name).first()
-        if existing_dealer:
-            flash(f'Dealer with name "{dealer_name}" already exists', 'danger')
-            return render_template('dealers/create.html')
-        
-        dealer = Dealer(
-            dealer_name=dealer_name,
-            contact_info=contact_info,
-            address=address,
-            date_joined=datetime.utcnow()
-        )
-        
-        try:
-            db.session.add(dealer)
-            db.session.commit()
-            flash('Dealer added successfully', 'success')
-            return redirect(url_for('dealers.index'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error adding dealer: {str(e)}', 'danger')
+        if form.validate_on_submit():
+            # Check if a dealer with the same name already exists
+            existing_dealer = Dealer.query.filter_by(dealer_name=form.dealer_name.data).first()
+            if existing_dealer:
+                flash(f'Dealer with name "{form.dealer_name.data}" already exists', 'danger')
+                return render_template('dealers/create.html', form=form)
+            
+            dealer = Dealer(
+                dealer_name=form.dealer_name.data,
+                contact_info=form.contact_info.data,
+                address=form.address.data,
+                date_joined=datetime.utcnow()
+            )
+            
+            try:
+                db.session.add(dealer)
+                db.session.commit()
+                flash('Dealer added successfully', 'success')
+                return redirect(url_for('dealers.index'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding dealer: {str(e)}', 'danger')
+        else:
+            # Show what validation errors occurred
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            flash(f"Form validation failed: {', '.join(error_messages)}", 'danger')
+    else:
+        form = DealerForm()
     
-    return render_template('dealers/create.html')
+    return render_template('dealers/create.html', form=form)
 
 @dealers_bp.route('/<int:dealer_id>')
 @login_required
+@validate_params(dealer_id=(int, True))
 def view(dealer_id):
-    dealer = Dealer.query.get_or_404(dealer_id)
+    dealer = safe_get_or_404(Dealer, dealer_id, f"Dealer with ID {dealer_id} not found")
     dealer.update_performance_metrics()
     db.session.commit()
     
@@ -75,38 +132,49 @@ def view(dealer_id):
 
 @dealers_bp.route('/<int:dealer_id>/edit', methods=['GET', 'POST'])
 @login_required
+@validate_params(dealer_id=(int, True))
 def edit(dealer_id):
-    dealer = Dealer.query.get_or_404(dealer_id)
+    dealer = safe_get_or_404(Dealer, dealer_id, f"Dealer with ID {dealer_id} not found")
     
     if request.method == 'POST':
-        new_dealer_name = request.form.get('dealer_name')
+        form = DealerForm(formdata=request.form, obj=dealer)
         
-        # Check if another dealer with the same name exists
-        if new_dealer_name != dealer.dealer_name:
-            existing_dealer = Dealer.query.filter_by(dealer_name=new_dealer_name).first()
-            if existing_dealer:
-                flash(f'Dealer with name "{new_dealer_name}" already exists', 'danger')
-                return render_template('dealers/edit.html', dealer=dealer)
-        
-        dealer.dealer_name = new_dealer_name
-        dealer.contact_info = request.form.get('contact_info')
-        dealer.address = request.form.get('address')
-        dealer.status = request.form.get('status', 'Active')
-        
-        try:
-            db.session.commit()
-            flash('Dealer updated successfully', 'success')
-            return redirect(url_for('dealers.view', dealer_id=dealer.dealer_id))
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error updating dealer: {str(e)}', 'danger')
+        if form.validate_on_submit():
+            # Check if another dealer with the same name exists
+            if form.dealer_name.data != dealer.dealer_name:
+                existing_dealer = Dealer.query.filter_by(dealer_name=form.dealer_name.data).first()
+                if existing_dealer:
+                    flash(f'Dealer with name "{form.dealer_name.data}" already exists', 'danger')
+                    return render_template('dealers/edit.html', form=form, dealer=dealer)
+            
+            dealer.dealer_name = form.dealer_name.data
+            dealer.contact_info = form.contact_info.data
+            dealer.address = form.address.data
+            
+            try:
+                db.session.commit()
+                flash('Dealer updated successfully', 'success')
+                return redirect(url_for('dealers.view', dealer_id=dealer.dealer_id))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error updating dealer: {str(e)}', 'danger')
+        else:
+            # Show what validation errors occurred
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            flash(f"Form validation failed: {', '.join(error_messages)}", 'danger')
+    else:
+        form = DealerForm(obj=dealer)
     
-    return render_template('dealers/edit.html', dealer=dealer)
+    return render_template('dealers/edit.html', form=form, dealer=dealer)
 
 @dealers_bp.route('/<int:dealer_id>/delete', methods=['POST'])
 @login_required
+@validate_params(dealer_id=(int, True))
 def delete(dealer_id):
-    dealer = Dealer.query.get_or_404(dealer_id)
+    dealer = safe_get_or_404(Dealer, dealer_id, f"Dealer with ID {dealer_id} not found")
     
     # Check if dealer has cars associated
     car_count = Car.query.filter_by(dealer_id=dealer_id).count()
@@ -126,8 +194,9 @@ def delete(dealer_id):
 
 @dealers_bp.route('/<int:dealer_id>/performance')
 @login_required
+@validate_params(dealer_id=(int, True))
 def performance(dealer_id):
-    dealer = Dealer.query.get_or_404(dealer_id)
+    dealer = safe_get_or_404(Dealer, dealer_id, f"Dealer with ID {dealer_id} not found")
     dealer.update_performance_metrics()
     db.session.commit()
     

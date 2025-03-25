@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app
+from flask import Blueprint, render_template, current_app, jsonify, request
 from flask_login import login_required
 from app.models.car import Car
 from app.models.repair import Repair
@@ -6,6 +6,11 @@ from app.models.stand import Stand
 from app import db
 from sqlalchemy import func
 from datetime import datetime, timedelta
+from app.utils.errors import (
+    ValidationError, DatabaseError, AuthenticationError,
+    AuthorizationError, NotFoundError
+)
+from app.utils.validators import validate_params, validate_json, validate_email, validate_price
 
 main_bp = Blueprint('main', __name__)
 
@@ -65,5 +70,78 @@ def dashboard():
         avg_profit=avg_profit,
         cars_waiting_repair=cars_waiting_repair,
         cars_on_stand_longest=cars_on_stand_longest,
-        recent_repairs=recent_repairs
-    ) 
+        recent_repairs=recent_repairs,
+        now=datetime.now()
+    )
+
+# Test routes for error handling
+@main_bp.route('/test/validation-error')
+def test_validation_error():
+    """Test route that raises a validation error"""
+    raise ValidationError("Invalid input provided", field="price")
+
+@main_bp.route('/test/database-error')
+def test_database_error():
+    """Test route that raises a database error"""
+    raise DatabaseError("Failed to connect to database")
+
+@main_bp.route('/test/authentication-error')
+def test_authentication_error():
+    """Test route that raises an authentication error"""
+    raise AuthenticationError("Invalid credentials")
+
+@main_bp.route('/test/authorization-error')
+def test_authorization_error():
+    """Test route that raises an authorization error"""
+    raise AuthorizationError("Insufficient permissions")
+
+@main_bp.route('/test/not-found-error')
+def test_not_found_error():
+    """Test route that raises a not found error"""
+    raise NotFoundError("Resource not found")
+
+@main_bp.route('/test/unexpected-error')
+def test_unexpected_error():
+    """Test route that raises an unexpected error"""
+    raise ValueError("Unexpected error occurred")
+
+# Test routes for parameter validation
+@main_bp.route('/test/validate-params')
+@validate_params(
+    year=(int, True, None),
+    month=(int, False, None),
+    period=(str, False, 'monthly'),
+    email=(str, False, None)
+)
+def test_validate_params():
+    """Test route that demonstrates parameter validation"""
+    return jsonify({
+        'message': 'Parameters validated successfully',
+        'params': request.validated_params
+    })
+
+@main_bp.route('/test/validate-json', methods=['POST'])
+@validate_json({
+    'name': (str, True),
+    'price': (float, True),
+    'email': (str, False),
+    'is_active': (bool, False)
+})
+def test_validate_json():
+    """Test route that demonstrates JSON validation"""
+    return jsonify({
+        'message': 'JSON validated successfully',
+        'data': request.validated_data
+    })
+
+@main_bp.route('/test/validate-custom')
+@validate_params(
+    email=validate_email,
+    price=validate_price
+)
+def test_validate_custom():
+    """Test route that demonstrates custom validation functions"""
+    return jsonify({
+        'message': 'Custom validation successful',
+        'params': request.validated_params
+    }) 

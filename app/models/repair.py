@@ -16,8 +16,8 @@ class Repair(db.Model):
 
     # Relationships
     provider = db.relationship('RepairProvider', backref='repairs')
-    parts = db.relationship('Part', secondary='repair_parts', backref='repairs')
-    repair_parts = db.relationship('RepairPart', backref='repair_ref', cascade='all, delete-orphan')
+    parts = db.relationship('Part', secondary='repair_parts', back_populates='repairs', overlaps="repair_parts")
+    repair_parts = db.relationship('RepairPart', back_populates='repair', cascade='all, delete-orphan', overlaps="parts,repairs")
 
     def __repr__(self):
         return f'<Repair {self.repair_type} for Car ID {self.car_id}>'
