@@ -64,4 +64,87 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         row.style.cursor = 'pointer';
     });
-}); 
+    
+    // Dark mode initialization
+    initDarkMode();
+});
+
+// Function to initialize dark mode based on setting
+function initDarkMode() {
+    // Check for dark mode flag in HTML (set by backend)
+    const darkModeEnabled = document.body.dataset.darkMode === 'true';
+    
+    if (darkModeEnabled) {
+        enableDarkMode();
+    } else {
+        disableDarkMode();
+    }
+    
+    // Add event listener for dark mode toggle checkbox
+    const darkModeToggle = document.getElementById('enable_dark_mode');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', function() {
+            if (this.checked) {
+                enableDarkMode();
+                // Need to submit the form to save the setting, but don't want to reload the page yet
+                const form = this.closest('form');
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Dark mode setting saved');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving dark mode setting:', error);
+                });
+                
+                return false;
+            } else {
+                disableDarkMode();
+                // Same as above for saving the setting
+                const form = this.closest('form');
+                const formData = new FormData(form);
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Dark mode setting saved');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving dark mode setting:', error);
+                });
+                
+                return false;
+            }
+        });
+    }
+}
+
+// Function to enable dark mode
+function enableDarkMode() {
+    document.body.classList.add('dark-mode');
+    document.body.dataset.darkMode = 'true';
+    localStorage.setItem('darkMode', 'enabled');
+}
+
+// Function to disable dark mode
+function disableDarkMode() {
+    document.body.classList.remove('dark-mode');
+    document.body.dataset.darkMode = 'false';
+    localStorage.setItem('darkMode', 'disabled');
+} 

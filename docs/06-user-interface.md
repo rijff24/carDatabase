@@ -272,7 +272,50 @@ The dashboard provides an at-a-glance view of the business status:
 
 ### 6. Administration
 
-#### 6.1 User Management
+#### 6.1 System Settings
+
+![System Settings](../app/static/img/docs/system_settings.png)
+
+The System Settings page provides a centralized interface for controlling application behavior and preferences. It is accessible only to users with the admin role.
+
+- **Features**:
+  - Tabbed interface for organizing different setting categories
+  - Real-time validation of input values
+  - Role-based access control
+  - Immediate application of settings
+  
+- **Tabs**:
+  
+  1. **General Configuration**
+     - Interface preferences
+     - Dark mode toggle
+     - UI behavior settings
+     
+  2. **Thresholds & Rules**
+     - Numerical thresholds for business rules
+     - Feature toggles for enabling/disabling functionality
+     - Warning and alert thresholds
+     
+  3. **User Management**
+     - User listing with role information
+     - Interface for creating new users
+     - Edit existing user information
+     - Reset user passwords
+     - Delete users
+     
+- **Setting Types**:
+  - Boolean toggles (on/off switches)
+  - Numeric inputs with validation
+  - Text fields with validation
+  - Dropdown selectors
+  
+- **Implementation**:
+  - Server-side validation ensures valid settings
+  - Changes take effect immediately
+  - Settings are stored in the database
+  - Centralized access via `Setting.get_setting()` method
+
+#### 6.2 User Management
 
 ![User Management](../app/static/img/docs/user_management.png)
 
@@ -287,7 +330,7 @@ The dashboard provides an at-a-glance view of the business status:
   - Permission matrix
   - Activity logs
 
-#### 6.2 System Configuration
+#### 6.3 System Configuration
 
 ![System Configuration](../app/static/img/docs/system_configuration.png)
 

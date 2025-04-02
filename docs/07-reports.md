@@ -189,4 +189,25 @@ The application implements reports using:
 1. **Data Access Layer** - SQL queries using SQLAlchemy ORM
 2. **Business Logic Layer** - Data processing and calculations
 3. **Presentation Layer** - Rendering with templates and charts
-4. **Export Layer** - Format conversion for different outputs 
+4. **Export Layer** - Format conversion for different outputs
+
+## Configurable Report Thresholds
+
+Reports are influenced by system settings configured in the System Settings page:
+
+1. **Inventory Aging Thresholds** - The `stand_aging_threshold_days` setting determines when vehicles are flagged as aging in inventory reports. This threshold affects:
+   - The color coding in the Inventory Aging Report
+   - Warning indicators in the Current Inventory Report
+   - Suggested action recommendations
+
+2. **Status Inactivity Warnings** - The `status_inactivity_threshold_days` setting controls when vehicles are highlighted for having remained in the same status too long, affecting:
+   - Operational efficiency metrics
+   - Status timeline visualizations
+   - Workflow bottleneck identification
+
+3. **Feature Toggles** - Several report features can be enabled or disabled through settings:
+   - When `enable_depreciation_tracking` is enabled, reports include depreciation calculations
+   - When `enable_status_warnings` is enabled, reports include status warning indicators
+   - UI appearance changes based on the `enable_dark_mode` setting
+
+4. **Settings Access** - Report configuration thresholds can be adjusted by administrators through the Settings page, allowing the business to tune reporting behavior to their specific needs without code changes. 

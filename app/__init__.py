@@ -12,10 +12,12 @@ from flask import Flask, jsonify, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 from config import config
 import datetime
 import jinja2
 import markupsafe
+import os
 from app.utils.errors import register_error_handlers
 import logging
 
@@ -24,6 +26,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
+csrf = CSRFProtect()
 
 def create_app(config_name='default'):
     """
@@ -39,6 +42,14 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+    
+    # Ensure secret key is set
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = os.urandom(24)
+    
+    # Configure CSRF protection
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # 1 hour
+    app.config['WTF_CSRF_SSL_STRICT'] = False  # Allow CSRF token on http
     
     # Configure logging
     if not app.debug:
@@ -57,6 +68,7 @@ def create_app(config_name='default'):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    csrf.init_app(app)
     
     # Custom unauthorized handler for login_manager
     @login_manager.unauthorized_handler
@@ -80,6 +92,7 @@ def create_app(config_name='default'):
     from app.routes.stands import stands_bp
     from app.routes.dealers import dealers_bp
     from app.routes.reports import reports_bp
+    from app.routes.settings import settings_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -90,17 +103,37 @@ def create_app(config_name='default'):
     app.register_blueprint(stands_bp, url_prefix='/stands')
     app.register_blueprint(dealers_bp, url_prefix='/dealers')
     app.register_blueprint(reports_bp, url_prefix='/reports')
+    app.register_blueprint(settings_bp, url_prefix='/settings')
     
     # Register Jinja2 filters
     app.jinja_env.filters['format_date'] = format_date
     app.jinja_env.filters['format_price'] = format_price
     app.jinja_env.filters['format_percentage'] = format_percentage
+    app.jinja_env.filters['format_number'] = format_number
     
     # Register context processors
     @app.context_processor
     def utility_processor():
         return {
             'datetime': datetime
+        }
+    
+    # Dark mode context processor
+    @app.context_processor
+    def dark_mode_processor():
+        # Import here to avoid circular import
+        from app.models.setting import Setting
+        
+        # Get dark mode setting or default to False
+        dark_mode_enabled = False
+        try:
+            dark_mode_enabled = Setting.get_setting('enable_dark_mode', False)
+        except:
+            # If Setting model isn't available yet (e.g., during migrations)
+            pass
+        
+        return {
+            'dark_mode_enabled': dark_mode_enabled
         }
     
     return app
@@ -122,4 +155,10 @@ def format_percentage(value):
     """Format a percentage value"""
     if value is None:
         return '-'
-    return f"{value:.1f}%" 
+    return f"{value:.1f}%"
+
+def format_number(value):
+    """Format a number with thousands separators"""
+    if value is None:
+        return ""
+    return "{:,.2f}".format(float(value)) 

@@ -53,6 +53,13 @@ This application serves automotive businesses that purchase vehicles, perform re
 - Activity logging and audit trails
 - User management and permission settings
 
+### System Settings and Configuration
+- Centralized configuration for system behavior
+- Configurable thresholds for business rules
+- Feature toggles for enabling/disabling functionality
+- User management interface for administrators
+- UI customization options including dark mode
+
 ## User Roles
 
 The application supports several user roles:
@@ -104,4 +111,5 @@ The typical workflow in the system follows these steps:
 - Comprehensive reporting for business intelligence
 - Improved customer service through better information access
 - Reduced errors in financial calculations
-- Better business planning through data analytics 
+- Better business planning through data analytics
+- Configurable system behavior through centralized settings 

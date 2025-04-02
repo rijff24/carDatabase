@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">System Settings</h2>
+    
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'general' %}active{% endif %}" 
+               id="general-tab" data-bs-toggle="tab" href="#general" role="tab">
+                <i class="fas fa-cog"></i> General Configuration
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'thresholds' %}active{% endif %}" 
+               id="thresholds-tab" data-bs-toggle="tab" href="#thresholds" role="tab">
+                <i class="fas fa-sliders-h"></i> Thresholds & Rules
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'users' %}active{% endif %}" 
+               id="users-tab" data-bs-toggle="tab" href="#users" role="tab">
+                <i class="fas fa-users"></i> User Management
+            </a>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- General Configuration Tab -->
+        <div class="tab-pane fade {% if active_tab == 'general' %}show active{% endif %}" 
+             id="general" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>General Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('settings.index') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="form_action" value="update_general">
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="enable_dark_mode" 
+                                   name="enable_dark_mode" 
+                                   {% if general_settings.enable_dark_mode and general_settings.enable_dark_mode.value %}checked{% endif %}>
+                            <label class="form-check-label" for="enable_dark_mode">
+                                Enable Dark Mode
+                            </label>
+                            <div class="form-text text-muted">
+                                {{ general_settings.enable_dark_mode.description if general_settings.enable_dark_mode else 'Switch to a dark theme for the interface.' }}
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Thresholds & Rules Tab -->
+        <div class="tab-pane fade {% if active_tab == 'thresholds' %}show active{% endif %}" 
+             id="thresholds" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Thresholds & Rules</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('settings.index') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="form_action" value="update_thresholds">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="stand_aging_threshold_days">Stand Aging Threshold (Days)</label>
+                                    <input type="number" class="form-control" id="stand_aging_threshold_days" 
+                                           name="stand_aging_threshold_days" 
+                                           value="{{ thresholds_settings.stand_aging_threshold_days.value }}"
+                                           min="1" max="999" required>
+                                    <small class="form-text text-muted">
+                                        {{ thresholds_settings.stand_aging_threshold_days.description }}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="status_inactivity_threshold_days">Status Inactivity Threshold (Days)</label>
+                                    <input type="number" class="form-control" id="status_inactivity_threshold_days" 
+                                           name="status_inactivity_threshold_days" 
+                                           value="{{ thresholds_settings.status_inactivity_threshold_days.value }}"
+                                           min="1" max="999" required>
+                                    <small class="form-text text-muted">
+                                        {{ thresholds_settings.status_inactivity_threshold_days.description }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enable_depreciation_tracking" 
+                                           name="enable_depreciation_tracking" 
+                                           {% if thresholds_settings.enable_depreciation_tracking.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_depreciation_tracking">
+                                        Enable Depreciation Tracking
+                                    </label>
+                                    <div class="form-text text-muted">
+                                        {{ thresholds_settings.enable_depreciation_tracking.description }}
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enable_status_warnings" 
+                                           name="enable_status_warnings" 
+                                           {% if thresholds_settings.enable_status_warnings.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_status_warnings">
+                                        Enable Status Warnings
+                                    </label>
+                                    <div class="form-text text-muted">
+                                        {{ thresholds_settings.enable_status_warnings.description }}
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enable_subform_dropdowns" 
+                                           name="enable_subform_dropdowns" 
+                                           {% if thresholds_settings.enable_subform_dropdowns.value %}checked{% endif %}>
+                                    <label class="form-check-label" for="enable_subform_dropdowns">
+                                        Enable Subform Dropdowns
+                                    </label>
+                                    <div class="form-text text-muted">
+                                        {{ thresholds_settings.enable_subform_dropdowns.description }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Management Tab -->
+        <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" 
+             id="users" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>User Management</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="fas fa-plus"></i> Add User
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Full Name</th>
+                                    <th>Role</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'manager' %}warning{% else %}secondary{% endif %}">
+                                            {{ user.role }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.last_login %}
+                                            {{ user.last_login|format_date("%Y-%m-%d %H:%M") }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.user_id }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ user.user_id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('settings.create_user') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="">-- Select Role --</option>
+                            <option value="admin">Admin</option>
+                            <option value="manager">Manager</option>
+                            <option value="user">User</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modals -->
+{% for user in users %}
+<div class="modal fade" id="editUserModal{{ user.user_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User: {{ user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('settings.edit_user', user_id=user.user_id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                        <small class="form-text text-muted">Username cannot be changed</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_full_name{{ user.user_id }}" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="edit_full_name{{ user.user_id }}" 
+                               name="full_name" value="{{ user.full_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_role{{ user.user_id }}" class="form-label">Role</label>
+                        <select class="form-select" id="edit_role{{ user.user_id }}" name="role" required>
+                            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                            <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                        </select>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="edit_password{{ user.user_id }}" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="edit_password{{ user.user_id }}" name="password">
+                        <small class="form-text text-muted">Leave blank to keep current password</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_confirm{{ user.user_id }}" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="edit_confirm{{ user.user_id }}" name="confirm_password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Delete User Modals -->
+{% for user in users %}
+<div class="modal fade" id="deleteUserModal{{ user.user_id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the user <strong>{{ user.username }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('settings.delete_user', user_id=user.user_id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle tab selection from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        
+        if (tab) {
+            const triggerEl = document.querySelector(`#${tab}-tab`);
+            if (triggerEl) {
+                triggerEl.click();
+            }
+        }
+    });
+</script>
+{% endblock %} 

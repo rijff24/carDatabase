@@ -10,9 +10,62 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% if dark_mode_enabled %}
+    <style>
+        /* Direct dark mode overrides with highest specificity */
+        body.dark-mode {
+            --bs-table-color: #f8f9fa !important;
+            --bs-table-bg: #2c3034 !important;
+            --bs-table-border-color: #495057 !important;
+            --bs-table-striped-bg: #3a4046 !important;
+            --bs-table-striped-color: #f8f9fa !important;
+            --bs-table-active-bg: #474f57 !important;
+            --bs-table-active-color: #f8f9fa !important;
+            --bs-table-hover-bg: #474f57 !important;
+            --bs-table-hover-color: #f8f9fa !important;
+        }
+        
+        body.dark-mode .table {
+            color: #f8f9fa !important;
+            border-color: #495057 !important;
+        }
+        
+        body.dark-mode .table th,
+        body.dark-mode .table thead th,
+        body.dark-mode th {
+            background-color: #343a40 !important;
+            color: #f8f9fa !important;
+            border-color: #495057 !important;
+        }
+        
+        body.dark-mode .table td {
+            color: #f8f9fa !important;
+            border-color: #495057 !important;
+        }
+        
+        body.dark-mode .table-striped>tbody>tr:nth-of-type(odd)>* {
+            background-color: #3a4046 !important;
+            color: #f8f9fa !important;
+        }
+        
+        body.dark-mode .table-hover>tbody>tr:hover>* {
+            background-color: #474f57 !important;
+            color: #f8f9fa !important;
+        }
+        
+        body.dark-mode .bg-light {
+            background-color: #343a40 !important;
+            color: #f8f9fa !important;
+        }
+        
+        body.dark-mode .footer.bg-light {
+            background-color: #111418 !important;
+        }
+    </style>
+    {% endif %}
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body data-dark-mode="{{ 'true' if dark_mode_enabled else 'false' }}" {% if dark_mode_enabled %}class="dark-mode"{% endif %}>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
@@ -46,9 +99,23 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('reports.index') }}">Reports</a>
                     </li>
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('settings.index') }}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
+                    {% if dark_mode_enabled %}
+                    <li class="nav-item">
+                        <span class="nav-link" title="Dark Mode Enabled">
+                            <i class="fas fa-moon"></i>
+                        </span>
+                    </li>
+                    {% endif %}
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">

@@ -912,3 +912,212 @@ sale = api.sales.create(
     sale_price=22500.00,
     sale_date='2023-03-15'
 ) 
+```
+
+## Settings API
+
+### Get All Settings
+
+Retrieves all system settings.
+
+```
+GET /settings
+```
+
+**Query Parameters**:
+
+| Parameter | Type   | Description                    |
+|-----------|--------|--------------------------------|
+| category  | string | Filter settings by category    |
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "key": "stand_aging_threshold_days",
+      "value": 180,
+      "type": "int",
+      "description": "Number of days after which a car on a stand is considered aging",
+      "created_at": "2023-03-15T10:24:30",
+      "updated_at": "2023-03-15T10:24:30"
+    },
+    {
+      "id": 2,
+      "key": "enable_dark_mode",
+      "value": false,
+      "type": "bool",
+      "description": "Switch to a dark theme for the interface",
+      "created_at": "2023-03-15T10:24:30",
+      "updated_at": "2023-03-16T14:52:18"
+    },
+    // Additional settings...
+  ]
+}
+```
+
+### Get Setting
+
+Retrieves a specific setting by key.
+
+```
+GET /settings/{key}
+```
+
+**Path Parameters**:
+
+| Parameter | Type   | Description              |
+|-----------|--------|--------------------------|
+| key       | string | Key of the setting       |
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 1,
+    "key": "stand_aging_threshold_days",
+    "value": 180,
+    "type": "int",
+    "description": "Number of days after which a car on a stand is considered aging",
+    "created_at": "2023-03-15T10:24:30",
+    "updated_at": "2023-03-15T10:24:30"
+  }
+}
+```
+
+### Update Setting
+
+Updates an existing setting.
+
+```
+PUT /settings/{key}
+```
+
+**Path Parameters**:
+
+| Parameter | Type   | Description              |
+|-----------|--------|--------------------------|
+| key       | string | Key of the setting       |
+
+**Request Body**:
+
+```json
+{
+  "value": 90,
+  "description": "Number of days after which a car on a stand is considered aging"
+}
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 1,
+    "key": "stand_aging_threshold_days",
+    "value": 90,
+    "type": "int",
+    "description": "Number of days after which a car on a stand is considered aging",
+    "created_at": "2023-03-15T10:24:30",
+    "updated_at": "2023-04-01T15:30:45"
+  }
+}
+```
+
+## Settings Utility Methods
+
+The application provides utility methods for working with settings throughout the codebase:
+
+### Get Setting
+
+```python
+from app.models.setting import Setting
+
+# Get a setting with a default fallback
+value = Setting.get_setting('key_name', default_value)
+```
+
+**Parameters**:
+
+| Parameter     | Type   | Description                              |
+|---------------|--------|------------------------------------------|
+| key           | string | Key of the setting to retrieve           |
+| default_value | any    | Default value to return if key not found |
+
+**Returns**: The setting value, converted to the appropriate type
+
+**Example Usage**:
+
+```python
+# Get an integer setting with default
+threshold = Setting.get_setting('stand_aging_threshold_days', 180)
+
+# Get a boolean setting with default
+dark_mode = Setting.get_setting('enable_dark_mode', False)
+```
+
+### Set Setting
+
+```python
+from app.models.setting import Setting
+
+# Set a setting value
+Setting.set_setting('key_name', value, description='Description', type='string')
+```
+
+**Parameters**:
+
+| Parameter   | Type   | Description                             |
+|-------------|--------|-----------------------------------------|
+| key         | string | Key of the setting                      |
+| value       | any    | Value to store                          |
+| description | string | Optional human-readable description     |
+| type        | string | Optional type indicator (int, bool, str)|
+
+**Returns**: The Setting object
+
+**Example Usage**:
+
+```python
+# Set a boolean setting
+Setting.set_setting(
+    'enable_status_warnings',
+    True,
+    description='Show warnings for vehicles with stale status',
+    type='bool'
+)
+
+# Set an integer setting
+Setting.set_setting(
+    'status_inactivity_threshold_days',
+    30,
+    description='Number of days after which a car with unchanged status is considered inactive',
+    type='int'
+)
+```
+
+### Get All Settings
+
+```python
+from app.models.setting import Setting
+
+# Get all settings
+all_settings = Setting.get_all_settings()
+```
+
+**Returns**: A dictionary of all settings, with keys as the setting keys and values as dictionaries containing the setting data
+
+**Example Usage**:
+
+```python
+# Get all settings and process them
+settings = Setting.get_all_settings()
+for key, data in settings.items():
+    print(f"{key}: {data['value']} ({data['type']})")
+``` 

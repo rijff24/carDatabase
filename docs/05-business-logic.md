@@ -436,4 +436,81 @@ The application implements numerous validation rules to ensure data integrity:
            raise ValidationError(f"Cannot transition from '{current_status}' to '{new_status}'")
    ```
 
-These business rules and calculations ensure the application operates according to the specified business requirements and provides accurate financial and operational metrics. 
+These business rules and calculations ensure the application operates according to the specified business requirements and provides accurate financial and operational metrics.
+
+## System Settings
+
+The application includes a configurable settings system that affects various aspects of business logic and application behavior.
+
+### Setting Storage and Retrieval
+
+Settings are stored in the database using a flexible key-value storage model:
+
+```python
+# Getting a setting with a default fallback value
+threshold_days = Setting.get_setting('stand_aging_threshold_days', 180)
+
+# Setting a value with type and description
+Setting.set_setting(
+    'enable_depreciation_tracking',
+    True,
+    description='Track depreciation of vehicles over time',
+    type='bool'
+)
+```
+
+### Core Settings and Their Effects
+
+| Setting Key | Type | Default | Description | Effect |
+|-------------|------|---------|-------------|--------|
+| `stand_aging_threshold_days` | int | 180 | Number of days after which a car on a stand is considered aging | Controls when vehicles are flagged as "aging" in inventory reports; affects inventory aging warnings |
+| `status_inactivity_threshold_days` | int | 30 | Number of days after which a car with unchanged status is considered inactive | Determines when vehicles are flagged as "inactive" in status reports; affects operational efficiency metrics |
+| `enable_depreciation_tracking` | bool | false | Track depreciation of vehicles over time | When enabled, activates depreciation calculations in financial reports and vehicle valuation |
+| `enable_status_warnings` | bool | true | Show warnings for vehicles with stale status | Controls whether the system displays warnings for vehicles with inactive status |
+| `enable_subform_dropdowns` | bool | true | Use dropdown modals for subforms | UI preference that affects how subforms are displayed in the interface |
+| `enable_dark_mode` | bool | false | Switch to a dark theme for the interface | UI preference that toggles between light and dark interface themes |
+
+### Application of Settings
+
+Settings are applied throughout the application in various contexts:
+
+```python
+# Example: Using settings in business logic
+def check_vehicle_aging(vehicle):
+    """Flag vehicles that have been on stand too long"""
+    threshold = Setting.get_setting('stand_aging_threshold_days', 180)
+    
+    if vehicle.days_on_stand and vehicle.days_on_stand > threshold:
+        return True  # Vehicle is aging
+    return False  # Vehicle is within normal timeframe
+```
+
+```python
+# Example: Using settings in a route
+@app.route('/inventory')
+def inventory():
+    show_warnings = Setting.get_setting('enable_status_warnings', True)
+    return render_template('inventory.html', show_warnings=show_warnings)
+```
+
+### Setting Categories
+
+Settings are organized into logical groups for management:
+
+1. **Thresholds & Rules** - Numerical thresholds and business rule toggles
+2. **General Configuration** - Interface and general application preferences
+3. **User Management** - Settings related to user accounts and permissions
+
+### Access Control for Settings
+
+Settings management is restricted to administrators:
+
+```python
+@settings_bp.route('/', methods=['GET', 'POST'])
+@login_required
+@requires_role('admin')
+def index():
+    # Settings management code
+```
+
+This ensures that only authorized users can modify system-wide configurations. 
