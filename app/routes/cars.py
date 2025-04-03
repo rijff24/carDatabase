@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
-from app.models.car import Car
+from app.models.car import Car, VehicleMake, VehicleModel, VehicleYear, VehicleColor
 from app.models.stand import Stand
 from app.models.dealer import Dealer
 from app.models.repair_provider import RepairProvider
@@ -67,6 +67,141 @@ def index():
         current_sort_dir=sort_dir
     )
 
+@cars_bp.route('/api/vehicle-makes', methods=['GET'])
+@login_required
+@validate_params(
+    query=(str, False, ''),
+)
+def get_vehicle_makes():
+    """Get vehicle makes for autocomplete"""
+    params = request.validated_params
+    query = params['query']
+    
+    try:
+        # Check if the table exists
+        inspector = db.inspect(db.engine)
+        if 'vehicle_makes' not in inspector.get_table_names():
+            # Table doesn't exist, return empty list
+            return jsonify([])
+            
+        # Find all makes that contain the search term
+        makes = []
+        if query:
+            makes = VehicleMake.query.filter(VehicleMake.name.ilike(f'%{query}%')).order_by(VehicleMake.name).all()
+        else:
+            makes = VehicleMake.query.order_by(VehicleMake.name).all()
+        
+        # Return as JSON
+        return jsonify([make.name for make in makes])
+    except Exception as e:
+        # Log the error but don't crash
+        app.logger.error(f"Error fetching vehicle makes: {str(e)}")
+        return jsonify([]), 500
+
+@cars_bp.route('/api/vehicle-models', methods=['GET'])
+@login_required
+@validate_params(
+    query=(str, False, ''),
+)
+def get_vehicle_models():
+    """Get vehicle models for autocomplete"""
+    params = request.validated_params
+    query = params['query']
+    
+    try:
+        # Check if the table exists
+        inspector = db.inspect(db.engine)
+        if 'vehicle_models' not in inspector.get_table_names():
+            # Table doesn't exist, return empty list
+            return jsonify([])
+            
+        # Find all models that contain the search term
+        models = []
+        if query:
+            models = VehicleModel.query.filter(VehicleModel.name.ilike(f'%{query}%')).order_by(VehicleModel.name).all()
+        else:
+            models = VehicleModel.query.order_by(VehicleModel.name).all()
+        
+        # Return as JSON
+        return jsonify([model.name for model in models])
+    except Exception as e:
+        # Log the error but don't crash
+        app.logger.error(f"Error fetching vehicle models: {str(e)}")
+        return jsonify([]), 500
+
+@cars_bp.route('/api/vehicle-years', methods=['GET'])
+@login_required
+@validate_params(
+    query=(str, False, ''),
+)
+def get_vehicle_years():
+    """Get vehicle years for autocomplete"""
+    params = request.validated_params
+    query = params['query']
+    
+    try:
+        # Check if the table exists
+        inspector = db.inspect(db.engine)
+        if 'vehicle_years' not in inspector.get_table_names():
+            # Table doesn't exist, return empty list
+            return jsonify([])
+            
+        # Find all years that match the query
+        years = []
+        if query:
+            try:
+                # Try to parse the query as a number
+                year_query = int(query)
+                years = VehicleYear.query.filter(
+                    VehicleYear.year.like(f'{year_query}%')
+                ).order_by(VehicleYear.year.desc()).all()
+            except (ValueError, TypeError):
+                # If the query isn't a number, return empty list
+                years = []
+        else:
+            # If no query, return all years in descending order (newest first)
+            years = VehicleYear.query.order_by(VehicleYear.year.desc()).all()
+        
+        # Return as JSON
+        return jsonify([str(year.year) for year in years])
+    except Exception as e:
+        # Log the error but don't crash
+        app.logger.error(f"Error fetching vehicle years: {str(e)}")
+        return jsonify([]), 500
+
+@cars_bp.route('/api/vehicle-colors', methods=['GET'])
+@login_required
+@validate_params(
+    query=(str, False, ''),
+)
+def get_vehicle_colors():
+    """Get vehicle colors for autocomplete"""
+    params = request.validated_params
+    query = params['query']
+    
+    try:
+        # Check if the table exists
+        inspector = db.inspect(db.engine)
+        if 'vehicle_colors' not in inspector.get_table_names():
+            # Table doesn't exist, return empty list
+            return jsonify([])
+            
+        # Find all colors that contain the search term
+        colors = []
+        if query:
+            colors = VehicleColor.query.filter(
+                VehicleColor.name.ilike(f'%{query}%')
+            ).order_by(VehicleColor.name).all()
+        else:
+            colors = VehicleColor.query.order_by(VehicleColor.name).all()
+        
+        # Return as JSON
+        return jsonify([color.name for color in colors])
+    except Exception as e:
+        # Log the error but don't crash
+        app.logger.error(f"Error fetching vehicle colors: {str(e)}")
+        return jsonify([]), 500
+
 @cars_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @validate_form(CarForm)
@@ -79,6 +214,19 @@ def create():
     form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
     
     if request.method == 'POST':
+        # Handle the make field - get or create
+        make_name = form.vehicle_make.data
+        VehicleMake.get_or_create(make_name)
+        
+        # Handle the model field - get or create
+        model_name = form.vehicle_model.data
+        VehicleModel.get_or_create(model_name)
+        
+        # Sanitize the color field (but don't add new colors to the vehicle_colors table)
+        color = form.colour.data
+        if color:
+            form.colour.data = VehicleColor.sanitize_name(color)
+        
         # Set the current location based on repair status
         current_location = form.current_location.data
         if form.repair_status.data == 'Purchased':
@@ -97,8 +245,8 @@ def create():
         dealer = Dealer.query.get(form.source.data)
         car = Car(
             vehicle_name=form.vehicle_name.data,
-            vehicle_make=form.vehicle_make.data,
-            vehicle_model=form.vehicle_model.data,
+            vehicle_make=VehicleMake.sanitize_name(form.vehicle_make.data),
+            vehicle_model=VehicleModel.sanitize_name(form.vehicle_model.data),
             year=form.year.data,
             colour=form.colour.data,
             date_bought=form.date_bought.data,
@@ -158,8 +306,26 @@ def edit(car_id):
         form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
         
         if form.validate_on_submit():
+            # Handle the make field - get or create
+            make_name = form.vehicle_make.data
+            VehicleMake.get_or_create(make_name)
+            
+            # Handle the model field - get or create
+            model_name = form.vehicle_model.data
+            VehicleModel.get_or_create(model_name)
+            
             # First populate the car object with form data
             form.populate_obj(car)
+            
+            # Sanitize the make field
+            car.vehicle_make = VehicleMake.sanitize_name(car.vehicle_make)
+            
+            # Sanitize the model field
+            car.vehicle_model = VehicleModel.sanitize_name(car.vehicle_model)
+            
+            # Sanitize the color field
+            if form.colour.data:
+                form.colour.data = VehicleColor.sanitize_name(form.colour.data)
             
             # Set fields that are not directly mapped
             dealer = safe_get_or_404(Dealer, form.source.data, f"Dealer with ID {form.source.data} not found")

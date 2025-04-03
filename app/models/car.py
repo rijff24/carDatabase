@@ -32,6 +32,7 @@ class Car(db.Model):
     repairs = db.relationship('Repair', backref='car', lazy='dynamic', cascade='all, delete-orphan')
     stand = db.relationship('Stand', backref='cars')
     dealer = db.relationship('Dealer', foreign_keys=[dealer_id])
+    sale = db.relationship('Sale', back_populates='car', uselist=False)
 
     def __repr__(self):
         return f'<Car {self.vehicle_make} {self.vehicle_model} ({self.year})>'
@@ -78,4 +79,108 @@ class Car(db.Model):
     @property
     def sold(self):
         """Check if the car is sold"""
-        return self.date_sold is not None 
+        return self.date_sold is not None
+
+
+class VehicleMake(db.Model):
+    """Model for storing unique vehicle makes"""
+    __tablename__ = 'vehicle_makes'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<VehicleMake {self.name}>'
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize make name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        # Remove any extra whitespace and capitalize each word
+        return ' '.join(word.capitalize() for word in name.strip().split())
+    
+    @classmethod
+    def get_or_create(cls, make_name):
+        """Get existing make or create a new one if it doesn't exist"""
+        sanitized_name = cls.sanitize_name(make_name)
+        if not sanitized_name:
+            return None
+            
+        # Check for existing make (case insensitive)
+        existing = cls.query.filter(db.func.lower(cls.name) == db.func.lower(sanitized_name)).first()
+        if existing:
+            return existing
+            
+        # Create new make
+        new_make = cls(name=sanitized_name)
+        db.session.add(new_make)
+        db.session.commit()
+        return new_make
+
+
+class VehicleModel(db.Model):
+    """Model for storing unique vehicle models"""
+    __tablename__ = 'vehicle_models'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<VehicleModel {self.name}>'
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize model name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        # Remove any extra whitespace and capitalize each word
+        return ' '.join(word.capitalize() for word in name.strip().split())
+    
+    @classmethod
+    def get_or_create(cls, model_name):
+        """Get existing model or create a new one if it doesn't exist"""
+        sanitized_name = cls.sanitize_name(model_name)
+        if not sanitized_name:
+            return None
+            
+        # Check for existing model (case insensitive)
+        existing = cls.query.filter(db.func.lower(cls.name) == db.func.lower(sanitized_name)).first()
+        if existing:
+            return existing
+            
+        # Create new model
+        new_model = cls(name=sanitized_name)
+        db.session.add(new_model)
+        db.session.commit()
+        return new_model
+
+
+class VehicleYear(db.Model):
+    """Model for storing vehicle years"""
+    __tablename__ = 'vehicle_years'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    year = db.Column(db.Integer, unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<VehicleYear {self.year}>'
+
+
+class VehicleColor(db.Model):
+    """Model for storing vehicle colors"""
+    __tablename__ = 'vehicle_colors'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<VehicleColor {self.name}>'
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize color name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        # Remove any extra whitespace and capitalize each word
+        return ' '.join(word.capitalize() for word in name.strip().split()) 
