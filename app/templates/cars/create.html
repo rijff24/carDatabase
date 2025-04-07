@@ -6,184 +6,92 @@
 <div class="container">
     <h1 class="mb-4">Add New Car</h1>
     
-    <form method="POST" class="card shadow" autocomplete="off">
-        {{ form.hidden_tag() }}
-        <!-- Hidden fields to prevent browser autocomplete -->
-        <input type="text" name="prevent_autofill" id="prevent_autofill" value="" style="display:none;" />
-        <input type="password" name="password_fake" id="password_fake" value="" style="display:none;" />
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        {{ form.vehicle_name.label(class="form-label") }}
-                        {{ form.vehicle_name(class="form-control") }}
-                        {% for error in form.vehicle_name.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+    <form method="POST" action="{{ url_for('cars.create') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="vehicle_name">Vehicle Name</label>
+                    <input type="text" class="form-control" id="vehicle_name" name="vehicle_name" required>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        {{ form.source.label(class="form-label") }}
-                        {{ form.source(class="form-control") }}
-                        {% for error in form.source.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="vehicle_make">Make</label>
+                    <input type="text" class="form-control" id="vehicle_make" name="vehicle_make" required>
                 </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.vehicle_make.label(class="form-label") }}
-                        {{ form.vehicle_make(class="form-control", autocomplete="off") }}
-                        <div class="form-text">Type to search or add a new make</div>
-                        {% for error in form.vehicle_make.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="vehicle_model">Model</label>
+                    <input type="text" class="form-control bg-light text-muted" id="vehicle_model" name="vehicle_model" required disabled style="cursor: not-allowed;" placeholder="Select make first">
+                    <div class="form-text text-muted">Model selection will be enabled after choosing a make</div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.vehicle_model.label(class="form-label") }}
-                        {{ form.vehicle_model(class="form-control", autocomplete="off") }}
-                        <div class="form-text">Type to search or add a new model</div>
-                        {% for error in form.vehicle_model.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="year">Year</label>
+                    <input type="number" class="form-control" id="year" name="year" min="1900" max="2099" required>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.year.label(class="form-label") }}
-                        {{ form.year(class="form-control", autocomplete="off") }}
-                        <div class="form-text">Select from available years</div>
-                        {% for error in form.year.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="colour">Color</label>
+                    <input type="text" class="form-control" id="colour" name="colour" required>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="dekra_condition">Condition</label>
+                    <select class="form-control" id="dekra_condition" name="dekra_condition" required>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                        <option value="Poor">Poor</option>
+                    </select>
                 </div>
             </div>
             
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.colour.label(class="form-label") }}
-                        {{ form.colour(class="form-control", autocomplete="off") }}
-                        <div class="form-text">Select from available colors</div>
-                        {% for error in form.colour.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="licence_number">License Number</label>
+                    <input type="text" class="form-control" id="licence_number" name="licence_number" required>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="registration_number">Registration Number</label>
+                    <input type="text" class="form-control" id="registration_number" name="registration_number" required>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="purchase_price">Purchase Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R</span>
+                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" min="0" required>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.licence_number.label(class="form-label") }}
-                        {{ form.licence_number(class="form-control") }}
-                        {% for error in form.licence_number.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="source">Source</label>
+                    <input type="text" class="form-control" id="source" name="source" required>
                 </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.registration_number.label(class="form-label") }}
-                        {{ form.registration_number(class="form-control") }}
-                        {% for error in form.registration_number.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="current_location">Current Location</label>
+                    <input type="text" class="form-control" id="current_location" name="current_location" required>
                 </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.dekra_condition.label(class="form-label") }}
-                        {{ form.dekra_condition(class="form-select") }}
-                        {% for error in form.dekra_condition.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        {{ form.purchase_price.label(class="form-label") }}
-                        <div class="input-group">
-                            <span class="input-group-text">R</span>
-                            {{ form.purchase_price(class="form-control", type="number", step="0.01", min="0") }}
-                        </div>
-                        {% for error in form.purchase_price.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="mb-3">
-                        {{ form.refuel_cost.label(class="form-label") }}
-                        <div class="input-group">
-                            <span class="input-group-text">R</span>
-                            {{ form.refuel_cost(class="form-control", type="number", step="0.01", min="0") }}
-                        </div>
-                        {% for error in form.refuel_cost.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.date_bought.label(class="form-label") }}
-                        {{ form.date_bought(class="form-control", type="date") }}
-                        <div class="form-text">Default is today's date</div>
-                        {% for error in form.date_bought.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.date_added_to_stand.label(class="form-label") }}
-                        {{ form.date_added_to_stand(class="form-control", type="date") }}
-                        <div class="form-text">Leave empty if not on stand yet</div>
-                        {% for error in form.date_added_to_stand.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="mb-3">
-                        {{ form.date_sold.label(class="form-label") }}
-                        {{ form.date_sold(class="form-control", type="date") }}
-                        <div class="form-text">Leave empty if not sold yet</div>
-                        {% for error in form.date_sold.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        {{ form.repair_status.label(class="form-label") }}
-                        {{ form.repair_status(class="form-select") }}
-                        <div class="form-text">Current location will be set automatically based on status</div>
-                        {% for error in form.repair_status.errors %}
-                        <div class="text-danger small">{{ error }}</div>
-                        {% endfor %}
-                    </div>
+                
+                <div class="form-group mb-3">
+                    <label for="repair_status">Status</label>
+                    <select class="form-control" id="repair_status" name="repair_status" required>
+                        <option value="Purchased">Purchased</option>
+                        <option value="Waiting for Repairs">Waiting for Repairs</option>
+                        <option value="In Repair">In Repair</option>
+                        <option value="On Display">On Display</option>
+                    </select>
                 </div>
             </div>
         </div>
-        <div class="card-footer">
-            <div class="d-flex justify-content-between">
-                <a href="{{ url_for('cars.index') }}" class="btn btn-secondary">Cancel</a>
-                {{ form.submit(class="btn btn-primary") }}
-            </div>
+        
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('cars.index') }}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Car</button>
         </div>
     </form>
 </div>

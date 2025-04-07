@@ -3,7 +3,7 @@
  * Allows users to select from existing options
  */
 class VehicleAutocomplete {
-    constructor(inputElement, type) {
+    constructor(inputElement, type, options = {}) {
         this.input = inputElement;
         this.type = type; // 'make', 'model', 'year', or 'color'
         this.dropdown = null;
@@ -11,6 +11,7 @@ class VehicleAutocomplete {
         this.selectedIndex = -1;
         this.isDropdownVisible = false;
         this.darkMode = document.body.classList.contains('dark-mode');
+        this.onSelect = options.onSelect || null; // Callback for selection
 
         // Create dropdown container
         this.createDropdown();
@@ -90,7 +91,18 @@ class VehicleAutocomplete {
     bindEvents() {
         // Input focus
         this.input.addEventListener('focus', () => {
-            this.fetchSuggestions('');
+            // Only fetch if the dropdown isn't already visible
+            if (!this.isDropdownVisible) {
+                this.fetchSuggestions(this.input.value.trim());
+            }
+        });
+
+        // Input click - specifically handle click on empty field
+        this.input.addEventListener('click', () => {
+            // If dropdown isn't visible and input is empty or has minimal text, show suggestions
+            if (!this.isDropdownVisible) {
+                this.fetchSuggestions(this.input.value.trim());
+            }
         });
 
         // Input keydown for Tab and Enter handling
@@ -155,18 +167,27 @@ class VehicleAutocomplete {
 
     async fetchSuggestions(query) {
         let endpoint;
+        let params = new URLSearchParams({ query: query });
+        
         switch (this.type) {
             case 'make':
-                endpoint = '/cars/api/vehicle-makes';
+                endpoint = '/vehicle-data/api/makes';
                 break;
             case 'model':
-                endpoint = '/cars/api/vehicle-models';
+                endpoint = '/vehicle-data/api/models';
+                // For models, we need to also check if there's a selected make
+                if (document.querySelector('input[name="vehicle_make"]')) {
+                    const makeValue = document.querySelector('input[name="vehicle_make"]').value.trim();
+                    if (makeValue) {
+                        params.append('make', makeValue);
+                    }
+                }
                 break;
             case 'year':
-                endpoint = '/cars/api/vehicle-years';
+                endpoint = '/vehicle-data/api/years';
                 break;
             case 'color':
-                endpoint = '/cars/api/vehicle-colors';
+                endpoint = '/vehicle-data/api/colors';
                 break;
             default:
                 console.error(`Unknown autocomplete type: ${this.type}`);
@@ -174,7 +195,7 @@ class VehicleAutocomplete {
         }
         
         try {
-            const response = await fetch(`${endpoint}?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`${endpoint}?${params.toString()}`);
             if (!response.ok) {
                 console.error(`Error fetching ${this.type} suggestions:`, response.status);
                 return;
@@ -276,8 +297,25 @@ class VehicleAutocomplete {
     }
 
     selectSuggestion(suggestion) {
+        // Set the input value
         this.input.value = suggestion;
         this.hideDropdown();
+        
+        // Call onSelect callback if defined
+        if (typeof this.onSelect === 'function') {
+            this.onSelect(suggestion, this.type);
+        }
+        
+        // Dispatch a change event to trigger any event listeners
+        const event = new Event('change', { bubbles: true });
+        this.input.dispatchEvent(event);
+        
+        // Also dispatch an input event for completeness
+        const inputEvent = new Event('input', { bubbles: true });
+        this.input.dispatchEvent(inputEvent);
+        
+        // Focus the input to ensure the value is registered
+        this.input.focus();
     }
 
     showDropdown() {
@@ -295,6 +333,71 @@ class VehicleAutocomplete {
 
 // Initialize autocomplete for makes, models, years and colors
 document.addEventListener('DOMContentLoaded', function() {
+    // Function to set up make-model relationship
+    function setupMakeModelRelationship() {
+        const makeField = document.querySelector('input[name="vehicle_make"]');
+        const modelField = document.querySelector('input[name="vehicle_model"]');
+        
+        if (makeField && modelField) {
+            // Store original values for reference
+            const originalMake = makeField.value.trim();
+            const originalModel = modelField.value.trim();
+            
+            // Handle make changes to filter models
+            makeField.addEventListener('change', function() {
+                const newMake = this.value.trim();
+                // Only clear model if make has changed from its original value
+                if (newMake !== originalMake) {
+                    modelField.value = '';
+                }
+            });
+        }
+    }
+    
+    // Handle model field enabling/disabling on create page
+    function setupCreatePageBehavior() {
+        const makeInput = document.getElementById('vehicle_make');
+        const modelInput = document.getElementById('vehicle_model');
+        
+        // Only proceed if we're on the create page (identified by disabled model field)
+        if (makeInput && modelInput && modelInput.disabled) {
+            // Function to enable model field
+            function enableModelField() {
+                modelInput.disabled = false;
+                modelInput.classList.remove('bg-light', 'text-muted');
+                modelInput.style.cursor = 'text';
+                modelInput.placeholder = '';
+            }
+            
+            // Function to disable model field
+            function disableModelField() {
+                modelInput.disabled = true;
+                modelInput.classList.add('bg-light', 'text-muted');
+                modelInput.style.cursor = 'not-allowed';
+                modelInput.placeholder = 'Select make first';
+                modelInput.value = '';
+            }
+            
+            // Enable/disable model field based on make value
+            makeInput.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    enableModelField();
+                } else {
+                    disableModelField();
+                }
+            });
+            
+            // Also trigger on change event
+            makeInput.addEventListener('change', function() {
+                if (this.value.trim()) {
+                    enableModelField();
+                } else {
+                    disableModelField();
+                }
+            });
+        }
+    }
+
     // Initialize makes
     const makeInputs = document.querySelectorAll('input[name="vehicle_make"]');
     makeInputs.forEach(input => {
@@ -318,4 +421,10 @@ document.addEventListener('DOMContentLoaded', function() {
     colorInputs.forEach(input => {
         new VehicleAutocomplete(input, 'color');
     });
+    
+    // Set up make-model relationship after autocomplete is initialized
+    setupMakeModelRelationship();
+    
+    // Set up create page specific behavior
+    setupCreatePageBehavior();
 }); 

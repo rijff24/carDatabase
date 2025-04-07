@@ -67,211 +67,191 @@ def index():
         current_sort_dir=sort_dir
     )
 
-@cars_bp.route('/api/vehicle-makes', methods=['GET'])
-@login_required
-@validate_params(
-    query=(str, False, ''),
-)
-def get_vehicle_makes():
-    """Get vehicle makes for autocomplete"""
-    params = request.validated_params
-    query = params['query']
-    
-    try:
-        # Check if the table exists
-        inspector = db.inspect(db.engine)
-        if 'vehicle_makes' not in inspector.get_table_names():
-            # Table doesn't exist, return empty list
-            return jsonify([])
-            
-        # Find all makes that contain the search term
-        makes = []
-        if query:
-            makes = VehicleMake.query.filter(VehicleMake.name.ilike(f'%{query}%')).order_by(VehicleMake.name).all()
-        else:
-            makes = VehicleMake.query.order_by(VehicleMake.name).all()
-        
-        # Return as JSON
-        return jsonify([make.name for make in makes])
-    except Exception as e:
-        # Log the error but don't crash
-        app.logger.error(f"Error fetching vehicle makes: {str(e)}")
-        return jsonify([]), 500
-
-@cars_bp.route('/api/vehicle-models', methods=['GET'])
-@login_required
-@validate_params(
-    query=(str, False, ''),
-)
-def get_vehicle_models():
-    """Get vehicle models for autocomplete"""
-    params = request.validated_params
-    query = params['query']
-    
-    try:
-        # Check if the table exists
-        inspector = db.inspect(db.engine)
-        if 'vehicle_models' not in inspector.get_table_names():
-            # Table doesn't exist, return empty list
-            return jsonify([])
-            
-        # Find all models that contain the search term
-        models = []
-        if query:
-            models = VehicleModel.query.filter(VehicleModel.name.ilike(f'%{query}%')).order_by(VehicleModel.name).all()
-        else:
-            models = VehicleModel.query.order_by(VehicleModel.name).all()
-        
-        # Return as JSON
-        return jsonify([model.name for model in models])
-    except Exception as e:
-        # Log the error but don't crash
-        app.logger.error(f"Error fetching vehicle models: {str(e)}")
-        return jsonify([]), 500
-
-@cars_bp.route('/api/vehicle-years', methods=['GET'])
-@login_required
-@validate_params(
-    query=(str, False, ''),
-)
-def get_vehicle_years():
-    """Get vehicle years for autocomplete"""
-    params = request.validated_params
-    query = params['query']
-    
-    try:
-        # Check if the table exists
-        inspector = db.inspect(db.engine)
-        if 'vehicle_years' not in inspector.get_table_names():
-            # Table doesn't exist, return empty list
-            return jsonify([])
-            
-        # Find all years that match the query
-        years = []
-        if query:
-            try:
-                # Try to parse the query as a number
-                year_query = int(query)
-                years = VehicleYear.query.filter(
-                    VehicleYear.year.like(f'{year_query}%')
-                ).order_by(VehicleYear.year.desc()).all()
-            except (ValueError, TypeError):
-                # If the query isn't a number, return empty list
-                years = []
-        else:
-            # If no query, return all years in descending order (newest first)
-            years = VehicleYear.query.order_by(VehicleYear.year.desc()).all()
-        
-        # Return as JSON
-        return jsonify([str(year.year) for year in years])
-    except Exception as e:
-        # Log the error but don't crash
-        app.logger.error(f"Error fetching vehicle years: {str(e)}")
-        return jsonify([]), 500
-
-@cars_bp.route('/api/vehicle-colors', methods=['GET'])
-@login_required
-@validate_params(
-    query=(str, False, ''),
-)
-def get_vehicle_colors():
-    """Get vehicle colors for autocomplete"""
-    params = request.validated_params
-    query = params['query']
-    
-    try:
-        # Check if the table exists
-        inspector = db.inspect(db.engine)
-        if 'vehicle_colors' not in inspector.get_table_names():
-            # Table doesn't exist, return empty list
-            return jsonify([])
-            
-        # Find all colors that contain the search term
-        colors = []
-        if query:
-            colors = VehicleColor.query.filter(
-                VehicleColor.name.ilike(f'%{query}%')
-            ).order_by(VehicleColor.name).all()
-        else:
-            colors = VehicleColor.query.order_by(VehicleColor.name).all()
-        
-        # Return as JSON
-        return jsonify([color.name for color in colors])
-    except Exception as e:
-        # Log the error but don't crash
-        app.logger.error(f"Error fetching vehicle colors: {str(e)}")
-        return jsonify([]), 500
-
 @cars_bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@validate_form(CarForm)
 def create():
-    """Create a new car"""
-    form = request.validated_form if request.method == 'POST' else CarForm()
+    """Add a new car route"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            data = request.form
+            
+            # Get or create make
+            make_name = data.get('vehicle_make', '').strip()
+            if not make_name:
+                flash('Make is required', 'danger')
+                return redirect(url_for('cars.create'))
+                
+            make = VehicleMake.get_or_create(make_name)
+            if not make:
+                flash('Invalid make name', 'danger')
+                return redirect(url_for('cars.create'))
+            
+            # Get or create model with relationship to make
+            model_name = data.get('vehicle_model', '').strip()
+            if not model_name:
+                flash('Model is required', 'danger')
+                return redirect(url_for('cars.create'))
+                
+            model = VehicleModel.get_or_create(model_name, make_id=make.id)
+            if not model:
+                flash('Invalid model name', 'danger')
+                return redirect(url_for('cars.create'))
+            
+            # Create new car
+            car = Car(
+                vehicle_name=data.get('vehicle_name', '').strip(),
+                vehicle_make=make.name,
+                vehicle_model=model.name,
+                year=int(data.get('year')),
+                colour=data.get('colour', '').strip(),
+                dekra_condition=data.get('dekra_condition'),
+                licence_number=data.get('licence_number', '').strip(),
+                registration_number=data.get('registration_number', '').strip(),
+                purchase_price=float(data.get('purchase_price')),
+                source=data.get('source', '').strip(),
+                date_bought=datetime.now().date(),
+                current_location=data.get('current_location', '').strip(),
+                repair_status=data.get('repair_status')
+            )
+            
+            db.session.add(car)
+            db.session.commit()
+            
+            flash(f'Car {car.full_name} added successfully', 'success')
+            return redirect(url_for('cars.index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding car: {str(e)}', 'danger')
+            return redirect(url_for('cars.create'))
     
-    # Populate the source field with dealers
-    dealers = Dealer.query.all()
-    form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
+    return render_template('cars/create.html')
+
+@cars_bp.route('/add', methods=['GET', 'POST'])
+@login_required
+def add_car():
+    """Add a new car"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            data = request.form
+            
+            # Handle make (either existing or new)
+            make_id = data.get('make_id')
+            new_make = data.get('new_make', '').strip()
+            if new_make:
+                make = VehicleMake.get_or_create(new_make)
+                if not make:
+                    flash('Invalid make name', 'danger')
+                    return redirect(url_for('cars.add_car'))
+                make_id = make.id
+            elif not make_id:
+                flash('Make is required', 'danger')
+                return redirect(url_for('cars.add_car'))
+            
+            # Handle model (either existing or new)
+            model_id = data.get('model_id')
+            new_model = data.get('new_model', '').strip()
+            if new_model:
+                model = VehicleModel.get_or_create(new_model, make_id=make_id)
+                if not model:
+                    flash('Invalid model name', 'danger')
+                    return redirect(url_for('cars.add_car'))
+                model_id = model.id
+            elif not model_id:
+                flash('Model is required', 'danger')
+                return redirect(url_for('cars.add_car'))
+            
+            # Create new car
+            car = Car(
+                vin=data['vin'],
+                year=int(data['year']),
+                vehicle_make_id=make_id,
+                vehicle_model_id=model_id,
+                color=data.get('color'),
+                mileage=int(data['mileage']) if data.get('mileage') else None,
+                price=float(data['price']) if data.get('price') else None,
+                status=data.get('status', 'available'),
+                notes=data.get('notes')
+            )
+            
+            db.session.add(car)
+            db.session.commit()
+            
+            flash(f'Car {car.full_name} added successfully', 'success')
+            return redirect(url_for('cars.list_cars'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding car: {str(e)}', 'danger')
+            return redirect(url_for('cars.add_car'))
+    
+    # GET request - show form
+    makes = VehicleMake.query.order_by(VehicleMake.name).all()
+    return render_template('cars/form.html', makes=makes, current_year=datetime.now().year)
+
+@cars_bp.route('/edit/<int:car_id>', methods=['GET', 'POST'])
+@login_required
+def edit_car(car_id):
+    """Edit an existing car"""
+    car = Car.query.get_or_404(car_id)
     
     if request.method == 'POST':
-        # Handle the make field - get or create
-        make_name = form.vehicle_make.data
-        VehicleMake.get_or_create(make_name)
-        
-        # Handle the model field - get or create
-        model_name = form.vehicle_model.data
-        VehicleModel.get_or_create(model_name)
-        
-        # Sanitize the color field (but don't add new colors to the vehicle_colors table)
-        color = form.colour.data
-        if color:
-            form.colour.data = VehicleColor.sanitize_name(color)
-        
-        # Set the current location based on repair status
-        current_location = form.current_location.data
-        if form.repair_status.data == 'Purchased':
-            current_location = "Dealer's Lot"
-        elif form.repair_status.data == 'Waiting for Repairs':
-            current_location = 'Base (Awaiting Repairs)'
-        elif form.repair_status.data == 'In Repair':
-            provider = RepairProvider.query.first()
-            current_location = f"Repair: {provider.location if provider else 'Unknown'}"
-        elif form.repair_status.data == 'On Display':
-            # Get all stands and use the first one found
-            stand = Stand.query.first()
-            current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
-        
-        # Create new car
-        dealer = Dealer.query.get(form.source.data)
-        car = Car(
-            vehicle_name=form.vehicle_name.data,
-            vehicle_make=VehicleMake.sanitize_name(form.vehicle_make.data),
-            vehicle_model=VehicleModel.sanitize_name(form.vehicle_model.data),
-            year=form.year.data,
-            colour=form.colour.data,
-            date_bought=form.date_bought.data,
-            purchase_price=form.purchase_price.data,
-            repair_status=form.repair_status.data,
-            current_location=current_location,
-            licence_number=form.licence_number.data,
-            registration_number=form.registration_number.data,
-            mileage=form.mileage.data,
-            fuel_type=form.fuel_type.data,
-            engine_size=form.engine_size.data,
-            transmission=form.transmission.data,
-            body_style=form.body_style.data,
-            additional_info=form.additional_info.data,
-            source=dealer.dealer_name if dealer else 'Unknown Dealer',
-            dealer_id=form.source.data
-        )
-        
-        db.session.add(car)
-        db.session.commit()
-        
-        flash('Car added successfully', 'success')
-        return redirect(url_for('cars.view', car_id=car.car_id))
+        try:
+            # Get form data
+            data = request.form
+            
+            # Handle make (either existing or new)
+            make_id = data.get('make_id')
+            new_make = data.get('new_make', '').strip()
+            if new_make:
+                make = VehicleMake.get_or_create(new_make)
+                if not make:
+                    flash('Invalid make name', 'danger')
+                    return redirect(url_for('cars.edit_car', car_id=car.id))
+                make_id = make.id
+            elif not make_id:
+                flash('Make is required', 'danger')
+                return redirect(url_for('cars.edit_car', car_id=car.id))
+            
+            # Handle model (either existing or new)
+            model_id = data.get('model_id')
+            new_model = data.get('new_model', '').strip()
+            if new_model:
+                model = VehicleModel.get_or_create(new_model, make_id=make_id)
+                if not model:
+                    flash('Invalid model name', 'danger')
+                    return redirect(url_for('cars.edit_car', car_id=car.id))
+                model_id = model.id
+            elif not model_id:
+                flash('Model is required', 'danger')
+                return redirect(url_for('cars.edit_car', car_id=car.id))
+            
+            # Update car
+            car.vin = data['vin']
+            car.year = int(data['year'])
+            car.vehicle_make_id = make_id
+            car.vehicle_model_id = model_id
+            car.color = data.get('color')
+            car.mileage = int(data['mileage']) if data.get('mileage') else None
+            car.price = float(data['price']) if data.get('price') else None
+            car.status = data.get('status', 'available')
+            car.notes = data.get('notes')
+            
+            db.session.commit()
+            
+            flash(f'Car {car.full_name} updated successfully', 'success')
+            return redirect(url_for('cars.list_cars'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating car: {str(e)}', 'danger')
+            return redirect(url_for('cars.edit_car', car_id=car.id))
     
-    return render_template('cars/create.html', form=form)
+    # GET request - show form
+    makes = VehicleMake.query.order_by(VehicleMake.name).all()
+    return render_template('cars/form.html', car=car, makes=makes, current_year=datetime.now().year)
 
 @cars_bp.route('/<int:car_id>')
 @login_required
@@ -308,11 +288,11 @@ def edit(car_id):
         if form.validate_on_submit():
             # Handle the make field - get or create
             make_name = form.vehicle_make.data
-            VehicleMake.get_or_create(make_name)
+            make = VehicleMake.get_or_create(make_name)
             
             # Handle the model field - get or create
             model_name = form.vehicle_model.data
-            VehicleModel.get_or_create(model_name)
+            VehicleModel.get_or_create(model_name, make_id=make.id)
             
             # First populate the car object with form data
             form.populate_obj(car)
@@ -381,6 +361,13 @@ def delete(car_id):
     """Delete a car"""
     car = safe_get_or_404(Car, car_id, f"Car with ID {car_id} not found")
     
+    # Check if car has related sales
+    if car.sale:
+        # Delete the related sale first
+        db.session.delete(car.sale)
+        db.session.flush()  # Apply the deletion before moving on
+    
+    # Now delete the car
     db.session.delete(car)
     db.session.commit()
     
