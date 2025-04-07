@@ -4,11 +4,13 @@ from app.models.car import Car, VehicleMake, VehicleModel, VehicleYear, VehicleC
 from app.models.stand import Stand
 from app.models.dealer import Dealer
 from app.models.repair_provider import RepairProvider
-from app.utils.forms import CarForm, CarSaleForm
+from app.models.sale import Sale
+from app.utils.forms import CarForm, CarSaleForm, MoveToStandForm
 from app.utils.validators import validate_params, validate_form
 from app.utils.helpers import safe_get_or_404
 from app import db
 from datetime import datetime
+from sqlalchemy import extract
 
 cars_bp = Blueprint('cars', __name__)
 
@@ -260,15 +262,22 @@ def view(car_id):
     """View car details"""
     car = safe_get_or_404(Car, car_id, f"Car with ID {car_id} not found")
     sale_form = None
+    move_to_stand_form = None
     
     # Get all stands for the dropdown
     stands = Stand.query.all()
+    
+    # If car is waiting for repairs or in repair, create move to stand form
+    if car.repair_status in ['Waiting for Repairs', 'In Repair']:
+        move_to_stand_form = MoveToStandForm()
+        # Populate stand choices
+        move_to_stand_form.stand_id.choices = [(s.stand_id, s.stand_name) for s in stands]
     
     # If car is on display but not sold, prepare sale form
     if car.repair_status == 'On Display' and not car.date_sold:
         sale_form = CarSaleForm(car_id=car.car_id)
     
-    return render_template('cars/view.html', car=car, sale_form=sale_form, stands=stands)
+    return render_template('cars/view.html', car=car, sale_form=sale_form, move_to_stand_form=move_to_stand_form, stands=stands)
 
 @cars_bp.route('/<int:car_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -376,43 +385,31 @@ def delete(car_id):
 
 @cars_bp.route('/<int:car_id>/move-to-stand', methods=['POST'])
 @login_required
-@validate_params(
-    car_id=(int, True),
-    stand_id=(int, False, None)
-)
+@validate_params(car_id=(int, True))
 def move_to_stand(car_id):
     """Move a car to a stand"""
     car = safe_get_or_404(Car, car_id, f"Car with ID {car_id} not found")
-    params = request.validated_params
-    stand_id = params.get('stand_id')
     
-    # Check if a stand_id is provided either in the form data or URL parameter
-    if not stand_id and 'stand_id' in request.form:
-        try:
-            stand_id = int(request.form.get('stand_id'))
-        except (ValueError, TypeError):
-            flash('Invalid stand ID format', 'danger')
-            return redirect(url_for('cars.view', car_id=car_id))
+    # Create and populate form
+    form = MoveToStandForm()
+    stands = Stand.query.all()
+    form.stand_id.choices = [(s.stand_id, s.stand_name) for s in stands]
     
-    if not stand_id:
-        # Try to get the first stand if none selected
-        first_stand = Stand.query.first()
-        if first_stand:
-            stand_id = first_stand.stand_id
-        else:
-            flash('Please select a stand. If no stands exist, please create one first.', 'danger')
-            return redirect(url_for('cars.view', car_id=car_id))
+    if form.validate_on_submit():
+        stand_id = form.stand_id.data
+        stand = safe_get_or_404(Stand, stand_id, f"Stand with ID {stand_id} not found")
+        
+        car.stand_id = stand_id
+        car.date_added_to_stand = datetime.now().date()
+        car.repair_status = 'On Display'
+        car.current_location = f"Stand: {stand.stand_name}"
+        
+        db.session.commit()
+        
+        flash(f'Car moved to {stand.stand_name} stand', 'success')
+    else:
+        flash('Form validation failed. Please try again.', 'danger')
     
-    stand = safe_get_or_404(Stand, stand_id, f"Stand with ID {stand_id} not found")
-    
-    car.stand_id = stand_id
-    car.date_added_to_stand = datetime.now().date()
-    car.repair_status = 'On Display'
-    car.current_location = f"Stand: {stand.stand_name}"
-    
-    db.session.commit()
-    
-    flash(f'Car moved to {stand.stand_name} stand', 'success')
     return redirect(url_for('cars.view', car_id=car_id))
 
 @cars_bp.route('/<int:car_id>/record-sale', methods=['POST'])
@@ -425,13 +422,40 @@ def record_sale(car_id):
     form = CarSaleForm(formdata=request.form)
     
     if form.validate_on_submit():
+        # Update car fields
         car.date_sold = form.date_sold.data
         car.sale_price = form.sale_price.data
-        # Keep the existing dealer_id that was set when the car was added
         car.repair_status = 'Sold'
         
         # Calculate final costs
         car.final_cost_price = car.purchase_price + car.total_repair_cost + car.refuel_cost
+        
+        # Create a new Sale record - this is the key addition
+        # Use the dealer_id from the car if available
+        dealer_id = car.dealer_id if car.dealer_id else 1  # Default to first dealer if none set
+        
+        # Check if a sale record already exists for this car
+        existing_sale = Sale.query.filter_by(car_id=car.car_id).first()
+        
+        if existing_sale:
+            # Update existing sale record
+            existing_sale.sale_date = form.date_sold.data
+            existing_sale.sale_price = form.sale_price.data
+            existing_sale.dealer_id = dealer_id
+            # Generate a default customer name if none exists
+            if not existing_sale.customer_name:
+                existing_sale.customer_name = f"Customer {form.date_sold.data.year}-{len(Sale.query.filter(extract('year', Sale.sale_date) == form.date_sold.data.year).all()) + 1}"
+        else:
+            # Create new sale record
+            sale = Sale(
+                car_id=car.car_id,
+                dealer_id=dealer_id,
+                sale_price=form.sale_price.data,
+                sale_date=form.date_sold.data,
+                # Generate a default customer name
+                customer_name=f"Customer {form.date_sold.data.year}-{len(Sale.query.filter(extract('year', Sale.sale_date) == form.date_sold.data.year).all()) + 1}"
+            )
+            db.session.add(sale)
         
         db.session.commit()
         
@@ -443,5 +467,53 @@ def record_sale(car_id):
             for error in errors:
                 error_messages.append(f"{field}: {error}")
         flash(f"Form validation failed: {', '.join(error_messages)}", 'danger')
+    
+    return redirect(url_for('cars.view', car_id=car_id))
+
+@cars_bp.route('/<int:car_id>/unsell', methods=['POST'])
+@login_required
+@validate_params(car_id=(int, True))
+def unsell_car(car_id):
+    """Unsell a car - remove sale record and return to inventory"""
+    car = safe_get_or_404(Car, car_id, f"Car with ID {car_id} not found")
+    
+    # Check if the car is actually sold
+    if not car.date_sold and not car.sale:
+        flash('This car is not currently marked as sold.', 'warning')
+        return redirect(url_for('cars.view', car_id=car_id))
+    
+    try:
+        # Delete ALL related sale records - fix for multiple sale records issue
+        sale_records = Sale.query.filter_by(car_id=car.car_id).all()
+        
+        if sale_records:
+            for sale in sale_records:
+                db.session.delete(sale)
+            db.session.flush()  # Apply the deletion before moving on
+            flash(f'Removed {len(sale_records)} sale records.', 'info')
+        else:
+            flash('No sale records found to remove.', 'info')
+        
+        # Reset car status
+        car.date_sold = None
+        car.sale_price = None
+        
+        # Determine what stand to put the car back on
+        if car.stand_id:
+            stand = Stand.query.get(car.stand_id)
+            car.repair_status = 'On Display'
+            car.current_location = f"Stand: {stand.stand_name if stand else 'Stand'}"
+        else:
+            # No stand assigned, so put it in waiting status
+            car.repair_status = 'Waiting for Repairs'
+            car.current_location = 'Base (Awaiting Repairs)'
+            
+        # Save changes
+        db.session.commit()
+        
+        flash('Car has been unsold and returned to inventory.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error unselling car: {str(e)}', 'danger')
     
     return redirect(url_for('cars.view', car_id=car_id)) 
