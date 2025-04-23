@@ -19,11 +19,18 @@
             
             <div class="mb-3">
                 {{ form.service_type.label(class="form-label") }}
-                {{ form.service_type(class="form-control") }}
+                {{ form.service_type(class="form-select") }}
                 {% for error in form.service_type.errors %}
                 <div class="text-danger small">{{ error }}</div>
                 {% endfor %}
-                <small class="form-text text-muted">E.g., Mechanic, Paint Shop, Body Work, etc.</small>
+            </div>
+            
+            <div class="mb-3 custom-service-type" {% if form.service_type.data != 'custom' %}style="display: none"{% endif %}>
+                {{ form.custom_service_type.label(class="form-label") }}
+                {{ form.custom_service_type(class="form-control") }}
+                {% for error in form.custom_service_type.errors %}
+                <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
             </div>
             
             <div class="mb-3">
@@ -66,4 +73,22 @@
         </div>
     </form>
 </div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const serviceTypeSelect = document.getElementById('{{ form.service_type.id }}');
+        const customServiceTypeDiv = document.querySelector('.custom-service-type');
+        
+        // Toggle custom service type field visibility
+        serviceTypeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customServiceTypeDiv.style.display = 'block';
+            } else {
+                customServiceTypeDiv.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %} 

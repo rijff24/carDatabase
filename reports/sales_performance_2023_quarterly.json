@@ -1,0 +1,248 @@
+{
+  "report_date": "2025-03-26 01:39",
+  "period": "quarterly",
+  "period_name": "quarterly",
+  "period_label": "Period",
+  "year": 2023,
+  "current_year": 2025,
+  "month": 0,
+  "total_sales_count": 4,
+  "total_sales": 4,
+  "total_revenue": 853178.88,
+  "total_profit": 253178.88,
+  "average_margin": 29.674771133575177,
+  "profit_margin": 29.674771133575177,
+  "period_labels": [
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+  ],
+  "sales_by_period": [
+    {
+      "period_id": 1,
+      "period_name": "Q1",
+      "label": "Q1",
+      "count": 1,
+      "revenue": 228315.25,
+      "cost": 150000.0,
+      "profit": 78315.25,
+      "margin": 34.301366203089806,
+      "avg_price": 228315.25,
+      "trend": 0,
+      "sales_change": 0,
+      "revenue_change": 0,
+      "profit_change": 0
+    },
+    {
+      "period_id": 2,
+      "period_name": "Q2",
+      "label": "Q2",
+      "count": 1,
+      "revenue": 210317.29,
+      "cost": 150000.0,
+      "profit": 60317.29,
+      "margin": 28.679187526617522,
+      "avg_price": 210317.29,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": -7.882942554209585,
+      "profit_change": -22.981424435215363
+    },
+    {
+      "period_id": 3,
+      "period_name": "Q3",
+      "label": "Q3",
+      "count": 1,
+      "revenue": 194210.33,
+      "cost": 150000.0,
+      "profit": 44210.33,
+      "margin": 22.764149569181,
+      "avg_price": 194210.33,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": -7.658409824508484,
+      "profit_change": -26.70371961339775
+    },
+    {
+      "period_id": 4,
+      "period_name": "Q4",
+      "label": "Q4",
+      "count": 1,
+      "revenue": 220336.01,
+      "cost": 150000.0,
+      "profit": 70336.01,
+      "margin": 31.922158343522696,
+      "avg_price": 220336.01,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": 13.452260752556262,
+      "profit_change": 59.09406240577711
+    }
+  ],
+  "sales_by_dealer": [
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 2,
+      "total_revenue": 438632.54,
+      "total_cost": 300000.0,
+      "total_profit": 138632.54,
+      "average_sale": 219316.27,
+      "margin": 31.60562141604907,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 3,
+      "dealer_name": "Test Dealer 20250325222125",
+      "sales_count": 1,
+      "total_revenue": 194210.33,
+      "total_cost": 150000.0,
+      "total_profit": 44210.33,
+      "average_sale": 194210.33,
+      "margin": 22.764149569181,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 1,
+      "total_revenue": 220336.01,
+      "total_cost": 150000.0,
+      "total_profit": 70336.01,
+      "average_sale": 220336.01,
+      "margin": 31.922158343522696,
+      "sales_percentage": 25.0
+    }
+  ],
+  "dealer_performance": [
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 2,
+      "total_revenue": 438632.54,
+      "total_cost": 300000.0,
+      "total_profit": 138632.54,
+      "average_sale": 219316.27,
+      "margin": 31.60562141604907,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 3,
+      "dealer_name": "Test Dealer 20250325222125",
+      "sales_count": 1,
+      "total_revenue": 194210.33,
+      "total_cost": 150000.0,
+      "total_profit": 44210.33,
+      "average_sale": 194210.33,
+      "margin": 22.764149569181,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 1,
+      "total_revenue": 220336.01,
+      "total_cost": 150000.0,
+      "total_profit": 70336.01,
+      "average_sale": 220336.01,
+      "margin": 31.922158343522696,
+      "sales_percentage": 25.0
+    }
+  ],
+  "top_dealers": [
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 2,
+      "total_revenue": 438632.54,
+      "total_cost": 300000.0,
+      "total_profit": 138632.54,
+      "average_sale": 219316.27,
+      "margin": 31.60562141604907,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 3,
+      "dealer_name": "Test Dealer 20250325222125",
+      "sales_count": 1,
+      "total_revenue": 194210.33,
+      "total_cost": 150000.0,
+      "total_profit": 44210.33,
+      "average_sale": 194210.33,
+      "margin": 22.764149569181,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 1,
+      "total_revenue": 220336.01,
+      "total_cost": 150000.0,
+      "total_profit": 70336.01,
+      "average_sale": 220336.01,
+      "margin": 31.922158343522696,
+      "sales_percentage": 25.0
+    }
+  ],
+  "sales_count_trend": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "revenue_profit_trend": {
+    "revenue": [
+      228315.25,
+      210317.29,
+      194210.33,
+      220336.01
+    ],
+    "profit": [
+      78315.25,
+      60317.29,
+      44210.33,
+      70336.01
+    ]
+  },
+  "previous_year_comparison": {
+    "current_year": 2023,
+    "previous_year": 2022,
+    "current_sales": 4,
+    "previous_sales": 0,
+    "sales_change": 0,
+    "current_revenue": 853178.88,
+    "previous_revenue": 0,
+    "revenue_change": 0,
+    "current_profit": 253178.88,
+    "previous_profit": 0,
+    "profit_change": 0
+  },
+  "top_models": [
+    {
+      "make": "Toyota",
+      "model": "Camry",
+      "count": 4,
+      "total_revenue": 853178.88,
+      "average_price": 213294.72
+    }
+  ],
+  "sales_counts": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "revenues": [
+    228315.25,
+    210317.29,
+    194210.33,
+    220336.01
+  ],
+  "profits": [
+    78315.25,
+    60317.29,
+    44210.33,
+    70336.01
+  ]
+}

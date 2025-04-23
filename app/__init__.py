@@ -93,6 +93,9 @@ def create_app(config_name='default'):
     from app.routes.dealers import dealers_bp
     from app.routes.reports import reports_bp
     from app.routes.settings import settings_bp
+    from app.routes.vehicle_data import vehicle_data
+    from app.routes.api import api_bp
+    from app.routes.import_routes import import_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -104,6 +107,9 @@ def create_app(config_name='default'):
     app.register_blueprint(dealers_bp, url_prefix='/dealers')
     app.register_blueprint(reports_bp, url_prefix='/reports')
     app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(vehicle_data, url_prefix='/vehicle-data')
+    app.register_blueprint(api_bp)
+    app.register_blueprint(import_bp, url_prefix='/import')
     
     # Register Jinja2 filters
     app.jinja_env.filters['format_date'] = format_date

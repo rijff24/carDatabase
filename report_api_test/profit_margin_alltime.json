@@ -1,0 +1,190 @@
+{
+  "average_cost": "133716.6666666666666666666667",
+  "average_margin": "39.75052067118670931781102084",
+  "average_profit": "88221.6275",
+  "average_revenue": "221938.2941666666666666666667",
+  "high_performing_sales": [
+    {
+      "dealer_name": "We Buy Cars Midrand",
+      "margin": "78.87551327857769436769483542",
+      "profit": "195279.98",
+      "sale_date": "2024-10-14",
+      "sale_id": 8,
+      "sale_price": "247579.98",
+      "total_cost": "52300.00",
+      "vehicle_name": "2015 VW Golf 3"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222100",
+      "margin": "73.69932474650649840403177785",
+      "profit": "146554.21",
+      "sale_date": "2025-06-15",
+      "sale_id": 10,
+      "sale_price": "198854.21",
+      "total_cost": "52300.00",
+      "vehicle_name": "2015 VW Golf 3"
+    },
+    {
+      "dealer_name": "We Buy Cars Midrand",
+      "margin": "45.63302137198550054426782305",
+      "profit": "125902.77",
+      "sale_date": "2024-04-22",
+      "sale_id": 6,
+      "sale_price": "275902.77",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222239",
+      "margin": "42.19234825549224718459393709",
+      "profit": "109481.22",
+      "sale_date": "2025-02-06",
+      "sale_id": 9,
+      "sale_price": "259481.22",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222125",
+      "margin": "38.48075518072016396601283193",
+      "profit": "93826.14",
+      "sale_date": "2025-12-07",
+      "sale_id": 12,
+      "sale_price": "243826.14",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222100",
+      "margin": "34.30136620308980674746868639",
+      "profit": "78315.25",
+      "sale_date": "2023-02-07",
+      "sale_id": 1,
+      "sale_price": "228315.25",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "We Buy Cars Midrand",
+      "margin": "33.47424670561143398523101667",
+      "profit": "75476.59",
+      "sale_date": "2025-07-03",
+      "sale_id": 11,
+      "sale_price": "225476.59",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "We Buy Cars Midrand",
+      "margin": "31.92215834352269517815086150",
+      "profit": "70336.01",
+      "sale_date": "2023-12-22",
+      "sale_id": 4,
+      "sale_price": "220336.01",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222100",
+      "margin": "28.67918752661752155517028581",
+      "profit": "60317.29",
+      "sale_date": "2023-04-04",
+      "sale_id": 2,
+      "sale_price": "210317.29",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    }
+  ],
+  "margin_distribution": [
+    {
+      "count": 0,
+      "max": 10,
+      "min": 0,
+      "range": "Less than 10%"
+    },
+    {
+      "count": 2,
+      "max": 20,
+      "min": 10,
+      "range": "10-20%"
+    },
+    {
+      "count": 2,
+      "max": 30,
+      "min": 20,
+      "range": "20-30%"
+    },
+    {
+      "count": 8,
+      "max": Infinity,
+      "min": 30,
+      "range": "More than 30%"
+    }
+  ],
+  "margin_trend": [
+    {
+      "label": "2023",
+      "margin": "29.67477113357517710705637720"
+    },
+    {
+      "label": "2024",
+      "margin": "43.07844355953440093302850818"
+    },
+    {
+      "label": "2025",
+      "margin": "45.85173167089202108718770258"
+    }
+  ],
+  "profit_by_make": [
+    {
+      "avg_cost": "52300.00",
+      "avg_profit": "170917.095",
+      "avg_revenue": "223217.095",
+      "count": 2,
+      "make": "VW",
+      "margin": "76.56989488193097396953400903",
+      "total_cost": "104600.00",
+      "total_profit": "341834.19",
+      "total_revenue": "446434.19"
+    },
+    {
+      "avg_cost": "150000.00",
+      "avg_profit": "71682.534",
+      "avg_revenue": "221682.534",
+      "count": 10,
+      "make": "Toyota",
+      "margin": "32.33567061264285259388094147",
+      "total_cost": "1500000.00",
+      "total_profit": "716825.34",
+      "total_revenue": "2216825.34"
+    }
+  ],
+  "report_date": "2025-03-26 01:34",
+  "timeframe": "all_time",
+  "top_models": [
+    {
+      "avg_profit": "170917.095",
+      "count": 2,
+      "make": "VW",
+      "margin": "76.56989488193097396953400903",
+      "model": "Golf 3",
+      "total_cost": "104600.00",
+      "total_profit": "341834.19",
+      "total_revenue": "446434.19"
+    },
+    {
+      "avg_profit": "71682.534",
+      "count": 10,
+      "make": "Toyota",
+      "margin": "32.33567061264285259388094147",
+      "model": "Camry",
+      "total_cost": "1500000.00",
+      "total_profit": "716825.34",
+      "total_revenue": "2216825.34"
+    }
+  ],
+  "total_cars_sold": 12,
+  "total_cost": "1604600.00",
+  "total_profit": "1058659.53",
+  "total_revenue": "2663259.53"
+}

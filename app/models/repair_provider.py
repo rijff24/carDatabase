@@ -8,11 +8,14 @@ class RepairProvider(db.Model):
     provider_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     provider_name = db.Column(db.String(100), nullable=False)
     service_type = db.Column(db.String(50), nullable=False)
-    contact_info = db.Column(db.String(150), nullable=False)
-    location = db.Column(db.String(100), nullable=False)
+    contact_info = db.Column(db.String(150), nullable=True)
+    location = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.now, nullable=False)
     rating = db.Column(db.Integer, nullable=True)  # Rating out of 5
+
+    # Add the repairs relationship
+    repairs = db.relationship('Repair', back_populates='provider')
 
     def __repr__(self):
         return f'<RepairProvider {self.provider_name} ({self.service_type})>'

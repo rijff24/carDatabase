@@ -216,4 +216,51 @@ def performance(dealer_id):
         'revenue': [float(row.revenue or 0) for row in sales_by_month]
     }
     
-    return jsonify(performance_data) 
+    return jsonify(performance_data)
+
+@dealers_bp.route('/api/create', methods=['POST'])
+@login_required
+def api_create():
+    """API endpoint to create a new dealer"""
+    try:
+        # Get JSON data
+        data = request.json
+        
+        if not data or not data.get('dealer_name'):
+            return jsonify({
+                'success': False,
+                'message': 'Dealer name is required'
+            }), 400
+            
+        # Check if a dealer with the same name already exists
+        existing_dealer = Dealer.query.filter_by(dealer_name=data['dealer_name']).first()
+        if existing_dealer:
+            return jsonify({
+                'success': False,
+                'message': f'Dealer with name "{data["dealer_name"]}" already exists'
+            }), 400
+        
+        # Create new dealer
+        dealer = Dealer(
+            dealer_name=data['dealer_name'],
+            contact_info=data.get('contact_info', ''),
+            address=data.get('address', ''),
+            date_joined=datetime.utcnow()
+        )
+        
+        db.session.add(dealer)
+        db.session.commit()
+        
+        # Return success response with dealer ID
+        return jsonify({
+            'success': True,
+            'dealer_id': dealer.dealer_id,
+            'dealer_name': dealer.dealer_name
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error creating dealer: {str(e)}'
+        }), 500 

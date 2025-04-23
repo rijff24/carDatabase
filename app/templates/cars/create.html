@@ -3,95 +3,252 @@
 {% block title %}Add New Car - Car Sales Tracking{% endblock %}
 
 {% block content %}
+<style>
+/* Dealer dropdown styling */
+.dealer-search + select {
+    position: absolute;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding: 0.375rem 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.dealer-search + select option {
+    padding: 0.375rem 0.75rem;
+    cursor: pointer;
+}
+
+.dealer-search + select option:hover,
+.dealer-search + select option:focus {
+    background-color: #f8f9fa;
+}
+
+/* Make dropdown more visible */
+.dealer-search:focus {
+    z-index: 5;
+    position: relative;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* New dealer form style */
+.new-dealer-form {
+    display: none;
+    background: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.dealer-dropdown {
+    position: absolute;
+    max-height: 200px; /* Limit height */
+    overflow-y: auto; /* Enable scrolling */
+    background: white;
+    width: 100%;
+    z-index: 1000;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    display: none;
+}
+
+.dealer-dropdown .option {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.dealer-dropdown .option:hover {
+    background-color: #f5f5f5;
+}
+
+.dealer-dropdown .add-new {
+    padding: 8px 12px;
+    background-color: #e8f4fd;
+    border-top: 1px solid #ccc;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.dealer-dropdown .add-new:hover {
+    background-color: #d0e8fa;
+}
+
+.new-dealer-form {
+    display: none;
+    margin-top: 10px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.new-dealer-form .form-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+</style>
+
 <div class="container">
     <h1 class="mb-4">Add New Car</h1>
     
-    <form method="POST" action="{{ url_for('cars.create') }}">
+    <form method="POST" action="{{ url_for('cars.create') }}" class="card shadow" autocomplete="off">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <!-- Hidden fields to prevent browser autocomplete -->
+        <input type="text" name="prevent_autofill" id="prevent_autofill" value="" style="display:none;" />
+        <input type="password" name="password_fake" id="password_fake" value="" style="display:none;" />
         
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="vehicle_name">Vehicle Name</label>
-                    <input type="text" class="form-control" id="vehicle_name" name="vehicle_name" required>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="vehicle_name" class="form-label">Vehicle Name</label>
+                        <input type="text" class="form-control" id="vehicle_name" name="vehicle_name" required>
+                    </div>
                 </div>
-                
-                <div class="form-group mb-3">
-                    <label for="vehicle_make">Make</label>
-                    <input type="text" class="form-control" id="vehicle_make" name="vehicle_make" required>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="vehicle_model">Model</label>
-                    <input type="text" class="form-control bg-light text-muted" id="vehicle_model" name="vehicle_model" required disabled style="cursor: not-allowed;" placeholder="Select make first">
-                    <div class="form-text text-muted">Model selection will be enabled after choosing a make</div>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="year">Year</label>
-                    <input type="number" class="form-control" id="year" name="year" min="1900" max="2099" required>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="colour">Color</label>
-                    <input type="text" class="form-control" id="colour" name="colour" required>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="dekra_condition">Condition</label>
-                    <select class="form-control" id="dekra_condition" name="dekra_condition" required>
-                        <option value="Excellent">Excellent</option>
-                        <option value="Good">Good</option>
-                        <option value="Fair">Fair</option>
-                        <option value="Poor">Poor</option>
-                    </select>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="source" class="form-label">Source (Dealer)</label>
+                        <div class="dealer-autocomplete position-relative">
+                            <input type="text" class="form-control dealer-search" placeholder="Click to select a dealer..." autocomplete="off">
+                            <input type="hidden" id="dealer_id" name="dealer_id" value="{{ car.dealer_id if car else '' }}" required>
+                            <div class="dealer-dropdown">
+                                {% for dealer in dealers %}
+                                <div class="option" data-id="{{ dealer.dealer_id }}">{{ dealer.dealer_name }}</div>
+                                {% endfor %}
+                                <div class="add-new">+ Add New Dealer</div>
+                            </div>
+                        </div>
+                        <div class="form-text">Select a dealer or add a new one</div>
+                        
+                        <!-- New dealer form -->
+                        <div id="newDealerForm" class="new-dealer-form">
+                            <div class="mb-2">
+                                <label for="new_dealer_name" class="form-label">Dealer Name</label>
+                                <input type="text" class="form-control" id="new_dealer_name">
+                            </div>
+                            <div class="mb-2">
+                                <label for="new_dealer_contact" class="form-label">Contact Information</label>
+                                <input type="text" class="form-control" id="new_dealer_contact">
+                            </div>
+                            <div class="mb-2">
+                                <label for="new_dealer_address" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="new_dealer_address">
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary cancel-dealer">Cancel</button>
+                                <button type="button" class="btn btn-primary save-dealer">Save Dealer</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="col-md-6">
-                <div class="form-group mb-3">
-                    <label for="licence_number">License Number</label>
-                    <input type="text" class="form-control" id="licence_number" name="licence_number" required>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="registration_number">Registration Number</label>
-                    <input type="text" class="form-control" id="registration_number" name="registration_number" required>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label for="purchase_price">Purchase Price</label>
-                    <div class="input-group">
-                        <span class="input-group-text">R</span>
-                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" min="0" required>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicle_make" class="form-label">Make</label>
+                        <input type="text" class="form-control" id="vehicle_make" name="vehicle_make" required autocomplete="off">
+                        <div class="form-text">Type to search or add a new make</div>
                     </div>
                 </div>
-                
-                <div class="form-group mb-3">
-                    <label for="source">Source</label>
-                    <input type="text" class="form-control" id="source" name="source" required>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="vehicle_model" class="form-label">Model</label>
+                        <input type="text" class="form-control bg-light text-muted" id="vehicle_model" name="vehicle_model" required disabled style="cursor: not-allowed;" placeholder="Select make first" autocomplete="off">
+                        <div class="form-text">Type to search or add a new model</div>
+                    </div>
                 </div>
-                
-                <div class="form-group mb-3">
-                    <label for="current_location">Current Location</label>
-                    <input type="text" class="form-control" id="current_location" name="current_location" required>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" min="1900" max="2099" required autocomplete="off">
+                        <div class="form-text">Select from available years</div>
+                    </div>
                 </div>
-                
-                <div class="form-group mb-3">
-                    <label for="repair_status">Status</label>
-                    <select class="form-control" id="repair_status" name="repair_status" required>
-                        <option value="Purchased">Purchased</option>
-                        <option value="Waiting for Repairs">Waiting for Repairs</option>
-                        <option value="In Repair">In Repair</option>
-                        <option value="On Display">On Display</option>
-                    </select>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="colour" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="colour" name="colour" required autocomplete="off">
+                        <div class="form-text">Type to search or select a color</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="purchase_price" class="form-label">Purchase Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R</span>
+                            <input type="number" class="form-control" id="purchase_price" name="purchase_price" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="dekra_condition" class="form-label">Condition</label>
+                        <select class="form-control" id="dekra_condition" name="dekra_condition" required>
+                            <option value="Platinum">Platinum</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Green">Green</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="licence_number" class="form-label">License Number</label>
+                        <input type="text" class="form-control" id="licence_number" name="licence_number" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="registration_number" class="form-label">Registration Number</label>
+                        <input type="text" class="form-control" id="registration_number" name="registration_number" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="repair_status" class="form-label">Status</label>
+                        <select class="form-control" id="repair_status" name="repair_status" required>
+                            <option value="Purchased">Purchased</option>
+                            <option value="Waiting for Repairs">Waiting for Repairs</option>
+                            <option value="In Repair">In Repair</option>
+                            <option value="On Display">On Display</option>
+                        </select>
+                        <div class="form-text">Current location will be set automatically based on status</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="current_location" class="form-label">Current Location</label>
+                        <input type="text" class="form-control" id="current_location" name="current_location" required>
+                        <div class="form-text">This field will be updated automatically on form submit</div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="d-flex justify-content-between">
-            <a href="{{ url_for('cars.index') }}" class="btn btn-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary">Save Car</button>
+        <div class="card-footer">
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('cars.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Car</button>
+            </div>
         </div>
     </form>
 </div>
@@ -99,4 +256,307 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/autocomplete.js') }}"></script>
+<script>
+// Add new DealerAutocomplete class for the source field
+class DealerAutocomplete {
+    constructor() {
+        this.container = document.querySelector('.dealer-autocomplete');
+        this.searchInput = this.container.querySelector('.dealer-search');
+        this.hiddenInput = document.getElementById('dealer_id');
+        this.dropdown = this.container.querySelector('.dealer-dropdown');
+        this.options = Array.from(this.dropdown.querySelectorAll('.option'));
+        this.addNewButton = this.dropdown.querySelector('.add-new');
+        this.newDealerForm = document.querySelector('.new-dealer-form');
+        this.newDealerName = document.getElementById('new_dealer_name');
+        this.newDealerContact = document.getElementById('new_dealer_contact');
+        this.newDealerAddress = document.getElementById('new_dealer_address');
+        this.saveButton = document.querySelector('.save-dealer');
+        this.cancelButton = document.querySelector('.cancel-dealer');
+        
+        this.originalOptions = [...this.options];
+        
+        // Set initial value if available
+        if (this.hiddenInput.value) {
+            const selectedOption = this.options.find(opt => opt.dataset.id === this.hiddenInput.value);
+            if (selectedOption) {
+                this.searchInput.value = selectedOption.textContent;
+            }
+        }
+        
+        this.bindEvents();
+    }
+    
+    bindEvents() {
+        // Toggle dropdown on click
+        this.searchInput.addEventListener('focus', () => {
+            this.showAllOptions();
+        });
+        
+        this.searchInput.addEventListener('click', () => {
+            this.showAllOptions();
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target) && !this.newDealerForm.contains(e.target)) {
+                this.dropdown.style.display = 'none';
+                
+                // If no value selected, reset the input
+                if (!this.hiddenInput.value && this.searchInput.value) {
+                    this.searchInput.value = '';
+                }
+            }
+        });
+        
+        // Filter options on input
+        this.searchInput.addEventListener('input', () => {
+            const value = this.searchInput.value.toLowerCase();
+            
+            this.options.forEach(option => {
+                const matches = option.textContent.toLowerCase().includes(value);
+                option.style.display = matches ? 'block' : 'none';
+            });
+            
+            this.dropdown.style.display = 'block';
+        });
+        
+        // Handle option selection
+        this.options.forEach(option => {
+            option.addEventListener('click', () => {
+                this.searchInput.value = option.textContent;
+                this.hiddenInput.value = option.dataset.id;
+                this.dropdown.style.display = 'none';
+                
+                // Trigger change event on hidden input
+                const event = new Event('change');
+                this.hiddenInput.dispatchEvent(event);
+            });
+        });
+        
+        // Handle "Add New Dealer" button
+        this.addNewButton.addEventListener('click', () => {
+            this.dropdown.style.display = 'none';
+            this.newDealerForm.style.display = 'block';
+            this.newDealerName.focus();
+        });
+        
+        // Cancel adding new dealer
+        this.cancelButton.addEventListener('click', () => {
+            this.newDealerForm.style.display = 'none';
+            this.newDealerName.value = '';
+            this.newDealerContact.value = '';
+            this.newDealerAddress.value = '';
+        });
+        
+        // Save new dealer
+        this.saveButton.addEventListener('click', () => {
+            const dealerName = this.newDealerName.value.trim();
+            if (!dealerName) {
+                alert('Dealer name is required');
+                return;
+            }
+            
+            // Get CSRF token from the form
+            const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+            
+            // Send API request to create dealer
+            fetch('/dealers/api/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    dealer_name: dealerName,
+                    contact_info: this.newDealerContact.value.trim(),
+                    address: this.newDealerAddress.value.trim()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add the new dealer to the dropdown
+                    this.addNewDealer(data.dealer_id, data.dealer_name);
+                    
+                    // Hide the form and reset fields
+                    this.newDealerForm.style.display = 'none';
+                    this.newDealerName.value = '';
+                    this.newDealerContact.value = '';
+                    this.newDealerAddress.value = '';
+                    
+                    // Show success message
+                    alert('Dealer created successfully');
+                } else {
+                    alert(data.message || 'Error creating dealer');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the dealer');
+            });
+        });
+    }
+    
+    showAllOptions() {
+        // Reset the filter
+        this.options.forEach(option => {
+            option.style.display = 'block';
+        });
+        this.dropdown.style.display = 'block';
+    }
+    
+    addNewDealer(dealerId, dealerName) {
+        // Create new option element
+        const newOption = document.createElement('div');
+        newOption.className = 'option';
+        newOption.dataset.id = dealerId;
+        newOption.textContent = dealerName;
+        
+        // Add click event to the new option
+        newOption.addEventListener('click', () => {
+            this.searchInput.value = newOption.textContent;
+            this.hiddenInput.value = newOption.dataset.id;
+            this.dropdown.style.display = 'none';
+            
+            // Trigger change event on hidden input
+            const event = new Event('change');
+            this.hiddenInput.dispatchEvent(event);
+        });
+        
+        // Insert before the "Add New" button
+        this.dropdown.insertBefore(newOption, this.addNewButton);
+        
+        // Add to options array
+        this.options.push(newOption);
+        this.originalOptions.push(newOption);
+        
+        // Select the new dealer
+        this.searchInput.value = dealerName;
+        this.hiddenInput.value = dealerId;
+        
+        // Trigger change event on hidden input
+        const event = new Event('change');
+        this.hiddenInput.dispatchEvent(event);
+    }
+}
+
+// Update current location preview when repair status changes
+document.addEventListener('DOMContentLoaded', function() {
+    const currentLocationField = document.getElementById('current_location');
+    
+    // On form submit, make the field editable so it can be submitted
+    document.querySelector('form').addEventListener('submit', function() {
+        if (currentLocationField.hasAttribute('readonly')) {
+            currentLocationField.removeAttribute('readonly');
+        }
+    });
+    
+    // Update location preview when repair status changes
+    document.getElementById('repair_status').addEventListener('change', function() {
+        const status = this.value;
+        let newLocation = '';
+        
+        switch(status) {
+            case 'Purchased':
+                newLocation = "Dealer's Lot";
+                break;
+            case 'Waiting for Repairs':
+                newLocation = 'Base (Awaiting Repairs)';
+                break;
+            case 'In Repair':
+                newLocation = 'Repair: Service Provider';
+                break;
+            case 'On Display':
+                newLocation = 'On Display at Stand';
+                break;
+            default:
+                newLocation = currentLocationField.value;
+        }
+        
+        currentLocationField.value = newLocation;
+    });
+    
+    // Trigger the change event on page load to set initial value
+    document.getElementById('repair_status').dispatchEvent(new Event('change'));
+
+    // Function to set up make-model relationship
+    function setupMakeModelRelationship() {
+        const makeField = document.querySelector('input[name="vehicle_make"]');
+        const modelField = document.querySelector('input[name="vehicle_model"]');
+        
+        if (makeField && modelField) {
+            // Store original values for reference
+            const originalMake = makeField.value.trim();
+            const originalModel = modelField.value.trim();
+            
+            // Handle make changes to filter models
+            makeField.addEventListener('change', function() {
+                const newMake = this.value.trim();
+                // Only clear model if make has changed from its original value
+                if (newMake !== originalMake) {
+                    modelField.value = '';
+                }
+                
+                // Enable/disable model based on make
+                if (newMake) {
+                    modelField.disabled = false;
+                    modelField.classList.remove('bg-light', 'text-muted');
+                    modelField.style.cursor = 'text';
+                    modelField.placeholder = '';
+                } else {
+                    modelField.disabled = true;
+                    modelField.classList.add('bg-light', 'text-muted');
+                    modelField.style.cursor = 'not-allowed';
+                    modelField.placeholder = 'Select make first';
+                    modelField.value = '';
+                }
+            });
+            
+            // Also check on input event to make model field available as soon as user types
+            makeField.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    modelField.disabled = false;
+                    modelField.classList.remove('bg-light', 'text-muted');
+                    modelField.style.cursor = 'text';
+                    modelField.placeholder = '';
+                } else {
+                    modelField.disabled = true;
+                    modelField.classList.add('bg-light', 'text-muted');
+                    modelField.style.cursor = 'not-allowed';
+                    modelField.placeholder = 'Select make first';
+                    modelField.value = '';
+                }
+            });
+        }
+    }
+    
+    // Initialize dealer autocomplete
+    const dealerAutocomplete = new DealerAutocomplete();
+    
+    // Set up make-model relationship after autocomplete is initialized
+    setupMakeModelRelationship();
+    
+    // Enhance vehicle_make field with additional click handlers
+    const makeField = document.querySelector('input[name="vehicle_make"]');
+    if (makeField) {
+        // Add click handler to ensure dropdown shows on focus/click
+        makeField.addEventListener('click', function() {
+            // Trigger focus event to show suggestions
+            this.dispatchEvent(new Event('focus'));
+        });
+    }
+    
+    // Enhance vehicle_model field with additional click handlers
+    const modelField = document.querySelector('input[name="vehicle_model"]');
+    if (modelField) {
+        // Add click handler to ensure dropdown shows on focus/click
+        modelField.addEventListener('click', function() {
+            if (!this.disabled) {
+                // Trigger focus event to show suggestions
+                this.dispatchEvent(new Event('focus'));
+            }
+        });
+    }
+});
+</script>
 {% endblock %} 

@@ -1,0 +1,112 @@
+{
+  "report_date": "2025-03-26 01:28",
+  "year": 2023,
+  "total_repairs": 0,
+  "total_cost": 0,
+  "average_cost": 0.0,
+  "average_duration": 0,
+  "repair_costs_by_type": [],
+  "repairs_by_type": [],
+  "repair_costs_by_provider": [],
+  "repairs_by_provider": [],
+  "repair_duration_by_type": [],
+  "monthly_costs": [
+    {
+      "month": 1,
+      "name": "January",
+      "month_name": "January",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 2,
+      "name": "February",
+      "month_name": "February",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 3,
+      "name": "March",
+      "month_name": "March",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 4,
+      "name": "April",
+      "month_name": "April",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 5,
+      "name": "May",
+      "month_name": "May",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 6,
+      "name": "June",
+      "month_name": "June",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 7,
+      "name": "July",
+      "month_name": "July",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 8,
+      "name": "August",
+      "month_name": "August",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 9,
+      "name": "September",
+      "month_name": "September",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 10,
+      "name": "October",
+      "month_name": "October",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 11,
+      "name": "November",
+      "month_name": "November",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    },
+    {
+      "month": 12,
+      "name": "December",
+      "month_name": "December",
+      "count": 0,
+      "total_cost": 0,
+      "average_cost": 0.0
+    }
+  ],
+  "max_duration": 0
+}

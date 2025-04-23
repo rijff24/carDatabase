@@ -1,0 +1,255 @@
+{
+  "report_date": "2025-03-26 01:43",
+  "period": "quarterly",
+  "period_name": "quarterly",
+  "period_label": "Period",
+  "year": 2024,
+  "current_year": 2025,
+  "month": 0,
+  "total_sales_count": 4,
+  "total_sales": 4,
+  "total_revenue": 882442.49,
+  "total_profit": 380142.49,
+  "average_margin": 43.0784435595344,
+  "profit_margin": 43.0784435595344,
+  "period_labels": [
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+  ],
+  "sales_by_period": [
+    {
+      "period_id": 1,
+      "period_name": "Q1",
+      "label": "Q1",
+      "count": 1,
+      "revenue": 181181.47,
+      "cost": 150000.0,
+      "profit": 31181.47,
+      "margin": 17.21007672583736,
+      "avg_price": 181181.47,
+      "trend": 0,
+      "sales_change": 0,
+      "revenue_change": 0,
+      "profit_change": 0
+    },
+    {
+      "period_id": 2,
+      "period_name": "Q2",
+      "label": "Q2",
+      "count": 1,
+      "revenue": 275902.77,
+      "cost": 150000.0,
+      "profit": 125902.77,
+      "margin": 45.6330213719855,
+      "avg_price": 275902.77,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": 52.27979439619294,
+      "profit_change": 303.77432494362836
+    },
+    {
+      "period_id": 3,
+      "period_name": "Q3",
+      "label": "Q3",
+      "count": 1,
+      "revenue": 177778.27,
+      "cost": 150000.0,
+      "profit": 27778.27,
+      "margin": 15.625233612634435,
+      "avg_price": 177778.27,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": -35.56488396256406,
+      "profit_change": -77.9367284770621
+    },
+    {
+      "period_id": 4,
+      "period_name": "Q4",
+      "label": "Q4",
+      "count": 1,
+      "revenue": 247579.98,
+      "cost": 52300.0,
+      "profit": 195279.98,
+      "margin": 78.8755132785777,
+      "avg_price": 247579.98,
+      "trend": 0.0,
+      "sales_change": 0.0,
+      "revenue_change": 39.263353164590924,
+      "profit_change": 602.9954709202553
+    }
+  ],
+  "sales_by_dealer": [
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 2,
+      "total_revenue": 523482.75,
+      "total_cost": 202300.0,
+      "total_profit": 321182.75,
+      "average_sale": 261741.375,
+      "margin": 61.354982566283226,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 1,
+      "total_revenue": 181181.47,
+      "total_cost": 150000.0,
+      "total_profit": 31181.47,
+      "average_sale": 181181.47,
+      "margin": 17.21007672583736,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 4,
+      "dealer_name": "Test Dealer 20250325222239",
+      "sales_count": 1,
+      "total_revenue": 177778.27,
+      "total_cost": 150000.0,
+      "total_profit": 27778.27,
+      "average_sale": 177778.27,
+      "margin": 15.625233612634435,
+      "sales_percentage": 25.0
+    }
+  ],
+  "dealer_performance": [
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 2,
+      "total_revenue": 523482.75,
+      "total_cost": 202300.0,
+      "total_profit": 321182.75,
+      "average_sale": 261741.375,
+      "margin": 61.354982566283226,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 1,
+      "total_revenue": 181181.47,
+      "total_cost": 150000.0,
+      "total_profit": 31181.47,
+      "average_sale": 181181.47,
+      "margin": 17.21007672583736,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 4,
+      "dealer_name": "Test Dealer 20250325222239",
+      "sales_count": 1,
+      "total_revenue": 177778.27,
+      "total_cost": 150000.0,
+      "total_profit": 27778.27,
+      "average_sale": 177778.27,
+      "margin": 15.625233612634435,
+      "sales_percentage": 25.0
+    }
+  ],
+  "top_dealers": [
+    {
+      "dealer_id": 1,
+      "dealer_name": "We Buy Cars Midrand",
+      "sales_count": 2,
+      "total_revenue": 523482.75,
+      "total_cost": 202300.0,
+      "total_profit": 321182.75,
+      "average_sale": 261741.375,
+      "margin": 61.354982566283226,
+      "sales_percentage": 50.0
+    },
+    {
+      "dealer_id": 2,
+      "dealer_name": "Test Dealer 20250325222100",
+      "sales_count": 1,
+      "total_revenue": 181181.47,
+      "total_cost": 150000.0,
+      "total_profit": 31181.47,
+      "average_sale": 181181.47,
+      "margin": 17.21007672583736,
+      "sales_percentage": 25.0
+    },
+    {
+      "dealer_id": 4,
+      "dealer_name": "Test Dealer 20250325222239",
+      "sales_count": 1,
+      "total_revenue": 177778.27,
+      "total_cost": 150000.0,
+      "total_profit": 27778.27,
+      "average_sale": 177778.27,
+      "margin": 15.625233612634435,
+      "sales_percentage": 25.0
+    }
+  ],
+  "sales_count_trend": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "revenue_profit_trend": {
+    "revenue": [
+      181181.47,
+      275902.77,
+      177778.27,
+      247579.98
+    ],
+    "profit": [
+      31181.47,
+      125902.77,
+      27778.27,
+      195279.98
+    ]
+  },
+  "previous_year_comparison": {
+    "current_year": 2024,
+    "previous_year": 2023,
+    "current_sales": 4,
+    "previous_sales": 4,
+    "sales_change": 0.0,
+    "current_revenue": 882442.49,
+    "previous_revenue": 853178.88,
+    "revenue_change": 3.4299501178463303,
+    "current_profit": 380142.49,
+    "previous_profit": 253178.88,
+    "profit_change": 50.14778878870149
+  },
+  "top_models": [
+    {
+      "make": "Toyota",
+      "model": "Camry",
+      "count": 3,
+      "total_revenue": 634862.51,
+      "average_price": 211620.83666666667
+    },
+    {
+      "make": "VW",
+      "model": "Golf 3",
+      "count": 1,
+      "total_revenue": 247579.98,
+      "average_price": 247579.98
+    }
+  ],
+  "sales_counts": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "revenues": [
+    181181.47,
+    275902.77,
+    177778.27,
+    247579.98
+  ],
+  "profits": [
+    31181.47,
+    125902.77,
+    27778.27,
+    195279.98
+  ]
+}

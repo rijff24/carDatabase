@@ -9,6 +9,7 @@ from app.utils.validators import validate_params, validate_form
 from app.utils.helpers import safe_get_or_404
 from app import db
 from datetime import datetime
+from app.models.setting import Setting
 
 repairs_bp = Blueprint('repairs', __name__)
 
@@ -112,7 +113,7 @@ def create():
         form.provider_id.choices = [(p.provider_id, f"{p.provider_name} ({p.service_type})") 
                                 for p in RepairProvider.query.all()]
     
-    return render_template('repairs/create.html', form=form)
+    return render_template('repairs/create.html', form=form, settings=Setting)
 
 @repairs_bp.route('/<int:repair_id>')
 @login_required
@@ -129,7 +130,8 @@ def view(repair_id):
         'repairs/view.html', 
         repair=repair, 
         part_form=part_form,
-        repair_parts=repair_parts
+        repair_parts=repair_parts,
+        settings=Setting
     )
 
 @repairs_bp.route('/<int:repair_id>/edit', methods=['GET', 'POST'])
@@ -149,7 +151,14 @@ def edit(repair_id):
                                    for p in RepairProvider.query.all()]
         
         if form.validate_on_submit():
-            form.populate_obj(repair)
+            # Map form fields to model fields
+            repair.car_id = form.car_id.data
+            repair.repair_type = form.repair_type.data
+            repair.provider_id = form.provider_id.data
+            repair.start_date = form.start_date.data
+            repair.end_date = form.end_date.data
+            repair.repair_cost = form.repair_cost.data
+            repair.additional_notes = form.additional_notes.data
             
             # If repair is marked as complete (end_date is set), update car status
             car = safe_get_or_404(Car, repair.car_id, f"Car with ID {repair.car_id} not found")
@@ -178,14 +187,23 @@ def edit(repair_id):
                     error_messages.append(f"{field}: {error}")
             flash(f"Form validation failed: {', '.join(error_messages)}", 'danger')
     else:
-        form = RepairForm(obj=repair)
+        # Map model fields to form fields for display
+        form = RepairForm()
+        form.car_id.data = repair.car_id
+        form.repair_type.data = repair.repair_type
+        form.provider_id.data = repair.provider_id
+        form.start_date.data = repair.start_date
+        form.end_date.data = repair.end_date
+        form.repair_cost.data = repair.repair_cost
+        form.additional_notes.data = repair.additional_notes
+        
         # Populate form choices
         form.car_id.choices = [(c.car_id, f"{c.vehicle_make} {c.vehicle_model} ({c.year})") 
-                               for c in Car.query.all()]
+                              for c in Car.query.all()]
         form.provider_id.choices = [(p.provider_id, f"{p.provider_name} ({p.service_type})") 
                                    for p in RepairProvider.query.all()]
     
-    return render_template('repairs/edit.html', form=form, repair=repair)
+    return render_template('repairs/edit.html', form=form, repair=repair, settings=Setting)
 
 @repairs_bp.route('/<int:repair_id>/delete', methods=['POST'])
 @login_required

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Import{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Bulk Import Data</h1>
+            <p class="lead">Upload CSV or Excel files to import data in bulk. Use the sample templates for reference.</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Cars Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Cars</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload car data with VIN, make, model, year, color, price, etc.</p>
+                    <form action="{{ url_for('import.import_cars_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="cars-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="cars-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Cars
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('cars')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Repairs Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Repairs</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload repair records including car ID, description, cost, etc.</p>
+                    <form action="{{ url_for('import.import_repairs_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="repairs-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="repairs-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Repairs
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('repairs')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sales Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Sales</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload sales records with car ID, customer details, sale price, etc.</p>
+                    <form action="{{ url_for('import.import_sales_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="sales-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="sales-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Sales
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('sales')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dealers Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Dealers</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload dealer information including name, address, contact details, etc.</p>
+                    <form action="{{ url_for('import.import_dealers_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="dealers-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="dealers-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Dealers
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('dealers')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parts Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Parts</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload parts inventory with name, manufacturer, price, etc.</p>
+                    <form action="{{ url_for('import.import_parts_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="parts-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="parts-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Parts
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('parts')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stands Import -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Import Stands</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Upload stand information with name, location, capacity, etc.</p>
+                    <form action="{{ url_for('import.import_stands_route') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="stands-file" class="form-label">Select CSV or Excel file</label>
+                            <input class="form-control" type="file" id="stands-file" name="file" accept=".csv, .xlsx">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Stands
+                            </button>
+                            <a href="#" class="btn btn-outline-secondary" onclick="downloadTemplate('stands')">
+                                <i class="fas fa-download me-2"></i>Download Template
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Import Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Use CSV or Excel (.xlsx) format for all imports</li>
+                        <li>Download the template to see the expected format</li>
+                        <li>Required fields will be marked in the template</li>
+                        <li>Date formats should be YYYY-MM-DD</li>
+                        <li>Numeric values should not include currency symbols</li>
+                        <li>For relationships, use IDs from the system (car_id, provider_id, etc.)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function downloadTemplate(entityType) {
+        // Redirect to the download template endpoint using the proper route
+        window.location.href = "{{ url_for('import.download_template', entity_type='') }}" + entityType;
+    }
+</script>
+{% endblock %} 

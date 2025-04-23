@@ -20,6 +20,7 @@ class Dealer(db.Model):
     
     # Relationships
     cars = db.relationship('Car', primaryjoin="Dealer.dealer_id==Car.dealer_id", lazy='dynamic', overlaps="dealer")
+    sales = db.relationship('Sale', back_populates='dealer', lazy='dynamic')
     
     def update_performance_metrics(self):
         """Update the dealer's performance metrics based on sales"""

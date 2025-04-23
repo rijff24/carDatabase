@@ -4,19 +4,350 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1 class="mb-3">Sales Performance Report</h1>
-    <div class="row">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Sales Performance Report</h1>
+        <div class="btn-group">
+            <a href="{{ url_for('reports.sales_performance', period='monthly', year=year) }}" class="btn btn-outline-primary {% if period == 'monthly' %}active{% endif %}">Monthly</a>
+            <a href="{{ url_for('reports.sales_performance', period='quarterly', year=year) }}" class="btn btn-outline-primary {% if period == 'quarterly' %}active{% endif %}">Quarterly</a>
+            <a href="{{ url_for('reports.sales_performance', period='yearly', year=year) }}" class="btn btn-outline-primary {% if period == 'yearly' %}active{% endif %}">Yearly</a>
+        </div>
+    </div>
+    
+    <!-- Filter Panel -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Report Filters</h5>
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="fas fa-filter me-1"></i>Toggle Filters
+            </button>
+        </div>
+        <div class="collapse" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" action="{{ url_for('reports.sales_performance') }}" class="row g-3">
+                    <input type="hidden" name="period" value="{{ period|default('monthly', true) }}">
+                    
+                    <div class="col-md-3">
+                        <label for="year" class="form-label">Year</label>
+                        <select name="year" id="year" class="form-select">
+                            {% set current_year = current_year|default(2025) %}
+                            {% for y in range(current_year-2, current_year+1) %}
+                            <option value="{{ y }}" {% if year|int == y %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="time_range" class="form-label">Custom Date Range</label>
+                        <div class="input-group">
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date|default('') }}">
+                            <span class="input-group-text">to</span>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date|default('') }}">
+                        </div>
+                        <small class="text-muted">Optional: Overrides year selection</small>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="vehicle_make" class="form-label">Vehicle Make</label>
+                        <select name="vehicle_make" id="vehicle_make" class="form-select">
+                            <option value="">All Makes</option>
+                            {% for make in vehicle_makes|default([]) %}
+                            <option value="{{ make }}" {% if vehicle_make == make %}selected{% endif %}>{{ make }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="vehicle_model" class="form-label">Vehicle Model</label>
+                        <select name="vehicle_model" id="vehicle_model" class="form-select" {% if not vehicle_make %}disabled{% endif %}>
+                            <option value="">All Models</option>
+                            {% for model in vehicle_models|default([]) %}
+                            <option value="{{ model }}" {% if vehicle_model == model %}selected{% endif %}>{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="stand_ids" class="form-label">Filter by Stand</label>
+                        <select name="stand_ids" id="stand_ids" class="form-select" multiple>
+                            {% for stand in stands|default([]) %}
+                            <option value="{{ stand.stand_id }}" {% if stand_ids is defined and stand.stand_id in stand_ids %}selected{% endif %}>{{ stand.stand_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                    </div>
+                    
+                    <div class="col-md-8 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">Apply Filters</button>
+                        <a href="{{ url_for('reports.sales_performance') }}" class="btn btn-outline-secondary">Reset Filters</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card shadow mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Report Details</h5>
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <h5 class="mb-0">{{ period|default('Monthly')|capitalize }} Performance - {{ year }}</h5>
+                    <small>Report generated on {{ report_date }}</small>
                 </div>
                 <div class="card-body">
-                    <p>Report generated on: {{ report_date }}</p>
-                    <p>This is a placeholder for the Sales Performance report template.</p>
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Sales</h6>
+                                    <h3>{{ total_sales_count|default(0) }}</h3>
+                                    <p class="text-muted mb-0">vehicles sold</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Revenue</h6>
+                                    <h3>${{ total_revenue|default(0)|float|round(2) }}</h3>
+                                    <p class="text-muted mb-0">total sales amount</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Profit</h6>
+                                    <h3>${{ total_profit|default(0)|float|round(2) }}</h3>
+                                    <p class="text-muted mb-0">net earnings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Avg. Time in Stock</h6>
+                                    <h3>{{ avg_time_in_stock|default(0)|int }}</h3>
+                                    <p class="text-muted mb-0">days before sale</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ period|default('Monthly')|capitalize }} Sales Trends</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{ period_label|default('Period') }}</th>
+                                    <th class="text-center">Sales Count</th>
+                                    <th class="text-end">Revenue</th>
+                                    <th class="text-end">Profit</th>
+                                    <th class="text-end">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in sales_by_period|default([]) %}
+                                <tr>
+                                    <td>{{ item.label }}</td>
+                                    <td class="text-center">{{ item.count }}</td>
+                                    <td class="text-end">${{ item.revenue|default(0)|float|round(2) }}</td>
+                                    <td class="text-end">${{ item.profit|default(0)|float|round(2) }}</td>
+                                    <td class="text-end">{{ item.margin|default(0)|float|round(2) }}%</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not sales_by_period or sales_by_period|length == 0 %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No data available for this period</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Stand Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Stand</th>
+                                    <th class="text-center">Sales Count</th>
+                                    <th class="text-end">Revenue</th>
+                                    <th class="text-end">Profit</th>
+                                    <th class="text-center">Avg. Days in Stock</th>
+                                    <th class="text-end">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stand in sales_by_stand|default([]) %}
+                                <tr>
+                                    <td>{{ stand.stand_name }}</td>
+                                    <td class="text-center">{{ stand.sales_count }}</td>
+                                    <td class="text-end">${{ stand.total_revenue|default(0)|float|round(2) }}</td>
+                                    <td class="text-end">${{ stand.total_profit|default(0)|float|round(2) }}</td>
+                                    <td class="text-center">{{ stand.avg_days_in_stock|default(0)|int }}</td>
+                                    <td class="text-end">{{ stand.margin|default(0)|float|round(2) }}%</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not sales_by_stand or sales_by_stand|length == 0 %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No stand data available for this period</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Dealer Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Dealer</th>
+                                    <th class="text-center">Sales Count</th>
+                                    <th class="text-end">Revenue</th>
+                                    <th class="text-end">Profit</th>
+                                    <th class="text-end">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dealer in sales_by_dealer|default([]) %}
+                                <tr>
+                                    <td>{{ dealer.dealer_name }}</td>
+                                    <td class="text-center">{{ dealer.sales_count }}</td>
+                                    <td class="text-end">${{ dealer.total_revenue|default(0)|float|round(2) }}</td>
+                                    <td class="text-end">${{ dealer.total_profit|default(0)|float|round(2) }}</td>
+                                    <td class="text-end">{{ dealer.margin|default(0)|float|round(2) }}%</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not sales_by_dealer or sales_by_dealer|length == 0 %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No dealer data available for this period</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Top Selling Vehicles</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Make & Model</th>
+                                    <th class="text-center">Sales Count</th>
+                                    <th class="text-end">Avg. Price</th>
+                                    <th>Licence Number</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model in top_models|default([]) %}
+                                <tr>
+                                    <td>{{ model.make }} {{ model.model }}</td>
+                                    <td class="text-center">{{ model.count }}</td>
+                                    <td class="text-end">${{ model.average_price|default(0)|float|round(2) }}</td>
+                                    <td>
+                                        {% for car in model.cars[:3] %}
+                                        <a href="{{ url_for('cars.view', car_id=car.car_id) }}" class="badge bg-secondary text-decoration-none">{{ car.vin }}</a>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not top_models or top_models|length == 0 %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No model data available for this period</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+    document.getElementById('vehicle_make').addEventListener('change', function() {
+        const modelSelect = document.getElementById('vehicle_model');
+        const selectedMake = this.value;
+        
+        if (selectedMake) {
+            modelSelect.disabled = false;
+            
+            // Clear existing options except the first one
+            while (modelSelect.options.length > 1) {
+                modelSelect.remove(1);
+            }
+            
+            // Make AJAX call to get models for the selected make
+            fetch(`/api/vehicle-models?make=${encodeURIComponent(selectedMake)}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Add new options
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model;
+                        option.textContent = model;
+                        modelSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching vehicle models:', error);
+                });
+        } else {
+            modelSelect.disabled = true;
+            modelSelect.value = '';
+        }
+    });
+    
+    // Initialize stand_ids select with Select2 for better UX if available
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#stand_ids').select2({
+            placeholder: 'Select stands to filter',
+            allowClear: true
+        });
+    }
+</script>
+{% endblock %}
+
 {% endblock %} 

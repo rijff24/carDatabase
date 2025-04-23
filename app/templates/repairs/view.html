@@ -13,6 +13,7 @@
             
             {% if not repair.end_date %}
             <form action="{{ url_for('repairs.complete', repair_id=repair.repair_id) }}" method="POST" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-success">
                     <i class="fas fa-check"></i> Mark as Complete
                 </button>
@@ -114,6 +115,7 @@
                                     <td>{{ part.vendor }}</td>
                                     <td>
                                         <form action="{{ url_for('repairs.remove_part', record_id=part.record_id) }}" method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -138,14 +140,20 @@
                     <hr>
                     
                     <h6>Add Part</h6>
-                    <form method="POST" action="{{ url_for('repairs.add_part', repair_id=repair.repair_id) }}">
+                    <form method="POST" action="{{ url_for('repairs.add_part', repair_id=repair.repair_id) }}" id="add-repair-part-form">
                         {{ part_form.hidden_tag() }}
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     {{ part_form.part_id.label(class="form-label") }}
-                                    {{ part_form.part_id(class="form-select") }}
+                                    <select class="form-select" id="{{ part_form.part_id.id }}" name="{{ part_form.part_id.name }}">
+                                        {% for value, label in part_form.part_id.choices %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                        <option disabled>──────────</option>
+                                        <option value="add_new" class="text-primary">+ Add New Part</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -178,4 +186,111 @@
         </div>
     </div>
 </div>
+
+<!-- Add New Part Modal -->
+<div class="modal fade" id="addPartModal" tabindex="-1" aria-labelledby="addPartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPartModalLabel">Add New Part</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+                <div id="addPartFormContainer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const partSelect = document.getElementById('{{ part_form.part_id.id }}');
+        const enableSubformDropdowns = {{ 'true' if settings.get_setting('enable_subform_dropdowns', True) else 'false' }};
+        
+        partSelect.addEventListener('change', function(e) {
+            if (e.target.value === 'add_new') {
+                // Reset back to first option to prevent the "Add New" option from being selected
+                e.target.selectedIndex = 0;
+                
+                if (enableSubformDropdowns) {
+                    // Show modal with part form
+                    const modal = new bootstrap.Modal(document.getElementById('addPartModal'));
+                    
+                    // Load part form into modal
+                    fetch('{{ url_for("parts.create", modal=1) }}')
+                        .then(function(response) { 
+                            return response.text(); 
+                        })
+                        .then(function(html) {
+                            document.getElementById('addPartFormContainer').innerHTML = html;
+                            modal.show();
+                            
+                            // Setup form submission
+                            const form = document.getElementById('modalPartForm');
+                            if (form) {
+                                form.addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    
+                                    const formData = new FormData(form);
+                                    
+                                    fetch(form.action, {
+                                        method: 'POST',
+                                        body: formData,
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    })
+                                    .then(function(response) { 
+                                        return response.json(); 
+                                    })
+                                    .then(function(data) {
+                                        if (data.success) {
+                                            // Close modal
+                                            modal.hide();
+                                            
+                                            // Add new option to dropdown and select it
+                                            const newOption = new Option(data.part_name, data.part_id, true, true);
+                                            partSelect.insertBefore(newOption, partSelect.firstChild);
+                                            partSelect.selectedIndex = 0;
+                                            
+                                            // Show success message
+                                            const alertContainer = document.createElement('div');
+                                            alertContainer.className = 'alert alert-success alert-dismissible fade show';
+                                            alertContainer.innerHTML = data.message + 
+                                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                                            document.querySelector('.container.mt-3').appendChild(alertContainer);
+                                        } else {
+                                            // Show validation errors in the modal
+                                            let errorDiv = document.getElementById('form-errors');
+                                            if (!errorDiv) {
+                                                errorDiv = document.createElement('div');
+                                                errorDiv.id = 'form-errors';
+                                                errorDiv.className = 'alert alert-danger';
+                                                form.prepend(errorDiv);
+                                            }
+                                            errorDiv.textContent = data.message;
+                                        }
+                                    })
+                                    .catch(function(error) {
+                                        console.error('Error:', error);
+                                        alert('An error occurred while processing your request.');
+                                    });
+                                });
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error loading form:', error);
+                            alert('Could not load the form. Please try again.');
+                        });
+                } else {
+                    // Redirect to the regular part creation page
+                    window.location.href = '{{ url_for("parts.create", return_to=request.path) }}';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %} 

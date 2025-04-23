@@ -1,0 +1,78 @@
+{
+  "report_date": "2025-03-26 01:28",
+  "status": "all",
+  "cars": [],
+  "total_inventory": 0,
+  "aged_vehicle_count": 0,
+  "aged_vehicle_percentage": 0,
+  "total_investment": 0,
+  "avg_investment_per_vehicle": 0,
+  "avg_days_in_inventory": 0,
+  "aging_buckets": [
+    {
+      "label": "0-15 days",
+      "min_days": 0,
+      "max_days": 15,
+      "count": 0,
+      "investment": 0.0,
+      "alert": false,
+      "percentage": 0,
+      "avg_investment": 0.0
+    },
+    {
+      "label": "16-30 days",
+      "min_days": 16,
+      "max_days": 30,
+      "count": 0,
+      "investment": 0.0,
+      "alert": false,
+      "percentage": 0,
+      "avg_investment": 0.0
+    },
+    {
+      "label": "31-45 days",
+      "min_days": 31,
+      "max_days": 45,
+      "count": 0,
+      "investment": 0.0,
+      "alert": false,
+      "percentage": 0,
+      "avg_investment": 0.0
+    },
+    {
+      "label": "46-60 days",
+      "min_days": 46,
+      "max_days": 60,
+      "count": 0,
+      "investment": 0.0,
+      "alert": true,
+      "percentage": 0,
+      "avg_investment": 0.0
+    },
+    {
+      "label": "61-90 days",
+      "min_days": 61,
+      "max_days": 90,
+      "count": 0,
+      "investment": 0.0,
+      "alert": true,
+      "percentage": 0,
+      "avg_investment": 0.0
+    },
+    {
+      "label": "91+ days",
+      "min_days": 91,
+      "max_days": Infinity,
+      "count": 0,
+      "investment": 0.0,
+      "alert": true,
+      "percentage": 0,
+      "avg_investment": 0.0
+    }
+  ],
+  "status_counts": {
+    "reconditioning": 0,
+    "ready": 0,
+    "stand": 0
+  }
+}

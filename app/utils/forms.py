@@ -36,7 +36,6 @@ class CarForm(FlaskForm):
     colour = StringField('Colour', validators=[DataRequired(), Length(1, 50)])
     dekra_condition = SelectField('Dekra Condition', validators=[DataRequired()], 
                                 choices=[('Platinum', 'Platinum'), 
-                                        ('Diamond', 'Diamond'),
                                         ('Gold', 'Gold'),
                                         ('Green', 'Green'),
                                         ('Other', 'Other')])
@@ -84,24 +83,52 @@ class CarForm(FlaskForm):
 class RepairForm(FlaskForm):
     """Form for adding or editing a repair"""
     car_id = SelectField('Car', validators=[DataRequired()], coerce=int)
-    repair_type = SelectField('Repair Type', validators=[DataRequired()],
-                            choices=[('Upholstery', 'Upholstery'),
-                                    ('Panel Beating', 'Panel Beating'),
-                                    ('Tires/Suspension', 'Tires/Suspension'),
-                                    ('Workshop Repairs', 'Workshop Repairs'),
-                                    ('Car Wash', 'Car Wash'),
-                                    ('Air Conditioning', 'Air Conditioning'),
-                                    ('Brakes/Clutch', 'Brakes/Clutch'),
-                                    ('Windscreen', 'Windscreen'),
-                                    ('Covers', 'Covers'),
-                                    ('Diagnostics', 'Diagnostics'),
-                                    ('Other', 'Other')])
+    repair_type = SelectField('Repair Type', validators=[DataRequired()])
     provider_id = SelectField('Service Provider', validators=[DataRequired()], coerce=int)
     start_date = DateField('Start Date', validators=[DataRequired()], format='%Y-%m-%d')
     end_date = DateField('End Date', validators=[Optional()], format='%Y-%m-%d')
     repair_cost = FloatField('Labor Cost', validators=[DataRequired(), NumberRange(min=0)])
     additional_notes = TextAreaField('Additional Notes', validators=[Optional(), Length(max=1000)])
     submit = SubmitField('Submit')
+
+    def __init__(self, *args, **kwargs):
+        super(RepairForm, self).__init__(*args, **kwargs)
+        # Default choices for repair_type
+        self.repair_type.choices = [
+            ('Upholstery', 'Upholstery'),
+            ('Panel Beating', 'Panel Beating'),
+            ('Tires/Suspension', 'Tires/Suspension'),
+            ('Workshop Repairs', 'Workshop Repairs'),
+            ('Car Wash', 'Car Wash'),
+            ('Air Conditioning', 'Air Conditioning'),
+            ('Brakes/Clutch', 'Brakes/Clutch'),
+            ('Windscreen', 'Windscreen'),
+            ('Covers', 'Covers'),
+            ('Diagnostics', 'Diagnostics'),
+            ('Other', 'Other')
+        ]
+        
+        # Add any custom service types from providers that aren't in the default list
+        from app.models.repair_provider import RepairProvider
+        from flask import current_app
+        
+        try:
+            custom_service_types = set()
+            default_types = {choice[0] for choice in self.repair_type.choices}
+            
+            with current_app.app_context():
+                providers = RepairProvider.query.all()
+                for provider in providers:
+                    if provider.service_type and provider.service_type not in default_types:
+                        custom_service_types.add(provider.service_type)
+            
+            # Add custom service types to choices
+            for service_type in sorted(custom_service_types):
+                self.repair_type.choices.append((service_type, service_type))
+        except Exception as e:
+            # If there's any error (like during form initialization outside app context),
+            # just continue with default choices
+            pass
 
     def validate_start_date(self, field):
         """Ensure start_date is not in the future"""
@@ -220,20 +247,21 @@ class RepairProviderForm(FlaskForm):
         Length(1, 100),
         Regexp(r'^[a-zA-Z0-9\-\.\& ]+$', message='Provider name can only contain letters, numbers, spaces, hyphens, dots and ampersands')
     ])
-    service_type = StringField('Service Type', validators=[
-        DataRequired(), 
+    service_type = SelectField('Service Type', validators=[DataRequired()])
+    custom_service_type = StringField('Custom Service Type', validators=[
+        Optional(),
         Length(1, 50),
         Regexp(r'^[a-zA-Z0-9\-\/ ]+$', message='Service type can only contain letters, numbers, spaces, hyphens and slashes')
     ])
     contact_info = StringField('Contact Information', validators=[
-        DataRequired(), 
-        Length(1, 150),
-        Regexp(r'^[a-zA-Z0-9\-\.\+\@\, ]+$', message='Contact information format is invalid')
+        Optional(), 
+        Length(max=150),
+        Regexp(r'^[a-zA-Z0-9\-\.\+\@\, ]*$', message='Contact information format is invalid')
     ])
     location = StringField('Location', validators=[
-        DataRequired(), 
-        Length(1, 100),
-        Regexp(r'^[a-zA-Z0-9\-\.\,\/ ]+$', message='Location format is invalid')
+        Optional(), 
+        Length(max=100),
+        Regexp(r'^[a-zA-Z0-9\-\.\,\/ ]*$', message='Location format is invalid')
     ])
     notes = TextAreaField('Notes', validators=[Optional(), Length(max=1000)])
     rating = SelectField('Rating', validators=[Optional()], 
@@ -242,9 +270,32 @@ class RepairProviderForm(FlaskForm):
                         coerce=lambda x: int(x) if x else None)
     submit = SubmitField('Submit')
 
+    def __init__(self, *args, **kwargs):
+        super(RepairProviderForm, self).__init__(*args, **kwargs)
+        # Pre-defined repair types for service_type choices
+        repair_choices = [
+            ('Upholstery', 'Upholstery'),
+            ('Panel Beating', 'Panel Beating'),
+            ('Tires/Suspension', 'Tires/Suspension'),
+            ('Workshop Repairs', 'Workshop Repairs'),
+            ('Car Wash', 'Car Wash'),
+            ('Air Conditioning', 'Air Conditioning'),
+            ('Brakes/Clutch', 'Brakes/Clutch'),
+            ('Windscreen', 'Windscreen'),
+            ('Covers', 'Covers'),
+            ('Diagnostics', 'Diagnostics'),
+            ('Other', 'Other')
+        ]
+        self.service_type.choices = repair_choices + [('custom', '+ Add Custom Type')]
+
+    def validate_custom_service_type(self, field):
+        """Validate custom service type if selected"""
+        if self.service_type.data == 'custom' and not field.data:
+            raise ValidationError('Please enter a custom service type')
+
     def validate_contact_info(self, field):
-        """Validate that contact information contains at least a phone number or email"""
-        if not any(char in field.data for char in ['@', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']):
+        """Validate that contact information contains at least a phone number or email if provided"""
+        if field.data and not any(char in field.data for char in ['@', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']):
             raise ValidationError('Contact information must include a phone number or email address')
 
 class CarSaleForm(FlaskForm):
@@ -264,3 +315,8 @@ class DateRangeForm(FlaskForm):
         """Ensure end_date is after start_date"""
         if field.data < self.start_date.data:
             raise ValidationError('End date must be after start date') 
+
+class MoveToStandForm(FlaskForm):
+    """Form for moving a car to a stand"""
+    stand_id = SelectField('Select Stand', validators=[DataRequired()], coerce=int)
+    submit = SubmitField('Move to Stand') 

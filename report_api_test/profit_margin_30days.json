@@ -1,0 +1,228 @@
+{
+  "average_cost": "117433.3333333333333333333333",
+  "average_margin": "47.27286676091398526819163174",
+  "average_profit": "105285.6466666666666666666667",
+  "average_revenue": "222718.98",
+  "high_performing_sales": [
+    {
+      "dealer_name": "Test Dealer 20250325222100",
+      "margin": "73.69932474650649840403177785",
+      "profit": "146554.21",
+      "sale_date": "2025-06-15",
+      "sale_id": 10,
+      "sale_price": "198854.21",
+      "total_cost": "52300.00",
+      "vehicle_name": "2015 VW Golf 3"
+    },
+    {
+      "dealer_name": "Test Dealer 20250325222125",
+      "margin": "38.48075518072016396601283193",
+      "profit": "93826.14",
+      "sale_date": "2025-12-07",
+      "sale_id": 12,
+      "sale_price": "243826.14",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    },
+    {
+      "dealer_name": "We Buy Cars Midrand",
+      "margin": "33.47424670561143398523101667",
+      "profit": "75476.59",
+      "sale_date": "2025-07-03",
+      "sale_id": 11,
+      "sale_price": "225476.59",
+      "total_cost": "150000.00",
+      "vehicle_name": "2020 Toyota Camry"
+    }
+  ],
+  "margin_distribution": [
+    {
+      "count": 0,
+      "max": 10,
+      "min": 0,
+      "range": "Less than 10%"
+    },
+    {
+      "count": 0,
+      "max": 20,
+      "min": 10,
+      "range": "10-20%"
+    },
+    {
+      "count": 0,
+      "max": 30,
+      "min": 20,
+      "range": "20-30%"
+    },
+    {
+      "count": 3,
+      "max": Infinity,
+      "min": 30,
+      "range": "More than 30%"
+    }
+  ],
+  "margin_trend": [
+    {
+      "label": "Feb 25",
+      "margin": 0
+    },
+    {
+      "label": "Feb 26",
+      "margin": 0
+    },
+    {
+      "label": "Feb 27",
+      "margin": 0
+    },
+    {
+      "label": "Feb 28",
+      "margin": 0
+    },
+    {
+      "label": "Mar 01",
+      "margin": 0
+    },
+    {
+      "label": "Mar 02",
+      "margin": 0
+    },
+    {
+      "label": "Mar 03",
+      "margin": 0
+    },
+    {
+      "label": "Mar 04",
+      "margin": 0
+    },
+    {
+      "label": "Mar 05",
+      "margin": 0
+    },
+    {
+      "label": "Mar 06",
+      "margin": 0
+    },
+    {
+      "label": "Mar 07",
+      "margin": 0
+    },
+    {
+      "label": "Mar 08",
+      "margin": 0
+    },
+    {
+      "label": "Mar 09",
+      "margin": 0
+    },
+    {
+      "label": "Mar 10",
+      "margin": 0
+    },
+    {
+      "label": "Mar 11",
+      "margin": 0
+    },
+    {
+      "label": "Mar 12",
+      "margin": 0
+    },
+    {
+      "label": "Mar 13",
+      "margin": 0
+    },
+    {
+      "label": "Mar 14",
+      "margin": 0
+    },
+    {
+      "label": "Mar 15",
+      "margin": 0
+    },
+    {
+      "label": "Mar 16",
+      "margin": 0
+    },
+    {
+      "label": "Mar 17",
+      "margin": 0
+    },
+    {
+      "label": "Mar 18",
+      "margin": 0
+    },
+    {
+      "label": "Mar 19",
+      "margin": 0
+    },
+    {
+      "label": "Mar 20",
+      "margin": 0
+    },
+    {
+      "label": "Mar 21",
+      "margin": 0
+    },
+    {
+      "label": "Mar 22",
+      "margin": 0
+    },
+    {
+      "label": "Mar 23",
+      "margin": 0
+    },
+    {
+      "label": "Mar 24",
+      "margin": 0
+    },
+    {
+      "label": "Mar 25",
+      "margin": 0
+    },
+    {
+      "label": "Mar 26",
+      "margin": 0
+    }
+  ],
+  "profit_by_make": [
+    {
+      "avg_cost": "52300.00",
+      "avg_profit": "146554.21",
+      "avg_revenue": "198854.21",
+      "count": 1,
+      "make": "VW",
+      "margin": "73.69932474650649840403177785",
+      "total_cost": "52300.00",
+      "total_profit": "146554.21",
+      "total_revenue": "198854.21"
+    },
+    {
+      "avg_cost": "150000.00",
+      "avg_profit": "84651.365",
+      "avg_revenue": "234651.365",
+      "count": 2,
+      "make": "Toyota",
+      "margin": "36.07537718776960875552545795",
+      "total_cost": "300000.00",
+      "total_profit": "169302.73",
+      "total_revenue": "469302.73"
+    }
+  ],
+  "report_date": "2025-03-26 01:34",
+  "timeframe": "last_30_days",
+  "top_models": [
+    {
+      "avg_profit": "84651.365",
+      "count": 2,
+      "make": "Toyota",
+      "margin": "36.07537718776960875552545795",
+      "model": "Camry",
+      "total_cost": "300000.00",
+      "total_profit": "169302.73",
+      "total_revenue": "469302.73"
+    }
+  ],
+  "total_cars_sold": 3,
+  "total_cost": "352300.00",
+  "total_profit": "315856.94",
+  "total_revenue": "668156.94"
+}

@@ -1,0 +1,85 @@
+<form id="modalProviderForm" method="POST" action="{{ url_for('providers.create_ajax') }}">
+    {{ form.hidden_tag() }}
+    
+    <div class="mb-3">
+        {{ form.provider_name.label(class="form-label") }}
+        {{ form.provider_name(class="form-control") }}
+        {% for error in form.provider_name.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.service_type.label(class="form-label") }}
+        {{ form.service_type(class="form-select") }}
+        {% for error in form.service_type.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3 custom-service-type" style="display: none;">
+        {{ form.custom_service_type.label(class="form-label") }}
+        {{ form.custom_service_type(class="form-control") }}
+        {% for error in form.custom_service_type.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.contact_info.label(class="form-label") }}
+        {{ form.contact_info(class="form-control", placeholder="Phone numbers, email addresses, physical address, etc.") }}
+        {% for error in form.contact_info.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.location.label(class="form-label") }}
+        {{ form.location(class="form-control", placeholder="City, area, or full address") }}
+        {% for error in form.location.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.rating.label(class="form-label") }}
+        {{ form.rating(class="form-select") }}
+        {% for error in form.rating.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.notes.label(class="form-label") }}
+        {{ form.notes(class="form-control", rows=2) }}
+        {% for error in form.notes.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        {{ form.submit(class="btn btn-primary") }}
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const serviceTypeSelect = document.getElementById('{{ form.service_type.id }}');
+        const customServiceTypeDiv = document.querySelector('.custom-service-type');
+        
+        // Initialize visibility
+        if (serviceTypeSelect.value === 'custom') {
+            customServiceTypeDiv.style.display = 'block';
+        }
+        
+        // Toggle custom service type field visibility
+        serviceTypeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customServiceTypeDiv.style.display = 'block';
+            } else {
+                customServiceTypeDiv.style.display = 'none';
+            }
+        });
+    });
+</script> 

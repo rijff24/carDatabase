@@ -5,12 +5,13 @@ from app.models.stand import Stand
 from app.models.dealer import Dealer
 from app.models.repair_provider import RepairProvider
 from app.models.sale import Sale
-from app.utils.forms import CarForm, CarSaleForm, MoveToStandForm
+from app.utils.forms import CarForm, CarSaleForm, MoveToStandForm, StandForm
 from app.utils.validators import validate_params, validate_form
 from app.utils.helpers import safe_get_or_404
 from app import db
 from datetime import datetime
 from sqlalchemy import extract
+from app.models.setting import Setting
 
 cars_bp = Blueprint('cars', __name__)
 
@@ -100,6 +101,17 @@ def create():
                 flash('Invalid model name', 'danger')
                 return redirect(url_for('cars.create'))
             
+            # Get dealer info
+            dealer_id = data.get('source')
+            if not dealer_id:
+                flash('Source (Dealer) is required', 'danger')
+                return redirect(url_for('cars.create'))
+                
+            dealer = Dealer.query.get(dealer_id)
+            if not dealer:
+                flash('Invalid dealer selected', 'danger')
+                return redirect(url_for('cars.create'))
+            
             # Create new car
             car = Car(
                 vehicle_name=data.get('vehicle_name', '').strip(),
@@ -111,11 +123,25 @@ def create():
                 licence_number=data.get('licence_number', '').strip(),
                 registration_number=data.get('registration_number', '').strip(),
                 purchase_price=float(data.get('purchase_price')),
-                source=data.get('source', '').strip(),
+                source=dealer.dealer_name,
+                dealer_id=dealer.dealer_id,
                 date_bought=datetime.now().date(),
-                current_location=data.get('current_location', '').strip(),
                 repair_status=data.get('repair_status')
             )
+            
+            # Set the current location based on repair status
+            if car.repair_status == 'Purchased':
+                car.current_location = "Dealer's Lot"
+            elif car.repair_status == 'Waiting for Repairs':
+                car.current_location = 'Base (Awaiting Repairs)'
+            elif car.repair_status == 'In Repair':
+                provider = RepairProvider.query.first()
+                car.current_location = f"Repair: {provider.location if provider else 'Unknown'}"
+            elif car.repair_status == 'On Display':
+                stand = Stand.query.first()
+                car.current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
+            else:
+                car.current_location = data.get('current_location', '').strip()
             
             db.session.add(car)
             db.session.commit()
@@ -128,7 +154,9 @@ def create():
             flash(f'Error adding car: {str(e)}', 'danger')
             return redirect(url_for('cars.create'))
     
-    return render_template('cars/create.html')
+    # GET request - fetch dealers for dropdown
+    dealers = Dealer.query.all()
+    return render_template('cars/create.html', dealers=dealers)
 
 @cars_bp.route('/add', methods=['GET', 'POST'])
 @login_required
@@ -277,7 +305,16 @@ def view(car_id):
     if car.repair_status == 'On Display' and not car.date_sold:
         sale_form = CarSaleForm(car_id=car.car_id)
     
-    return render_template('cars/view.html', car=car, sale_form=sale_form, move_to_stand_form=move_to_stand_form, stands=stands)
+    # Create stand form for the modal
+    stand_form = StandForm()
+    
+    return render_template('cars/view.html', 
+                          car=car, 
+                          sale_form=sale_form, 
+                          move_to_stand_form=move_to_stand_form, 
+                          stands=stands,
+                          stand_form=stand_form,
+                          settings=Setting)
 
 @cars_bp.route('/<int:car_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -387,28 +424,48 @@ def delete(car_id):
 @login_required
 @validate_params(car_id=(int, True))
 def move_to_stand(car_id):
-    """Move a car to a stand"""
+    """Move a car to a stand or change stands"""
     car = safe_get_or_404(Car, car_id, f"Car with ID {car_id} not found")
     
-    # Create and populate form
-    form = MoveToStandForm()
-    stands = Stand.query.all()
-    form.stand_id.choices = [(s.stand_id, s.stand_name) for s in stands]
+    # Get stand_id from form
+    stand_id = request.form.get('stand_id')
+    if not stand_id:
+        flash('Please select a stand', 'danger')
+        return redirect(url_for('cars.view', car_id=car_id))
     
-    if form.validate_on_submit():
-        stand_id = form.stand_id.data
+    # Validate if it's a valid stand_id
+    try:
+        stand_id = int(stand_id)
+    except ValueError:
+        flash('Invalid stand selection', 'danger')
+        return redirect(url_for('cars.view', car_id=car_id))
+    
+    try:
         stand = safe_get_or_404(Stand, stand_id, f"Stand with ID {stand_id} not found")
         
+        # Check if we're changing stands or moving to a stand for the first time
+        is_changing_stands = car.stand_id is not None
+        
+        # Update car's stand information
         car.stand_id = stand_id
-        car.date_added_to_stand = datetime.now().date()
-        car.repair_status = 'On Display'
+        
+        # Only update date_added_to_stand if the car was not already on a stand
+        if not is_changing_stands:
+            car.date_added_to_stand = datetime.now().date()
+        
+        # Update repair status if car wasn't already on display
+        if car.repair_status != 'On Display':
+            car.repair_status = 'On Display'
+        
+        # Update current location
         car.current_location = f"Stand: {stand.stand_name}"
         
         db.session.commit()
         
         flash(f'Car moved to {stand.stand_name} stand', 'success')
-    else:
-        flash('Form validation failed. Please try again.', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error changing stand: {str(e)}', 'danger')
     
     return redirect(url_for('cars.view', car_id=car_id))
 
@@ -516,4 +573,50 @@ def unsell_car(car_id):
         db.session.rollback()
         flash(f'Error unselling car: {str(e)}', 'danger')
     
-    return redirect(url_for('cars.view', car_id=car_id)) 
+    return redirect(url_for('cars.view', car_id=car_id))
+
+@cars_bp.route('/create-stand-ajax', methods=['POST'])
+@login_required
+def create_stand_ajax():
+    """Create a stand from modal and return JSON response"""
+    form = StandForm(formdata=request.form)
+    
+    if form.validate_on_submit():
+        try:
+            # Create the new stand
+            stand = Stand(
+                stand_name=form.stand_name.data,
+                location=form.location.data,
+                capacity=form.capacity.data,
+                additional_info=form.additional_info.data,
+                date_created=datetime.now(),
+                last_updated=datetime.now()
+            )
+            
+            db.session.add(stand)
+            db.session.commit()
+            
+            # Return success with the new stand info
+            return jsonify({
+                'success': True,
+                'stand_id': stand.stand_id,
+                'stand_name': stand.stand_name,
+                'message': 'Stand created successfully!'
+            })
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                'success': False,
+                'message': f'Error creating stand: {str(e)}'
+            })
+    else:
+        # Return validation errors
+        error_messages = []
+        for field, errors in form.errors.items():
+            for error in errors:
+                error_messages.append(f"{field}: {error}")
+        
+        return jsonify({
+            'success': False,
+            'message': f"Form validation failed: {', '.join(error_messages)}"
+        }) 

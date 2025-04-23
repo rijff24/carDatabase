@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if car else 'Add' }} Car{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="mb-3">{{ 'Edit' if car else 'Add' }} Car</h1>
+            <form method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="row g-3">
+                    <!-- VIN -->
+                    <div class="col-md-6">
+                        <label for="vin" class="form-label">VIN</label>
+                        <input type="text" class="form-control" id="vin" name="vin" value="{{ car.vin if car else '' }}" required maxlength="17">
+                        <div class="invalid-feedback">Please enter a valid VIN.</div>
+                    </div>
+
+                    <!-- Year -->
+                    <div class="col-md-6">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" value="{{ car.year if car else '' }}" required min="1900" max="{{ current_year }}">
+                        <div class="invalid-feedback">Please enter a valid year.</div>
+                    </div>
+
+                    <!-- Make -->
+                    <div class="col-md-6">
+                        <label for="make" class="form-label">Make</label>
+                        <div class="input-group">
+                            <select class="form-select" id="make" name="make_id">
+                                <option value="">Select or type to add new...</option>
+                                {% for make in makes %}
+                                <option value="{{ make.id }}" {% if car and car.make_id == make.id %}selected{% endif %}>
+                                    {{ make.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" class="form-control d-none" id="new_make" name="new_make" placeholder="Enter new make">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleMakeInput">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Model -->
+                    <div class="col-md-6">
+                        <label for="model" class="form-label">Model</label>
+                        <div class="input-group">
+                            <select class="form-select" id="model" name="model_id" disabled>
+                                <option value="">Select make first...</option>
+                            </select>
+                            <input type="text" class="form-control d-none" id="new_model" name="new_model" placeholder="Enter new model" disabled>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleModelInput" disabled>
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="form-text text-muted">Model selection will be enabled after choosing a make</div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="col-md-6">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="color" name="color" value="{{ car.color if car else '' }}">
+                    </div>
+
+                    <!-- Mileage -->
+                    <div class="col-md-6">
+                        <label for="mileage" class="form-label">Mileage</label>
+                        <input type="number" class="form-control" id="mileage" name="mileage" value="{{ car.mileage if car else '' }}" min="0">
+                    </div>
+
+                    <!-- Price -->
+                    <div class="col-md-6">
+                        <label for="price" class="form-label">Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="price" name="price" value="{{ car.price if car else '' }}" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="available" {% if car and car.status == 'available' %}selected{% endif %}>Available</option>
+                            <option value="pending" {% if car and car.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="sold" {% if car and car.status == 'sold' %}selected{% endif %}>Sold</option>
+                            <option value="maintenance" {% if car and car.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                        </select>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3">{{ car.notes if car else '' }}</textarea>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <button class="btn btn-primary" type="submit">Save Car</button>
+                <a href="{{ url_for('cars.list_cars') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const makeSelect = document.getElementById('make');
+    const newMakeInput = document.getElementById('new_make');
+    const toggleMakeBtn = document.getElementById('toggleMakeInput');
+    const modelSelect = document.getElementById('model');
+    const newModelInput = document.getElementById('new_model');
+    const toggleModelBtn = document.getElementById('toggleModelInput');
+
+    // Function to toggle between select and input for make
+    function toggleMakeInput() {
+        const isSelect = !makeSelect.classList.contains('d-none');
+        makeSelect.classList.toggle('d-none');
+        newMakeInput.classList.toggle('d-none');
+        toggleMakeBtn.innerHTML = isSelect ? '<i class="fas fa-list"></i>' : '<i class="fas fa-plus"></i>';
+        
+        // Reset and disable model inputs when make input changes
+        modelSelect.innerHTML = '<option value="">Select make first...</option>';
+        modelSelect.disabled = true;
+        modelSelect.classList.add('text-muted', 'bg-light');
+        modelSelect.style.cursor = 'not-allowed';
+        newModelInput.disabled = true;
+        toggleModelBtn.disabled = true;
+        
+        // Enable model inputs if make is selected or entered
+        if (!isSelect) {
+            updateModelState(newMakeInput.value);
+        }
+    }
+
+    // Function to toggle between select and input for model
+    function toggleModelInput() {
+        const isSelect = !modelSelect.classList.contains('d-none');
+        modelSelect.classList.toggle('d-none');
+        newModelInput.classList.toggle('d-none');
+        toggleModelBtn.innerHTML = isSelect ? '<i class="fas fa-list"></i>' : '<i class="fas fa-plus"></i>';
+    }
+
+    // Function to update model field state based on make selection/input
+    function updateModelState(makeValue) {
+        if (makeValue) {
+            newModelInput.disabled = false;
+            toggleModelBtn.disabled = false;
+            modelSelect.disabled = false;
+            modelSelect.classList.remove('text-muted', 'bg-light');
+            modelSelect.style.cursor = 'pointer';
+            
+            // For new makes, we'll have an empty model list, but it should be enabled
+            if (makeSelect.classList.contains('d-none') && newMakeInput.value) {
+                modelSelect.innerHTML = '<option value="">Select or enter a new model...</option>';
+            }
+        } else {
+            newModelInput.disabled = true;
+            toggleModelBtn.disabled = true;
+            modelSelect.disabled = true;
+            modelSelect.classList.add('text-muted', 'bg-light');
+            modelSelect.style.cursor = 'not-allowed';
+            modelSelect.innerHTML = '<option value="">Select make first...</option>';
+        }
+    }
+
+    // Apply initial styles
+    if (modelSelect.disabled) {
+        modelSelect.classList.add('text-muted', 'bg-light');
+        modelSelect.style.cursor = 'not-allowed';
+    }
+
+    // Function to load models for selected make
+    async function loadModels(makeId) {
+        try {
+            const response = await fetch(`/vehicle-data/api/makes/${makeId}/models`);
+            if (!response.ok) throw new Error('Failed to fetch models');
+            
+            const data = await response.json();
+            modelSelect.innerHTML = '<option value="">Select a model...</option>';
+            data.models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.name;
+                modelSelect.appendChild(option);
+            });
+            
+            updateModelState(makeId);
+        } catch (error) {
+            console.error('Error loading models:', error);
+            modelSelect.innerHTML = '<option value="">Error loading models</option>';
+            modelSelect.disabled = true;
+            modelSelect.classList.add('text-muted', 'bg-light');
+            modelSelect.style.cursor = 'not-allowed';
+        }
+    }
+
+    // Event Listeners
+    toggleMakeBtn.addEventListener('click', toggleMakeInput);
+    toggleModelBtn.addEventListener('click', toggleModelInput);
+    
+    makeSelect.addEventListener('change', function() {
+        if (this.value) {
+            loadModels(this.value);
+        } else {
+            updateModelState('');
+        }
+    });
+
+    newMakeInput.addEventListener('input', function() {
+        updateModelState(this.value);
+    });
+
+    // Initialize the form
+    // Apply visual styles to the model field
+    if (!makeSelect.value && !newMakeInput.value) {
+        modelSelect.classList.add('text-muted', 'bg-light');
+        modelSelect.style.cursor = 'not-allowed';
+    }
+
+    // Initialize model select if make is pre-selected (edit mode)
+    if (makeSelect.value) {
+        loadModels(makeSelect.value);
+    }
+});
+</script>
+{% endblock %} 

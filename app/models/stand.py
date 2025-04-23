@@ -15,6 +15,9 @@ class Stand(db.Model):
     last_updated = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     additional_info = db.Column(db.Text, nullable=True)
 
+    # Relationships
+    cars = db.relationship('Car', back_populates='stand')
+
     def __repr__(self):
         return f'<Stand {self.stand_name}>'
     
@@ -22,7 +25,7 @@ class Stand(db.Model):
     def current_car_count(self):
         """Return the number of cars currently on this stand"""
         from app.models.car import Car
-        return Car.query.filter_by(stand_id=self.stand_id, date_sold=None).count()
+        return Car.query.filter_by(stand_id=self.stand_id, status='available').count()
     
     @hybrid_property
     def occupancy_rate(self):
@@ -35,7 +38,7 @@ class Stand(db.Model):
     def cars_sold_count(self):
         """Return the number of cars sold from this stand"""
         from app.models.car import Car
-        return Car.query.filter(Car.stand_id == self.stand_id, Car.date_sold.isnot(None)).count()
+        return Car.query.filter(Car.stand_id == self.stand_id, Car.status == 'sold').count()
     
     @hybrid_property
     def avg_days_on_stand(self):
@@ -45,14 +48,13 @@ class Stand(db.Model):
         
         cars = Car.query.filter(
             Car.stand_id == self.stand_id, 
-            Car.date_sold.isnot(None),
-            Car.date_added_to_stand.isnot(None)
+            Car.status == 'sold'
         ).all()
         
         if not cars:
             return 0
             
-        total_days = sum((car.date_sold - car.date_added_to_stand).days for car in cars)
+        total_days = sum((car.updated_at - car.created_at).days for car in cars)
         return total_days / len(cars)
     
     @hybrid_property
@@ -62,7 +64,7 @@ class Stand(db.Model):
         
         cars = Car.query.filter(
             Car.stand_id == self.stand_id,
-            Car.date_sold.isnot(None)
+            Car.status == 'sold'
         ).all()
         
-        return sum(car.profit or 0 for car in cars) 
+        return sum((car.price or 0) for car in cars) 

@@ -1,0 +1,31 @@
+<form id="modalPartForm" method="POST" action="{{ url_for('parts.create_ajax') }}">
+    {{ form.hidden_tag() }}
+    
+    <div class="mb-3">
+        {{ form.part_name.label(class="form-label") }}
+        {{ form.part_name(class="form-control") }}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control", rows=3) }}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.manufacturer.label(class="form-label") }}
+        {{ form.manufacturer(class="form-control") }}
+    </div>
+    
+    <div class="mb-3">
+        {{ form.standard_price.label(class="form-label") }}
+        <div class="input-group">
+            <span class="input-group-text">R</span>
+            {{ form.standard_price(class="form-control") }}
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        {{ form.submit(class="btn btn-success") }}
+    </div>
+</form> 

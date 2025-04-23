@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, flash, redirect, url_for, request
+from flask import Blueprint, render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_required
 from app.models.part import Part
 from app.utils.forms import PartForm
 from app.utils.validators import validate_params, validate_form
 from app.utils.helpers import safe_get_or_404
 from app import db
+from app.models.setting import Setting
 
 parts_bp = Blueprint('parts', __name__)
 
@@ -75,6 +76,9 @@ def index():
 @login_required
 def create():
     """Create a new part"""
+    is_modal = request.args.get('modal', '0') == '1'
+    return_to = request.args.get('return_to', None)
+    
     if request.method == 'POST':
         form = PartForm(formdata=request.form)
         
@@ -90,7 +94,11 @@ def create():
             db.session.commit()
             
             flash('Part added successfully', 'success')
-            return redirect(url_for('parts.index'))
+            
+            if return_to:
+                return redirect(return_to)
+            else:
+                return redirect(url_for('parts.index'))
         else:
             # Show what validation errors occurred
             error_messages = []
@@ -101,7 +109,53 @@ def create():
     else:
         form = PartForm()
     
+    # If it's a modal request, return only the form without the base template
+    if is_modal:
+        return render_template('parts/modal_form.html', form=form)
+    
     return render_template('parts/create.html', form=form)
+
+@parts_bp.route('/create-ajax', methods=['POST'])
+@login_required
+def create_ajax():
+    """Create a new part via AJAX"""
+    try:
+        form = PartForm(formdata=request.form)
+        
+        if form.validate_on_submit():
+            part = Part(
+                part_name=form.part_name.data,
+                description=form.description.data,
+                manufacturer=form.manufacturer.data,
+                standard_price=form.standard_price.data
+            )
+            
+            db.session.add(part)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'part_id': part.part_id,
+                'part_name': part.part_name,
+                'message': f'Part "{part.part_name}" added successfully'
+            })
+        else:
+            # Collect validation errors
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    error_messages.append(f"{field}: {error}")
+            
+            return jsonify({
+                'success': False,
+                'message': f"Form validation failed: {', '.join(error_messages)}"
+            })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f"An error occurred: {str(e)}"
+        })
 
 @parts_bp.route('/<int:part_id>')
 @login_required

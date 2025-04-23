@@ -140,19 +140,33 @@
                 </div>
             </div>
             
-            {% if car.repair_status == 'Waiting for Repairs' or car.repair_status == 'In Repair' %}
+            {% if car.repair_status == 'Waiting for Repairs' or car.repair_status == 'In Repair' or (car.repair_status == 'On Display' and not car.date_sold) %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Move to Stand</h5>
+                    <h5 class="card-title mb-0">{% if car.stand_id %}Change Stand{% else %}Move to Stand{% endif %}</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('cars.move_to_stand', car_id=car.car_id) }}">
-                        {{ move_to_stand_form.hidden_tag() }}
+                    <form method="POST" action="{{ url_for('cars.move_to_stand', car_id=car.car_id) }}" id="moveToStandForm">
+                        {% if move_to_stand_form %}
+                            {{ move_to_stand_form.hidden_tag() }}
+                        {% else %}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
                         <div class="mb-3">
-                            {{ move_to_stand_form.stand_id.label(class="form-label") }}
-                            {{ move_to_stand_form.stand_id(class="form-select") }}
+                            <label for="stand_id" class="form-label">Select Stand</label>
+                            <select class="form-select" id="stand_id" name="stand_id" required>
+                                <option value="">Select a stand</option>
+                                {% for stand in stands %}
+                                <option value="{{ stand.stand_id }}" {% if car.stand_id == stand.stand_id %}selected{% endif %}>
+                                    {{ stand.stand_name }}
+                                </option>
+                                {% endfor %}
+                                {% if settings.get_setting('enable_subform_dropdowns', True) %}
+                                <option value="add_new" class="fw-bold text-primary">+ Add New Stand</option>
+                                {% endif %}
+                            </select>
                         </div>
-                        {{ move_to_stand_form.submit(class="btn btn-primary w-100") }}
+                        <button type="submit" class="btn btn-primary w-100">{% if car.stand_id %}Change Stand{% else %}Move to Stand{% endif %}</button>
                     </form>
                 </div>
             </div>
@@ -188,4 +202,137 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if settings.get_setting('enable_subform_dropdowns', True) %}
+<!-- Add New Stand Modal -->
+<div class="modal fade" id="addStandModal" tabindex="-1" aria-labelledby="addStandModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStandModalLabel">Add New Stand</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addStandForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="stand_name" class="form-label">Stand Name</label>
+                        <input type="text" class="form-control" id="stand_name" name="stand_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" value="10" min="1">
+                        <small class="form-text text-muted">The maximum number of cars this stand can hold</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="additional_info" class="form-label">Additional Information</label>
+                        <textarea class="form-control" id="additional_info" name="additional_info" rows="4"></textarea>
+                    </div>
+                    
+                    <div id="standFormError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Stand</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const standSelect = document.getElementById('stand_id');
+        const moveToStandForm = document.getElementById('moveToStandForm');
+        const addStandForm = document.getElementById('addStandForm');
+        const addStandModal = new bootstrap.Modal(document.getElementById('addStandModal'));
+        
+        // Handle selection of "+ Add New Stand" option
+        standSelect.addEventListener('change', function() {
+            if (this.value === 'add_new') {
+                addStandModal.show();
+                // Reset to previous value to avoid submitting with this option
+                setTimeout(() => {
+                    this.value = '';
+                }, 100);
+            }
+        });
+        
+        // Handle submission of the add stand form
+        addStandForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const errorDiv = document.getElementById('standFormError');
+            
+            // Add CSRF token
+            formData.append('csrf_token', '{{ csrf_token() }}');
+            
+            fetch('{{ url_for("cars.create_stand_ajax") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add the new stand to the dropdown and select it
+                    const newOption = new Option(data.stand_name, data.stand_id, true, true);
+                    
+                    // Find the add_new option
+                    const addNewOption = standSelect.querySelector('option[value="add_new"]');
+                    if (addNewOption) {
+                        standSelect.removeChild(addNewOption);
+                    }
+                    
+                    // Add the new stand option
+                    standSelect.add(newOption);
+                    
+                    // Add back the "+ Add New Stand" option at the end
+                    const newAddOption = new Option('+ Add New Stand', 'add_new');
+                    newAddOption.classList.add('fw-bold', 'text-primary');
+                    standSelect.add(newAddOption);
+                    
+                    // Select the new stand
+                    standSelect.value = data.stand_id;
+                    
+                    // Close the modal
+                    addStandModal.hide();
+                    
+                    // Reset the form
+                    addStandForm.reset();
+                    
+                    // Hide any previous error
+                    errorDiv.classList.add('d-none');
+                    
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    moveToStandForm.insertAdjacentElement('beforebegin', alertDiv);
+                } else {
+                    // Show error message
+                    errorDiv.textContent = data.message;
+                    errorDiv.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDiv.textContent = 'An error occurred while processing your request.';
+                errorDiv.classList.remove('d-none');
+            });
+        });
+    });
+</script>
+{% endif %}
 {% endblock %} 

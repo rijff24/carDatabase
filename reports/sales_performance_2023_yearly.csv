@@ -1,0 +1,15 @@
+Metric,Value
+Period,yearly
+Year,2023
+Total Sales,4
+Total Revenue,853178.88
+Total Profit,253178.88
+Average Margin,29.674771133575177
+
+Period,Sales Count,Revenue,Profit,Margin
+2023,4,853178.88,253178.88,29.674771133575177
+
+Dealer,Sales Count,Revenue,Profit,Margin
+Test Dealer 20250325222100,2,438632.54,138632.54,31.60562141604907
+Test Dealer 20250325222125,1,194210.33,44210.33,22.764149569181
+We Buy Cars Midrand,1,220336.01,70336.01,31.922158343522696

@@ -1,0 +1,154 @@
+{
+  "aged_vehicle_count": 3,
+  "aged_vehicle_percentage": 60.0,
+  "aging_buckets": [
+    {
+      "alert": false,
+      "avg_investment": "19500.00",
+      "count": 1,
+      "investment": "19500.00",
+      "label": "0-15 days",
+      "max_days": 15,
+      "min_days": 0,
+      "percentage": 20.0
+    },
+    {
+      "alert": false,
+      "avg_investment": "17000.00",
+      "count": 1,
+      "investment": "17000.00",
+      "label": "16-30 days",
+      "max_days": 30,
+      "min_days": 16,
+      "percentage": 20.0
+    },
+    {
+      "alert": false,
+      "avg_investment": "0.00",
+      "count": 0,
+      "investment": "0.00",
+      "label": "31-45 days",
+      "max_days": 45,
+      "min_days": 31,
+      "percentage": 0.0
+    },
+    {
+      "alert": true,
+      "avg_investment": "26500.00",
+      "count": 1,
+      "investment": "26500.00",
+      "label": "46-60 days",
+      "max_days": 60,
+      "min_days": 46,
+      "percentage": 20.0
+    },
+    {
+      "alert": true,
+      "avg_investment": "39500.00",
+      "count": 1,
+      "investment": "39500.00",
+      "label": "61-90 days",
+      "max_days": 90,
+      "min_days": 61,
+      "percentage": 20.0
+    },
+    {
+      "alert": true,
+      "avg_investment": "33500.00",
+      "count": 1,
+      "investment": "33500.00",
+      "label": "91+ days",
+      "max_days": Infinity,
+      "min_days": 91,
+      "percentage": 20.0
+    }
+  ],
+  "avg_days_in_inventory": 51.4,
+  "avg_investment_per_vehicle": "27200.00",
+  "cars": [
+    {
+      "car_id": 5,
+      "date_bought": "2024-12-21",
+      "date_sold": null,
+      "days_in_inventory": 95,
+      "make": "Chevrolet",
+      "model": "Suburban",
+      "purchase_price": "32000.00",
+      "status": "ready",
+      "total_investment": "33500.00",
+      "trim": "LT",
+      "vehicle_name": "2017 Chevrolet Suburban",
+      "vin": "5FNRL5H66CB123456",
+      "year": 2017
+    },
+    {
+      "car_id": 4,
+      "date_bought": "2025-01-10",
+      "date_sold": null,
+      "days_in_inventory": 75,
+      "make": "BMW",
+      "model": "X5",
+      "purchase_price": "38000.00",
+      "status": "stand",
+      "total_investment": "39500.00",
+      "trim": "xDrive40i",
+      "vehicle_name": "2019 BMW X5",
+      "vin": "1C4RJFAG7FC123456",
+      "year": 2019
+    },
+    {
+      "car_id": 3,
+      "date_bought": "2025-02-02",
+      "date_sold": null,
+      "days_in_inventory": 52,
+      "make": "Ford",
+      "model": "F-150",
+      "purchase_price": "25000.00",
+      "status": "stand",
+      "total_investment": "26500.00",
+      "trim": "XLT",
+      "vehicle_name": "2018 Ford F-150",
+      "vin": "2HNYD28818H123456",
+      "year": 2018
+    },
+    {
+      "car_id": 2,
+      "date_bought": "2025-03-01",
+      "date_sold": null,
+      "days_in_inventory": 25,
+      "make": "Honda",
+      "model": "Accord",
+      "purchase_price": "15500.00",
+      "status": "reconditioning",
+      "total_investment": "17000.00",
+      "trim": "EX",
+      "vehicle_name": "2019 Honda Accord",
+      "vin": "5TDKK3DC2BS157246",
+      "year": 2019
+    },
+    {
+      "car_id": 1,
+      "date_bought": "2025-03-16",
+      "date_sold": null,
+      "days_in_inventory": 10,
+      "make": "Toyota",
+      "model": "Camry",
+      "purchase_price": "18000.00",
+      "status": "ready",
+      "total_investment": "19500.00",
+      "trim": "SE",
+      "vehicle_name": "2020 Toyota Camry",
+      "vin": "1HGCM82633A123456",
+      "year": 2020
+    }
+  ],
+  "report_date": "2025-03-26 01:34",
+  "status": "all",
+  "status_counts": {
+    "ready": 2,
+    "reconditioning": 1,
+    "stand": 2
+  },
+  "total_inventory": 5,
+  "total_investment": "136000.00"
+}
