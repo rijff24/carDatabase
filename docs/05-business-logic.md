@@ -57,6 +57,20 @@ def profit_margin(self):
 
 This gives the profit as a percentage of the selling price, which is a common business metric for evaluating sales performance.
 
+### Return on Investment (ROI) Calculation
+
+The return on investment is calculated as:
+
+```python
+def roi(self):
+    """Calculate return on investment as a percentage"""
+    if not self.profit or not self.total_investment or float(self.total_investment) == 0:
+        return 0
+    return (self.profit / float(self.total_investment)) * 100
+```
+
+This metric evaluates how efficiently the business is using its capital by showing the percentage return on the total investment made in the vehicle.
+
 ### Days in Reconditioning Calculation
 
 The number of days a car spent in reconditioning is calculated as:
@@ -92,7 +106,7 @@ The total cost of all repairs for a car is calculated by summing the costs of in
 ```python
 def total_repair_cost(self):
     """Calculate total repair costs for this car"""
-    return sum(repair.repair_cost for repair in self.repairs.all())
+    return sum(float(repair.repair_cost) for repair in self.repairs.all())
 ```
 
 This aggregates all repair costs associated with a vehicle.
@@ -104,7 +118,10 @@ The total investment in a car is calculated as:
 ```python
 def total_investment(self):
     """Calculate total investment in the car"""
-    return self.purchase_price + self.total_repair_cost + self.refuel_cost
+    repair_cost = self.total_repair_cost or 0
+    refuel = float(self.refuel_cost) if self.refuel_cost else 0
+    purchase = float(self.purchase_price) if self.purchase_price else 0
+    return purchase + repair_cost + refuel
 ```
 
 This represents the total amount invested in the vehicle before sale.
@@ -248,6 +265,222 @@ Access rules:
 - Managers can access everything except user management
 - Regular users have limited access based on their specific role
 - Some features are only available to specific roles
+
+### Aging Vehicle Thresholds
+
+The application includes configurable thresholds for vehicle aging on stands:
+
+```python
+def is_aging(self):
+    """Check if a car has been on stand too long without selling"""
+    if not self.date_added_to_stand or self.date_sold:
+        return False
+        
+    # Get the aging threshold from settings
+    threshold_days = Setting.get_setting('stand_aging_threshold_days', 180)
+    days_on_stand = (datetime.now().date() - self.date_added_to_stand).days
+    
+    return days_on_stand >= threshold_days
+```
+
+This logic is used to flag vehicles that may require price adjustments or other interventions to increase the chance of sale.
+
+### Status Inactivity Rules
+
+The application monitors vehicles with unchanged status for extended periods:
+
+```python
+def has_inactive_status(self):
+    """Check if a car's status has remained unchanged for too long"""
+    if self.date_sold:  # Sold cars are never inactive
+        return False
+        
+    # Get the inactivity threshold from settings
+    threshold_days = Setting.get_setting('status_inactivity_threshold_days', 30)
+    
+    # Check how long since the status was last changed
+    last_status_change = self.last_status_changed or self.date_bought
+    days_since_change = (datetime.now().date() - last_status_change).days
+    
+    return days_since_change >= threshold_days
+```
+
+This helps identify vehicles that may be stuck in a particular stage of processing.
+
+### Depreciation Tracking
+
+When enabled, the application can track vehicle depreciation over time:
+
+```python
+def calculate_current_value(self):
+    """Calculate current value taking into account depreciation"""
+    if self.date_sold:  # Sold cars use actual sale price
+        return self.sale_price
+        
+    # Check if depreciation tracking is enabled
+    depreciation_enabled = Setting.get_setting('enable_depreciation_tracking', False)
+    if not depreciation_enabled:
+        return self.total_investment
+        
+    # Calculate days since purchase
+    days_owned = (datetime.now().date() - self.date_bought).days
+    
+    # Apply depreciation formula (example: 15% annual depreciation)
+    annual_rate = 0.15
+    daily_rate = annual_rate / 365
+    depreciation_factor = (1 - daily_rate) ** days_owned
+    
+    return self.total_investment * depreciation_factor
+```
+
+This feature allows for more accurate inventory valuation, particularly for vehicles held for extended periods.
+
+### Data Validation and Sanitization
+
+The application implements input sanitization for vehicle data:
+
+```python
+# Example: Vehicle make sanitization
+@staticmethod
+def sanitize_name(name):
+    """Sanitize make name: trim whitespace and capitalize first letter of each word"""
+    if not name:
+        return None
+    # Remove any extra whitespace and capitalize each word
+    return ' '.join(word.capitalize() for word in name.strip().split())
+```
+
+This ensures that vehicle makes, models, and colors are stored consistently in the database, enabling better search and reporting capabilities.
+
+### Settings Management
+
+The application provides a flexible settings system for adjusting business rules without code changes:
+
+```python
+@classmethod
+def get_setting(cls, key, default=None, as_type=None):
+    """Get a setting value by key with optional default value"""
+    setting = cls.query.filter_by(key=key).first()
+    if not setting:
+        return default
+    
+    # Determine conversion type
+    convert_type = as_type or setting.type
+    
+    # Convert value based on type
+    try:
+        if convert_type == 'int':
+            return int(setting.value)
+        elif convert_type == 'float':
+            return float(setting.value)
+        elif convert_type == 'bool':
+            return setting.value.lower() in ('true', '1', 'yes', 'y', 'on')
+        else:
+            return setting.value
+    except (ValueError, TypeError):
+        # If conversion fails, return the default
+        return default
+```
+
+Default settings include:
+- `stand_aging_threshold_days`: Number of days after which a car on stand is considered aging (default: 180)
+- `status_inactivity_threshold_days`: Number of days after which a car with unchanged status is considered inactive (default: 30)
+- `enable_depreciation_tracking`: Toggle for depreciation calculation (default: false)
+- `enable_status_warnings`: Toggle for showing status warning indicators (default: true)
+- `enable_subform_dropdowns`: Toggle for using dropdown modals for subforms (default: true)
+- `enable_dark_mode`: Toggle for UI dark theme (default: false)
+
+### Car-Sale Consistency Checking
+
+The application enforces consistency between car and sale records using event listeners:
+
+```python
+@event.listens_for(Car, 'load')
+def check_car_sale_consistency(target, context):
+    """Ensure car.date_sold is consistent with the associated sale record"""
+    # This event is fired when a Car object is loaded from the database
+    # We'll defer actual validation until the object is accessed
+    target._needs_consistency_check = True
+
+# This is a descriptor that can intercept attribute access
+class ConsistencyCheckingDescriptor:
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+            
+        # Check if we need to validate the car's data
+        needs_check = getattr(obj, '_needs_consistency_check', True)
+        if needs_check:
+            # Only do consistency check once
+            obj._needs_consistency_check = False
+            
+            # Perform the actual consistency check
+            has_sale = hasattr(obj, 'sale') and obj.sale is not None
+            
+            if has_sale and obj.date_sold is None:
+                # Car has a sale but no date_sold, update it
+                obj.date_sold = obj.sale.sale_date
+                db.session.merge(obj)
+                
+            elif has_sale and obj.date_sold != obj.sale.sale_date:
+                # date_sold doesn't match sale date, fix it
+                obj.date_sold = obj.sale.sale_date
+                db.session.merge(obj)
+                
+            elif obj.date_sold is not None and not has_sale:
+                # Car is marked as sold but has no sale record, clear date_sold
+                obj.date_sold = None
+                db.session.merge(obj)
+                
+        # Return the result of the is_available property
+        return obj.date_sold is None
+
+# Replace the is_available property with our descriptor
+Car.is_available = ConsistencyCheckingDescriptor()
+```
+
+This ensures that car records and sale records remain synchronized even when modified separately.
+
+### Bulk Import Validation
+
+When importing data in bulk, the application applies validation rules to ensure data quality:
+
+```python
+# Example: Car import validation
+def import_cars(file: FileStorage) -> Dict[str, Any]:
+    """Import cars from a CSV or Excel file."""
+    success_count = 0
+    fail_count = 0
+    errors = []
+    
+    # Validate required columns
+    required_columns = ['VIN', 'Make', 'Model', 'Year', 'Colour', 'Purchase Price']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        errors.append(f"Missing required columns: {', '.join(missing_columns)}")
+        return {"success": 0, "failed": 0, "errors": errors}
+    
+    # Process each row with validation
+    for index, row in df.iterrows():
+        row_errors = []
+        
+        # Check for required fields
+        if pd.isna(row.get('VIN')) or not str(row.get('VIN')).strip():
+            row_errors.append('VIN is required')
+        
+        # Skip row if validation errors
+        if row_errors:
+            fail_count += 1
+            errors.append(f"Row {index+2}: {'; '.join(row_errors)}")
+            continue
+            
+        # Process valid row
+        # ...
+    
+    return {"success": success_count, "failed": fail_count, "errors": errors}
+```
+
+This ensures that imported data meets the same validation standards as data entered through the application's user interface.
 
 ## Business Workflows
 

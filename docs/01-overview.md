@@ -14,6 +14,7 @@ This application serves automotive businesses that purchase vehicles, perform re
 - Monitor vehicle status (waiting for repair, in repair, on display stand, sold)
 - Track vehicle location within the business
 - Record vehicle sales and calculate profitability
+- Maintain standardized vehicle makes and models database
 
 ### Repair Tracking and Cost Management
 - Create and assign repair jobs for vehicles
@@ -55,10 +56,23 @@ This application serves automotive businesses that purchase vehicles, perform re
 
 ### System Settings and Configuration
 - Centralized configuration for system behavior
-- Configurable thresholds for business rules
+- Configurable thresholds for business rules (aging, inactivity)
 - Feature toggles for enabling/disabling functionality
 - User management interface for administrators
 - UI customization options including dark mode
+
+### Bulk Import Functionality
+- Import vehicle data from CSV or Excel files
+- Import repairs, sales, dealers, parts, and stands
+- Template download for standardized imports
+- Error validation and reporting during import
+
+### Advanced UI Features
+- Smart dropdowns for related data
+- Subform modals for efficient data entry
+- Dark mode toggle for user preference
+- Responsive design for various device sizes
+- Intelligent data validation and sanitization
 
 ## User Roles
 
@@ -113,3 +127,5 @@ The typical workflow in the system follows these steps:
 - Reduced errors in financial calculations
 - Better business planning through data analytics
 - Configurable system behavior through centralized settings 
+- Bulk data import to save time on data entry
+- Standardized vehicle data with makes and models database 

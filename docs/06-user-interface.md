@@ -23,6 +23,7 @@ The application has a consistent navigation structure throughout:
 │   ├── Sales
 │   ├── Reports
 │   ├── Admin
+│   ├── Settings
 │   └── User Menu
 ├── Secondary Navigation (Sidebar or Tab Bars)
 │   └── Context-specific navigation based on primary selection
@@ -38,7 +39,8 @@ The application has a consistent navigation structure throughout:
 4. **Sales**: Sales recording and dealer performance
 5. **Reports**: Financial and operational reporting
 6. **Admin**: System configuration and user management
-7. **User Menu**: Profile, preferences, and logout
+7. **Settings**: Application configuration and preferences
+8. **User Menu**: Profile, preferences, and logout
 
 ## Key Screens
 
@@ -75,6 +77,7 @@ The dashboard provides an at-a-glance view of the business status:
   - Status indicators (color-coded)
   - Quick action buttons
   - Search functionality
+  - Status aging and inactivity warnings
   
 - **Columns**:
   - Vehicle ID
@@ -94,6 +97,7 @@ The dashboard provides an at-a-glance view of the business status:
   - Status history
   - Financial summary
   - Repair history
+  - Smart dropdowns for related data
   
 - **Sections**:
   - Basic Information
@@ -110,6 +114,7 @@ The dashboard provides an at-a-glance view of the business status:
   - Visual representation of stands
   - Capacity indicators
   - Drag-and-drop vehicle assignment
+  - Stand aging thresholds visualization
   
 - **Elements**:
   - Stand cards with capacity bars
@@ -146,6 +151,7 @@ The dashboard provides an at-a-glance view of the business status:
   - Detailed repair information
   - Parts list with costs
   - Status update controls
+  - Subform modals for adding parts
   
 - **Sections**:
   - Basic Information
@@ -198,811 +204,301 @@ The dashboard provides an at-a-glance view of the business status:
 - **Features**:
   - Complete sale information
   - Financial breakdown
-  - Related documents
+  - Customer details
+  - Commission calculation
   
 - **Sections**:
   - Sale Information
   - Vehicle Details
-  - Dealer Information
   - Financial Summary
-  - Payment Details
   - Customer Information
+  - Dealer Details
+  - Notes and Documentation
 
-#### 4.3 Dealer Performance
+### 5. Settings Management
 
-![Dealer Performance](../app/static/img/docs/dealer_performance.png)
-
-- **Features**:
-  - Dealer sales performance metrics
-  - Commission totals
-  - Performance comparisons
-  
-- **Elements**:
-  - Dealer list
-  - Performance charts
-  - Sales history
-  - Commission calculations
-
-### 5. Reporting
-
-#### 5.1 Financial Reports
-
-![Financial Reports](../app/static/img/docs/financial_reports.png)
+![Settings](../app/static/img/docs/settings.png)
 
 - **Features**:
-  - Profit and loss statements
-  - Revenue breakdowns
-  - Expense tracking
-  
-- **Report Types**:
-  - Monthly Profit Summary
-  - Vehicle Profitability Analysis
-  - Commission Payments
-  - Investment Returns
-
-#### 5.2 Operational Reports
-
-![Operational Reports](../app/static/img/docs/operational_reports.png)
-
-- **Features**:
-  - Inventory status
-  - Repair efficiency
-  - Sales velocity
-  
-- **Report Types**:
-  - Inventory Aging
-  - Repair Duration Analysis
-  - Stand Utilization
-  - Vehicle Turnover Rate
-
-#### 5.3 Custom Reports
-
-![Custom Reports](../app/static/img/docs/custom_reports.png)
-
-- **Features**:
-  - Build custom reports
-  - Save report templates
-  - Export options (CSV, PDF)
-  
-- **Elements**:
-  - Field selector
-  - Filter builder
-  - Visualization options
-  - Scheduling controls
-
-### 6. Administration
-
-#### 6.1 System Settings
-
-![System Settings](../app/static/img/docs/system_settings.png)
-
-The System Settings page provides a centralized interface for controlling application behavior and preferences. It is accessible only to users with the admin role.
-
-- **Features**:
-  - Tabbed interface for organizing different setting categories
-  - Real-time validation of input values
-  - Role-based access control
-  - Immediate application of settings
+  - Tabbed interface for different setting categories
+  - Save changes in each tab independently
+  - Live preview for certain settings
   
 - **Tabs**:
+  - **General Configuration**:
+    - Enable Dark Mode toggle
+    - UI preferences
+    - Display options
   
-  1. **General Configuration**
-     - Interface preferences
-     - Dark mode toggle
-     - UI behavior settings
-     
-  2. **Thresholds & Rules**
-     - Numerical thresholds for business rules
-     - Feature toggles for enabling/disabling functionality
-     - Warning and alert thresholds
-     
-  3. **User Management**
-     - User listing with role information
-     - Interface for creating new users
-     - Edit existing user information
-     - Reset user passwords
-     - Delete users
-     
-- **Setting Types**:
-  - Boolean toggles (on/off switches)
-  - Numeric inputs with validation
-  - Text fields with validation
-  - Dropdown selectors
+  - **Thresholds & Rules**:
+    - Stand aging threshold (days)
+    - Status inactivity threshold (days)
+    - Enable depreciation tracking toggle
+    - Enable status warnings toggle
+    - Enable subform dropdowns toggle
   
-- **Implementation**:
-  - Server-side validation ensures valid settings
-  - Changes take effect immediately
-  - Settings are stored in the database
-  - Centralized access via `Setting.get_setting()` method
+  - **User Management**:
+    - User list with roles
+    - Add/Edit/Delete user controls
+    - Password reset functionality
+    - Role assignment
 
-#### 6.2 User Management
+### 6. Bulk Import
 
-![User Management](../app/static/img/docs/user_management.png)
+![Import](../app/static/img/docs/import.png)
 
 - **Features**:
-  - User account management
-  - Role assignment
-  - Access control
+  - Tabbed interface for different entity imports
+  - Template downloads for each entity type
+  - File upload with validation
+  - Import results summary
   
-- **Elements**:
-  - User list
-  - Role editor
-  - Permission matrix
-  - Activity logs
-
-#### 6.3 System Configuration
-
-![System Configuration](../app/static/img/docs/system_configuration.png)
-
-- **Features**:
-  - Application settings
-  - Business rules configuration
-  - Integration settings
+- **Import Types**:
+  - Cars
+  - Repairs
+  - Sales
+  - Dealers
+  - Parts
+  - Stands
   
-- **Settings Categories**:
-  - General Settings
-  - Financial Parameters
-  - Repair Provider Management
-  - Stand Configuration
-  - Backup and Restore
+- **Functionality**:
+  - Select file (CSV or Excel)
+  - Upload and validate
+  - View import results
+  - Error reporting for failed rows
 
-## Form Controls
+## Form Components
 
-### Standard Form Elements
+### Smart Dropdowns
 
-The application uses consistent form elements throughout:
+The application uses enhanced select dropdowns with the following features:
 
-1. **Text Input**:
-   ```html
-   <div class="form-group">
-     <label for="vehicleName">Vehicle Name</label>
-     <input type="text" class="form-control" id="vehicleName" name="vehicle_name" required>
-     <small class="form-text text-muted">Enter the complete vehicle name including year, make, and model</small>
-   </div>
-   ```
+- **Search functionality**: Type to search for options
+- **Create new option**: Add new entries directly from the dropdown
+- **Categorized options**: Group options by type or category
+- **Recent selections**: Quick access to recently used options
+- **Validation feedback**: Inline error messages for invalid selections
 
-2. **Date Picker**:
-   ```html
-   <div class="form-group">
-     <label for="purchaseDate">Purchase Date</label>
-     <input type="date" class="form-control datepicker" id="purchaseDate" name="purchase_date" required>
-   </div>
-   ```
-
-3. **Selection Dropdown**:
-   ```html
-   <div class="form-group">
-     <label for="repairProvider">Repair Provider</label>
-     <select class="form-control" id="repairProvider" name="provider_id">
-       <option value="">Select Provider...</option>
-       {% for provider in providers %}
-         <option value="{{ provider.provider_id }}">{{ provider.name }}</option>
-       {% endfor %}
-     </select>
-   </div>
-   ```
-
-4. **Numeric Input**:
-   ```html
-   <div class="form-group">
-     <label for="purchasePrice">Purchase Price</label>
-     <div class="input-group">
-       <div class="input-group-prepend">
-         <span class="input-group-text">$</span>
-       </div>
-       <input type="number" class="form-control" id="purchasePrice" name="purchase_price" min="0" step="0.01" required>
-     </div>
-   </div>
-   ```
-
-5. **Status Selection**:
-   ```html
-   <div class="form-group">
-     <label>Repair Status</label>
-     <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-       {% for status in valid_statuses %}
-         <label class="btn btn-outline-primary {% if car.repair_status == status %}active{% endif %}">
-           <input type="radio" name="repair_status" value="{{ status }}" {% if car.repair_status == status %}checked{% endif %}>
-           {{ status }}
-         </label>
-       {% endfor %}
-     </div>
-   </div>
-   ```
-
-### Form Validation
-
-The application implements both client-side and server-side validation:
-
-1. **Client-Side Validation**:
-   ```javascript
-   $(document).ready(function() {
-     $('#vehicleForm').validate({
-       rules: {
-         vehicle_name: {
-           required: true,
-           minlength: 3
-         },
-         purchase_price: {
-           required: true,
-           number: true,
-           min: 0
-         },
-         purchase_date: {
-           required: true,
-           date: true
-         }
-       },
-       messages: {
-         vehicle_name: {
-           required: "Please enter the vehicle name",
-           minlength: "Vehicle name must be at least 3 characters"
-         },
-         purchase_price: {
-           required: "Please enter the purchase price",
-           number: "Please enter a valid number",
-           min: "Price cannot be negative"
-         },
-         purchase_date: {
-           required: "Please enter the purchase date",
-           date: "Please enter a valid date"
-         }
-       },
-       errorElement: 'div',
-       errorClass: 'invalid-feedback',
-       highlight: function(element) {
-         $(element).addClass('is-invalid');
-       },
-       unhighlight: function(element) {
-         $(element).removeClass('is-invalid');
-       },
-       errorPlacement: function(error, element) {
-         error.insertAfter(element);
-       }
-     });
-   });
-   ```
-
-2. **Server-Side Validation**:
-   ```python
-   def validate_vehicle_form(form_data):
-       errors = {}
-       
-       # Validate vehicle name
-       if not form_data.get('vehicle_name'):
-           errors['vehicle_name'] = 'Vehicle name is required'
-       
-       # Validate purchase price
-       try:
-           price = float(form_data.get('purchase_price', 0))
-           if price < 0:
-               errors['purchase_price'] = 'Price cannot be negative'
-       except ValueError:
-           errors['purchase_price'] = 'Invalid price format'
-       
-       # Validate purchase date
-       try:
-           purchase_date = datetime.strptime(form_data.get('purchase_date', ''), '%Y-%m-%d').date()
-           if purchase_date > datetime.now().date():
-               errors['purchase_date'] = 'Purchase date cannot be in the future'
-       except ValueError:
-           errors['purchase_date'] = 'Invalid date format'
-       
-       return errors
-   ```
-
-## UI Components
-
-### Data Tables
-
-Data tables are used throughout the application for displaying tabular data:
-
+Example implementation:
 ```html
-<table class="table table-striped table-hover" id="vehicleTable">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Vehicle</th>
-      <th>Status</th>
-      <th>Purchase Date</th>
-      <th>Purchase Price</th>
-      <th>Location</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for car in cars %}
-    <tr class="status-{{ car.repair_status|slugify }}">
-      <td>{{ car.car_id }}</td>
-      <td>{{ car.vehicle_name }}</td>
-      <td><span class="badge badge-{{ status_colors[car.repair_status] }}">{{ car.repair_status }}</span></td>
-      <td>{{ car.date_bought|date }}</td>
-      <td>${{ car.purchase_price|floatformat:2 }}</td>
-      <td>{{ car.current_location }}</td>
-      <td>
-        <div class="btn-group btn-group-sm">
-          <a href="{{ url_for('inventory.view_car', car_id=car.car_id) }}" class="btn btn-info">
-            <i class="fas fa-eye"></i>
-          </a>
-          <a href="{{ url_for('inventory.edit_car', car_id=car.car_id) }}" class="btn btn-primary">
-            <i class="fas fa-edit"></i>
-          </a>
-          <!-- Additional action buttons -->
-        </div>
-      </td>
-    </tr>
+<div class="form-group">
+  <label for="vehicle_make">Make</label>
+  <select 
+    class="form-control smart-dropdown" 
+    id="vehicle_make" 
+    name="vehicle_make"
+    data-create-new="true"
+    data-api-url="/api/vehicle-makes"
+  >
+    <option value="">Select Make</option>
+    {% for make in makes %}
+      <option value="{{ make.id }}">{{ make.name }}</option>
     {% endfor %}
-  </tbody>
-</table>
-
-<script>
-  $(document).ready(function() {
-    $('#vehicleTable').DataTable({
-      "order": [[0, "desc"]],
-      "pageLength": 25,
-      "responsive": true
-    });
-  });
-</script>
+  </select>
+  <small class="form-text text-muted">Start typing to search or create a new make</small>
+</div>
 ```
 
-### Modal Dialogs
+### Subform Modals
 
-Modal dialogs are used for quick actions without navigating away from the current page:
+The application uses modal dialogs for creating related entities without leaving the current form:
 
+- **Triggered from parent form**: Button to open modal directly from main form
+- **Inline validation**: Real-time validation of subform inputs
+- **Automatic integration**: On submit, adds new entity to parent form dropdown
+- **Cancel without side effects**: Close without affecting parent form state
+
+Example implementation:
 ```html
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<!-- Trigger button in parent form -->
+<button type="button" class="btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#addMakeModal">
+  <i class="fas fa-plus"></i> Add New Make
+</button>
+
+<!-- Modal implementation -->
+<div class="modal fade" id="addMakeModal" tabindex="-1" role="dialog" aria-labelledby="addMakeModalTitle" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+      <div class="modal-header">
+        <h5 class="modal-title" id="addMakeModalTitle">Add New Vehicle Make</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        Are you sure you want to delete this vehicle? This action cannot be undone.
+        <form id="makeForm">
+          <div class="form-group">
+            <label for="makeName">Make Name</label>
+            <input type="text" class="form-control" id="makeName" required>
+          </div>
+        </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <form id="deleteForm" method="POST" action="">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
+        <button type="button" class="btn btn-primary" id="saveMake">Save</button>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-  // Update delete form action when modal is opened
-  $('#deleteModal').on('show.bs.modal', function (event) {
-    var button = $(event.relatedTarget);
-    var carId = button.data('car-id');
-    var carName = button.data('car-name');
-    
-    var modal = $(this);
-    modal.find('.modal-body').text('Are you sure you want to delete ' + carName + '? This action cannot be undone.');
-    modal.find('#deleteForm').attr('action', '/inventory/delete/' + carId);
-  });
-</script>
 ```
 
-### Charts and Graphs
+### Form Validation
 
-Data visualization is implemented using Chart.js:
+The application implements multi-layered validation:
 
+1. **Client-side validation**:
+   - HTML5 form validation (`required`, `pattern`, etc.)
+   - JavaScript validation for complex rules
+   - Real-time feedback as user types
+
+2. **Server-side validation**:
+   - Input sanitization to prevent security issues
+   - Business rule validation
+   - Database constraint checks
+
+3. **Validation feedback**:
+   - Inline error messages
+   - Field highlighting
+   - Form-level error summaries
+   - Input correction suggestions
+
+## UI Components
+
+### Status Indicators
+
+The application uses color-coded status indicators throughout:
+
+- **Green**: Completed, active, or available
+- **Yellow**: In progress or requiring attention
+- **Red**: Critical issues, overdue, or errors
+- **Gray**: Inactive or archived
+
+Example implementation:
 ```html
-<div class="card">
-  <div class="card-header">
-    Monthly Sales Performance
-  </div>
-  <div class="card-body">
-    <canvas id="salesChart" width="400" height="200"></canvas>
-  </div>
-</div>
-
-<script>
-  $(document).ready(function() {
-    var ctx = document.getElementById('salesChart').getContext('2d');
-    var salesChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: {{ months|safe }},
-        datasets: [{
-          label: 'Number of Sales',
-          data: {{ sales_counts|safe }},
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        }, {
-          label: 'Profit Margin (%)',
-          data: {{ profit_margins|safe }},
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1,
-          type: 'line',
-          yAxisID: 'y-axis-2'
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          yAxes: [{
-            id: 'y-axis-1',
-            type: 'linear',
-            position: 'left',
-            ticks: {
-              beginAtZero: true
-            },
-            scaleLabel: {
-              display: true,
-              labelString: 'Number of Sales'
-            }
-          }, {
-            id: 'y-axis-2',
-            type: 'linear',
-            position: 'right',
-            ticks: {
-              beginAtZero: true,
-              callback: function(value) {
-                return value + '%';
-              }
-            },
-            scaleLabel: {
-              display: true,
-              labelString: 'Profit Margin (%)'
-            },
-            gridLines: {
-              drawOnChartArea: false
-            }
-          }]
-        }
-      }
-    });
-  });
-</script>
+<span class="status-badge status-{{ status.lower() }}">
+  {{ status }}
+</span>
 ```
 
-## Responsive Design
-
-The application is fully responsive, adapting to different screen sizes:
-
-1. **Desktop Layout**:
-   - Full navigation visible
-   - Multi-column layouts
-   - Detailed data tables
-   - Advanced filtering options
-
-2. **Tablet Layout**:
-   - Condensed navigation
-   - Reduced column layouts
-   - Scrollable tables
-   - Simplified filters
-
-3. **Mobile Layout**:
-   - Hamburger menu for navigation
-   - Single column layouts
-   - Card-based data presentation
-   - Essential filtering only
-
-Example of responsive design implementation:
-
-```html
-<div class="row">
-  <!-- Vehicle Details Column -->
-  <div class="col-lg-8 col-md-6 col-sm-12">
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title">Vehicle Details</h5>
-      </div>
-      <div class="card-body">
-        <!-- Vehicle information -->
-      </div>
-    </div>
-  </div>
-  
-  <!-- Financial Summary Column -->
-  <div class="col-lg-4 col-md-6 col-sm-12">
-    <div class="card mb-4">
-      <div class="card-header">
-        <h5 class="card-title">Financial Summary</h5>
-      </div>
-      <div class="card-body">
-        <!-- Financial information -->
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Responsive utility classes for visibility -->
-<div class="d-none d-md-block">
-  <!-- This content only shows on medium screens and larger -->
-  <div class="advanced-filters">
-    <!-- Advanced filtering options -->
-  </div>
-</div>
-
-<div class="d-block d-md-none">
-  <!-- This content only shows on small screens -->
-  <button class="btn btn-primary btn-block" data-toggle="collapse" data-target="#mobileFilters">
-    Show Filters
-  </button>
-  <div id="mobileFilters" class="collapse">
-    <!-- Simplified filtering options -->
-  </div>
-</div>
+With CSS:
+```css
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.status-sold { background-color: #28a745; color: white; }
+.status-on-display { background-color: #17a2b8; color: white; }
+.status-in-repair { background-color: #ffc107; color: black; }
+.status-waiting-for-repairs { background-color: #dc3545; color: white; }
 ```
+
+### Data Tables
+
+The application uses enhanced data tables with the following features:
+
+- **Pagination**: Control number of items per page
+- **Sorting**: Click column headers to sort
+- **Filtering**: Filter table content by various criteria
+- **Export**: Download data as CSV or Excel
+- **Column visibility**: Toggle which columns are displayed
+- **Row actions**: Dropdown or button actions for each row
+
+### Dark Mode
+
+The application supports a dark theme which can be toggled through settings:
+
+- **Dark background** with light text
+- **Reduced contrast** for long working sessions
+- **Preserved readability** of all UI elements
+- **Consistent styling** across all pages
+- **User preference storage** in browser and account settings
+
+The dark mode implementation uses CSS variables and a theme class:
+
+```css
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+}
+
+.dark-theme {
+  --bg-primary: #212529;
+  --bg-secondary: #343a40;
+  --text-primary: #f8f9fa;
+  --text-secondary: #adb5bd;
+  --border-color: #495057;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+```
+
+## Mobile Responsiveness
+
+The application is designed to be responsive across different device sizes:
+
+- **Desktop**: Full layout with multiple columns and detailed information
+- **Tablet**: Adjusted layout with some elements moved or collapsed
+- **Mobile**: Simplified layout with essential information and touch-friendly controls
+
+Key mobile design considerations:
+- **Larger touch targets** for buttons and controls
+- **Simplified tables** with fewer columns
+- **Collapsible sections** to focus on important information
+- **Bottom navigation bar** for key actions
+- **Reduced data load** to improve performance
 
 ## Accessibility Features
 
-The application implements several accessibility features:
+The application implements accessibility best practices:
 
-1. **Semantic HTML**:
-   ```html
-   <main role="main">
-     <section aria-labelledby="pageTitle">
-       <h1 id="pageTitle">Inventory Management</h1>
-       <!-- Content -->
-     </section>
-   </main>
-   ```
+- **ARIA attributes** for screen readers
+- **Keyboard navigation** support
+- **Sufficient color contrast** for all text
+- **Focus indicators** for keyboard users
+- **Text alternatives** for images
+- **Skip to content** links
 
-2. **ARIA Attributes**:
-   ```html
-   <div id="inventoryTab" role="tabpanel" aria-labelledby="inventory-tab">
-     <!-- Tab content -->
-   </div>
-   ```
+## User Experience Flow
 
-3. **Keyboard Navigation**:
-   ```javascript
-   $('.nav-item').keydown(function(e) {
-     // Handle arrow key navigation
-     if (e.keyCode === 39) { // Right arrow
-       $(this).next().find('a').focus();
-     } else if (e.keyCode === 37) { // Left arrow
-       $(this).prev().find('a').focus();
-     }
-   });
-   ```
+The application is designed around common user workflows:
 
-4. **Screen Reader Support**:
-   ```html
-   <button class="btn btn-primary" aria-label="Add new vehicle">
-     <i class="fas fa-plus" aria-hidden="true"></i>
-   </button>
-   ```
+1. **Adding a new vehicle**:
+   - Navigate to Inventory > Add Vehicle
+   - Fill in vehicle details with standardized makes/models
+   - Save vehicle (initially in "Waiting for Repairs" status)
+   - Optionally add repair record from confirmation screen
 
-5. **Color Contrast**:
-   ```css
-   .status-badge {
-     color: #fff;
-     background-color: #007bff; /* WCAG AA compliant contrast */
-     padding: 0.25rem 0.5rem;
-     border-radius: 0.25rem;
-   }
-   ```
+2. **Processing repairs**:
+   - Navigate to Repairs > Add Repair or from vehicle detail page
+   - Select vehicle and add repair details
+   - Add parts using subform modal if needed
+   - Update repair status as it progresses
+   - Complete repair (updates vehicle status to "Ready for Display")
 
-## UI Workflows
+3. **Adding vehicle to stand**:
+   - Navigate to Inventory > Stand Management
+   - Drag vehicle from available vehicles to a stand
+   - Or update vehicle directly from detail page
+   - System automatically updates status to "On Display"
 
-### Adding a New Vehicle
+4. **Recording a sale**:
+   - Navigate to Sales > New Sale or from vehicle detail page
+   - Select vehicle (must be "On Display" status)
+   - Enter sale details
+   - Save sale (automatically updates vehicle status to "Sold")
 
-1. User navigates to Inventory → Add Vehicle
-2. Form is presented with required fields:
-   - Vehicle information
-   - Purchase details
-   - Initial status
-3. User completes form and submits
-4. System validates input
-5. On success, redirect to vehicle detail page
-6. On error, form is redisplayed with validation messages
-
-### Recording a Vehicle Sale
-
-1. User navigates to vehicle detail page
-2. User clicks "Record Sale" button
-3. Sale form modal appears with fields:
-   - Sale price
-   - Sale date
-   - Dealer
-   - Payment method
-4. User completes form and submits
-5. System validates input
-6. System calculates profit and commission
-7. On success, vehicle status updates to "Sold"
-8. Sales record is created
-9. User is redirected to sale detail page
-
-### Managing Repairs
-
-1. User navigates to Repairs → Add Repair
-2. User selects vehicle from dropdown
-3. User enters repair details:
-   - Description
-   - Provider
-   - Start date
-   - Estimated cost
-4. User adds parts to repair (optional)
-5. System creates repair record
-6. As repair progresses, user updates status
-7. When complete, user marks as finished and enters actual cost
-8. System updates vehicle repair history and total repair cost
-
-## Custom UI Elements
-
-### Status Timeline
-
-The application implements a custom status timeline to visualize the progression of vehicles through the workflow:
-
-```html
-<div class="status-timeline">
-  <div class="timeline-item {{ 'active' if car.repair_status == 'Waiting for Repairs' else 'complete' if car_timeline_position > 0 else '' }}">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <h3 class="timeline-title">Waiting for Repairs</h3>
-      <p>{{ car.date_bought|date }}</p>
-    </div>
-  </div>
-  
-  <div class="timeline-item {{ 'active' if car.repair_status == 'In Repair' else 'complete' if car_timeline_position > 1 else '' }}">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <h3 class="timeline-title">In Repair</h3>
-      <p>{{ car.date_repair_started|date if car.date_repair_started else 'Not started' }}</p>
-    </div>
-  </div>
-  
-  <div class="timeline-item {{ 'active' if car.repair_status == 'Ready for Display' else 'complete' if car_timeline_position > 2 else '' }}">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <h3 class="timeline-title">Ready for Display</h3>
-      <p>{{ car.date_repair_completed|date if car.date_repair_completed else 'Not completed' }}</p>
-    </div>
-  </div>
-  
-  <div class="timeline-item {{ 'active' if car.repair_status == 'On Display' else 'complete' if car_timeline_position > 3 else '' }}">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <h3 class="timeline-title">On Display</h3>
-      <p>{{ car.date_added_to_stand|date if car.date_added_to_stand else 'Not on display' }}</p>
-    </div>
-  </div>
-  
-  <div class="timeline-item {{ 'active' if car.repair_status == 'Sold' else '' }}">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <h3 class="timeline-title">Sold</h3>
-      <p>{{ car.date_sold|date if car.date_sold else 'Not sold' }}</p>
-    </div>
-  </div>
-</div>
-```
-
-### Financial Card
-
-The application uses a custom financial card component to display financial summaries:
-
-```html
-<div class="financial-card">
-  <div class="financial-card-header">
-    <h3>Financial Summary</h3>
-  </div>
-  <div class="financial-card-body">
-    <div class="financial-item">
-      <div class="financial-label">Purchase Price</div>
-      <div class="financial-value">${{ car.purchase_price|floatformat:2 }}</div>
-    </div>
-    <div class="financial-item">
-      <div class="financial-label">Repair Cost</div>
-      <div class="financial-value">${{ car.total_repair_cost|floatformat:2 }}</div>
-    </div>
-    <div class="financial-item">
-      <div class="financial-label">Refuel Cost</div>
-      <div class="financial-value">${{ car.refuel_cost|floatformat:2 }}</div>
-    </div>
-    <div class="financial-item total">
-      <div class="financial-label">Total Investment</div>
-      <div class="financial-value">${{ car.total_investment|floatformat:2 }}</div>
-    </div>
-    {% if car.sale_price %}
-    <div class="financial-item">
-      <div class="financial-label">Sale Price</div>
-      <div class="financial-value">${{ car.sale_price|floatformat:2 }}</div>
-    </div>
-    <div class="financial-item profit {{ 'positive' if car.profit > 0 else 'negative' }}">
-      <div class="financial-label">Profit</div>
-      <div class="financial-value">${{ car.profit|floatformat:2 }}</div>
-    </div>
-    <div class="financial-item">
-      <div class="financial-label">Profit Margin</div>
-      <div class="financial-value">{{ car.profit_margin|floatformat:1 }}%</div>
-    </div>
-    {% endif %}
-  </div>
-</div>
-```
-
-## UI Error Handling
-
-The application implements consistent error handling throughout the UI:
-
-1. **Form Validation Errors**:
-   ```html
-   {% if form.errors %}
-   <div class="alert alert-danger">
-     <h4 class="alert-heading">There were errors with your submission</h4>
-     <ul>
-       {% for field, errors in form.errors.items() %}
-         {% for error in errors %}
-           <li>{{ field }}: {{ error }}</li>
-         {% endfor %}
-       {% endfor %}
-     </ul>
-   </div>
-   {% endif %}
-   ```
-
-2. **Flash Messages**:
-   ```html
-   {% with messages = get_flashed_messages(with_categories=true) %}
-     {% if messages %}
-       {% for category, message in messages %}
-         <div class="alert alert-{{ category }} alert-dismissible fade show">
-           {{ message }}
-           <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-           </button>
-         </div>
-       {% endfor %}
-     {% endif %}
-   {% endwith %}
-   ```
-
-3. **AJAX Error Handling**:
-   ```javascript
-   $.ajax({
-     url: '/api/vehicle/' + carId,
-     type: 'GET',
-     dataType: 'json',
-     success: function(data) {
-       // Handle successful response
-       updateVehicleDetails(data);
-     },
-     error: function(xhr, status, error) {
-       // Handle error
-       let errorMessage;
-       try {
-         const response = JSON.parse(xhr.responseText);
-         errorMessage = response.error || 'An unknown error occurred';
-       } catch (e) {
-         errorMessage = 'Could not process the server response';
-       }
-       
-       // Display error message
-       showErrorToast(errorMessage);
-       
-       // Log for debugging
-       console.error('API Error:', errorMessage);
-     }
-   });
-   ```
-
-4. **Empty State Handling**:
-   ```html
-   {% if not cars %}
-   <div class="empty-state">
-     <div class="empty-state-icon">
-       <i class="fas fa-car fa-4x"></i>
-     </div>
-     <h3>No Vehicles Found</h3>
-     <p>There are no vehicles matching your search criteria.</p>
-     <a href="{{ url_for('inventory.add_car') }}" class="btn btn-primary">
-       <i class="fas fa-plus"></i> Add Vehicle
-     </a>
-   </div>
-   {% else %}
-   <!-- Vehicle list -->
-   {% endif %}
-   ``` 
+5. **Generating reports**:
+   - Navigate to Reports
+   - Select report type
+   - Configure parameters and filters
+   - Generate and view report
+   - Optionally export or schedule recurring reports 

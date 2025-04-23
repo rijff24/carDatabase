@@ -58,6 +58,8 @@ The application uses separate database files for different environments:
 - `commission`: Commission based on profit
 - `total_investment`: Total invested in the car (purchase_price + total_repair_cost + refuel_cost)
 - `sold`: Boolean indicating if the car has been sold (date_sold is not None)
+- `full_name`: Complete name of the car (year make model)
+- `is_available`: Boolean indicating if the car is available for sale
 
 **Model Definition** (simplified):
 ```python
@@ -88,10 +90,10 @@ class Car(db.Model):
     sale_price = db.Column(db.Numeric(10, 2), nullable=True)
 
     # Relationships
-    repairs = db.relationship('Repair', backref='car', lazy='dynamic', cascade='all, delete-orphan')
-    stand = db.relationship('Stand', backref='cars')
-    dealer = db.relationship('Dealer', foreign_keys=[dealer_id])
-    sale = db.relationship('Sale', back_populates='car', uselist=False)
+    repairs = db.relationship('Repair', back_populates='car', cascade='all, delete-orphan')
+    stand = db.relationship('Stand', foreign_keys=[stand_id], back_populates='cars')
+    dealer = db.relationship('Dealer', back_populates='cars')
+    sale = db.relationship('Sale', back_populates='car', uselist=False, cascade='all, delete-orphan')
 ```
 
 ### Sales Table
@@ -501,6 +503,218 @@ class User(db.Model, UserMixin):
         return self.username
 ```
 
+### Vehicle Makes Table
+
+**Table Name**: `vehicle_makes`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Integer | Primary Key, Autoincrement | Unique identifier for each make |
+| name | String(50) | Not Null, Unique | Name of the vehicle make (manufacturer) |
+
+**Indexes**:
+- Primary Key: `id`
+- Unique Index on `name`
+
+**Model Definition** (simplified):
+```python
+class VehicleMake(db.Model):
+    __tablename__ = 'vehicle_makes'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    
+    # Relationships
+    models = db.relationship('VehicleModel', backref='make', lazy='dynamic')
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize make name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        return ' '.join(word.capitalize() for word in name.strip().split())
+    
+    @classmethod
+    def get_or_create(cls, make_name):
+        """Get existing make or create a new one if it doesn't exist"""
+        sanitized_name = cls.sanitize_name(make_name)
+        if not sanitized_name:
+            return None
+            
+        existing = cls.query.filter(db.func.lower(cls.name) == db.func.lower(sanitized_name)).first()
+        if existing:
+            return existing
+            
+        new_make = cls(name=sanitized_name)
+        db.session.add(new_make)
+        db.session.commit()
+        return new_make
+```
+
+### Vehicle Models Table
+
+**Table Name**: `vehicle_models`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Integer | Primary Key, Autoincrement | Unique identifier for each model |
+| name | String(50) | Not Null | Name of the vehicle model |
+| make_id | Integer | Foreign Key (vehicle_makes.id), Not Null | ID of the make this model belongs to |
+
+**Indexes**:
+- Primary Key: `id`
+- Foreign Key: `make_id` references `vehicle_makes.id`
+- Unique Constraint on `name` and `make_id` combination
+
+**Model Definition** (simplified):
+```python
+class VehicleModel(db.Model):
+    __tablename__ = 'vehicle_models'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), nullable=False)
+    make_id = db.Column(db.Integer, db.ForeignKey('vehicle_makes.id'), nullable=False)
+    
+    # Add a unique constraint for name+make_id
+    __table_args__ = (
+        db.UniqueConstraint('name', 'make_id', name='unique_model_make'),
+    )
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize model name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        return ' '.join(word.capitalize() for word in name.strip().split())
+    
+    @classmethod
+    def get_or_create(cls, model_name, make_id=None):
+        """Get existing model or create a new one if it doesn't exist"""
+        sanitized_name = cls.sanitize_name(model_name)
+        if not sanitized_name:
+            return None
+            
+        existing = cls.query.filter(
+            db.func.lower(cls.name) == db.func.lower(sanitized_name),
+            cls.make_id == make_id
+        ).first()
+        
+        if existing:
+            return existing
+            
+        new_model = cls(name=sanitized_name, make_id=make_id)
+        db.session.add(new_model)
+        db.session.commit()
+        return new_model
+```
+
+### Vehicle Colors Table
+
+**Table Name**: `vehicle_colors`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Integer | Primary Key, Autoincrement | Unique identifier for each color |
+| name | String(50) | Not Null, Unique | Name of the vehicle color |
+
+**Indexes**:
+- Primary Key: `id`
+- Unique Index on `name`
+
+**Model Definition** (simplified):
+```python
+class VehicleColor(db.Model):
+    __tablename__ = 'vehicle_colors'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    
+    @staticmethod
+    def sanitize_name(name):
+        """Sanitize color name: trim whitespace and capitalize first letter of each word"""
+        if not name:
+            return None
+        return ' '.join(word.capitalize() for word in name.strip().split())
+```
+
+### Vehicle Years Table
+
+**Table Name**: `vehicle_years`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Integer | Primary Key, Autoincrement | Unique identifier for each year entry |
+| year | Integer | Not Null, Unique | Vehicle manufacturing year |
+
+**Indexes**:
+- Primary Key: `id`
+- Unique Index on `year`
+
+**Model Definition** (simplified):
+```python
+class VehicleYear(db.Model):
+    __tablename__ = 'vehicle_years'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    year = db.Column(db.Integer, unique=True, nullable=False)
+```
+
+### Settings Table
+
+**Table Name**: `settings`
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | Integer | Primary Key, Autoincrement | Unique identifier for each setting |
+| key | String(100) | Not Null, Unique | Unique key for the setting |
+| value | String(255) | Not Null | Value of the setting |
+| type | String(20) | Not Null, Default='str' | Data type (str, int, bool, float) |
+| description | Text | Nullable | Description of the setting |
+| created_at | DateTime | Default=Current Time | When the setting was created |
+| updated_at | DateTime | Default=Current Time, OnUpdate=Current Time | When the setting was last updated |
+
+**Indexes**:
+- Primary Key: `id`
+- Unique Index on `key`
+
+**Model Definition** (simplified):
+```python
+class Setting(db.Model):
+    __tablename__ = 'settings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    key = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    value = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(20), default='str')  # str, int, bool, float
+    description = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, default=func.now(), onupdate=func.now())
+    
+    @classmethod
+    def get_setting(cls, key, default=None, as_type=None):
+        """Get a setting value by key with optional default value"""
+        setting = cls.query.filter_by(key=key).first()
+        if not setting:
+            return default
+        
+        # Determine conversion type
+        convert_type = as_type or setting.type
+        
+        # Convert value based on type
+        try:
+            if convert_type == 'int':
+                return int(setting.value)
+            elif convert_type == 'float':
+                return float(setting.value)
+            elif convert_type == 'bool':
+                return setting.value.lower() in ('true', '1', 'yes', 'y', 'on')
+            else:
+                return setting.value
+        except (ValueError, TypeError):
+            # If conversion fails, return the default
+            return default
+```
+
 ## Table Relationships
 
 ### One-to-Many Relationships:
@@ -510,6 +724,7 @@ class User(db.Model, UserMixin):
 - **Stand to Cars**: A stand can have multiple cars
 - **Repair Provider to Repairs**: A repair provider can provide multiple repairs
 - **User to Various Activity Records**: Users can create multiple records of various types
+- **VehicleMake to VehicleModels**: A make can have multiple models
 
 ### One-to-One Relationships:
 - **Car to Sale**: A car can have at most one sale record (enforced at the application level)
@@ -538,3 +753,6 @@ Many fields have default values to ensure consistency when specific values are n
 
 ### Cascading Deletes
 Some relationships are configured with cascading deletes to automatically remove dependent records when a parent record is deleted. 
+
+### Data Sanitization
+The vehicle make, model, and color tables provide sanitization methods to ensure standardized data entry, capitalizing words and removing extra whitespace. 

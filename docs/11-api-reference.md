@@ -206,33 +206,42 @@ POST /vehicles
 
 ```json
 {
-  "vehicle_name": "2020 Honda Accord",
+  "vehicle_name": "2019 Honda Accord",
   "vehicle_make": "Honda",
   "vehicle_model": "Accord",
-  "vehicle_year": 2020,
-  "purchase_price": 18000.00,
-  "date_bought": "2023-03-01",
-  "refuel_cost": 45.00,
-  "dealer_id": 3
+  "year": 2019,
+  "colour": "Silver",
+  "dekra_condition": "Good",
+  "licence_number": "ABC123",
+  "registration_number": "DEF456",
+  "purchase_price": 16500.00,
+  "source": "Auction",
+  "current_location": "Warehouse",
+  "repair_status": "Waiting for Repairs",
+  "refuel_cost": 60.00
 }
 ```
 
-**Example Response**:
+**Response**:
 
 ```json
 {
   "status": "success",
   "data": {
     "car_id": 126,
-    "vehicle_name": "2020 Honda Accord",
+    "vehicle_name": "2019 Honda Accord",
     "vehicle_make": "Honda",
     "vehicle_model": "Accord",
-    "vehicle_year": 2020,
-    "purchase_price": 18000.00,
-    "date_bought": "2023-03-01",
+    "year": 2019,
+    "colour": "Silver",
+    "dekra_condition": "Good",
+    "licence_number": "ABC123",
+    "registration_number": "DEF456",
+    "purchase_price": 16500.00,
+    "source": "Auction",
+    "current_location": "Warehouse",
     "repair_status": "Waiting for Repairs",
-    "refuel_cost": 45.00,
-    "dealer_id": 3,
+    "refuel_cost": 60.00,
     "links": {
       "self": "/api/v1/vehicles/126"
     }
@@ -242,7 +251,7 @@ POST /vehicles
 
 ### Update Vehicle
 
-Updates a vehicle record.
+Updates an existing vehicle record.
 
 ```
 PUT /vehicles/{car_id}
@@ -258,28 +267,23 @@ PUT /vehicles/{car_id}
 
 ```json
 {
-  "purchase_price": 17500.00,
-  "refuel_cost": 50.00,
-  "repair_status": "Ready for Display"
+  "current_location": "Service Bay",
+  "repair_status": "In Repair",
+  "refuel_cost": 75.00
 }
 ```
 
-**Example Response**:
+**Response**:
 
 ```json
 {
   "status": "success",
   "data": {
     "car_id": 126,
-    "vehicle_name": "2020 Honda Accord",
-    "vehicle_make": "Honda",
-    "vehicle_model": "Accord",
-    "vehicle_year": 2020,
-    "purchase_price": 17500.00,
-    "date_bought": "2023-03-01",
-    "repair_status": "Ready for Display",
-    "refuel_cost": 50.00,
-    "dealer_id": 3,
+    "vehicle_name": "2019 Honda Accord",
+    "current_location": "Service Bay",
+    "repair_status": "In Repair",
+    "refuel_cost": 75.00,
     "links": {
       "self": "/api/v1/vehicles/126"
     }
@@ -301,32 +305,36 @@ DELETE /vehicles/{car_id}
 |-----------|------|--------------------|
 | car_id    | int  | ID of the vehicle  |
 
-**Example Response**:
+**Response**:
 
 ```json
 {
   "status": "success",
   "data": {
-    "message": "Vehicle with ID 126 deleted successfully"
+    "message": "Vehicle deleted successfully"
   }
 }
 ```
 
 ## Repairs API
 
-### Get Repairs for Vehicle
+### Get Repairs List
 
-Retrieves all repairs for a specific vehicle.
+Retrieves a list of repairs.
 
 ```
-GET /vehicles/{car_id}/repairs
+GET /repairs
 ```
 
-**Path Parameters**:
+**Query Parameters**:
 
-| Parameter | Type | Description        |
-|-----------|------|--------------------|
-| car_id    | int  | ID of the vehicle  |
+| Parameter    | Type   | Description                       |
+|--------------|--------|-----------------------------------|
+| car_id       | int    | Filter by vehicle ID              |
+| status       | string | Filter by repair status           |
+| provider_id  | int    | Filter by repair provider         |
+| limit        | int    | Maximum number of results         |
+| offset       | int    | Offset for pagination             |
 
 **Example Response**:
 
@@ -337,26 +345,80 @@ GET /vehicles/{car_id}/repairs
     {
       "repair_id": 5,
       "car_id": 1,
+      "provider_id": 3,
+      "repair_type": "Maintenance",
       "description": "Oil change and inspection",
-      "provider_id": 2,
-      "provider_name": "QuickService Auto",
       "start_date": "2023-01-16",
       "end_date": "2023-01-16",
-      "repair_cost": 95.00,
-      "parts_cost": 30.00,
-      "labor_cost": 65.00,
-      "duration_days": 1,
+      "repair_cost": 0.00,
+      "status": "Completed",
       "links": {
         "self": "/api/v1/repairs/5",
-        "vehicle": "/api/v1/vehicles/1",
-        "provider": "/api/v1/providers/2"
+        "car": "/api/v1/vehicles/1",
+        "provider": "/api/v1/providers/3"
       }
-    }
+    },
     // Additional repairs...
   ],
   "meta": {
-    "total": 1,
-    "total_cost": 95.00
+    "total": 45,
+    "limit": 20,
+    "offset": 0
+  }
+}
+```
+
+### Get Repair Detail
+
+Retrieves details for a specific repair.
+
+```
+GET /repairs/{repair_id}
+```
+
+**Path Parameters**:
+
+| Parameter | Type | Description        |
+|-----------|------|--------------------|
+| repair_id | int  | ID of the repair   |
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "repair_id": 5,
+    "car_id": 1,
+    "provider_id": 3,
+    "repair_type": "Maintenance",
+    "description": "Oil change and inspection",
+    "start_date": "2023-01-16",
+    "end_date": "2023-01-16",
+    "repair_cost": 0.00,
+    "status": "Completed",
+    "notes": "Routine maintenance",
+    "parts": [
+      {
+        "part_id": 7,
+        "name": "Oil Filter",
+        "quantity": 1,
+        "unit_cost": 15.00,
+        "total_cost": 15.00
+      },
+      {
+        "part_id": 12,
+        "name": "Engine Oil (5W-30)",
+        "quantity": 5,
+        "unit_cost": 10.00,
+        "total_cost": 50.00
+      }
+    ],
+    "links": {
+      "self": "/api/v1/repairs/5",
+      "car": "/api/v1/vehicles/1",
+      "provider": "/api/v1/providers/3"
+    }
   }
 }
 ```
@@ -374,84 +436,34 @@ POST /repairs
 ```json
 {
   "car_id": 126,
-  "description": "Pre-sale inspection and detailing",
   "provider_id": 3,
-  "start_date": "2023-03-05",
-  "estimated_cost": 250.00
+  "repair_type": "Mechanical",
+  "description": "Brake pad replacement",
+  "start_date": "2023-06-15",
+  "repair_cost": 350.00,
+  "status": "Pending",
+  "notes": "Front brakes only"
 }
 ```
 
-**Example Response**:
+**Response**:
 
 ```json
 {
   "status": "success",
   "data": {
-    "repair_id": 203,
+    "repair_id": 46,
     "car_id": 126,
-    "description": "Pre-sale inspection and detailing",
     "provider_id": 3,
-    "provider_name": "Premium Auto Detail",
-    "start_date": "2023-03-05",
-    "repair_cost": 0.00,
-    "parts_cost": 0.00,
-    "labor_cost": 0.00,
+    "repair_type": "Mechanical",
+    "description": "Brake pad replacement",
+    "start_date": "2023-06-15",
+    "repair_cost": 350.00,
+    "status": "Pending",
+    "notes": "Front brakes only",
     "links": {
-      "self": "/api/v1/repairs/203",
-      "vehicle": "/api/v1/vehicles/126",
-      "provider": "/api/v1/providers/3"
-    }
-  }
-}
-```
-
-### Complete Repair
-
-Marks a repair as complete.
-
-```
-PUT /repairs/{repair_id}/complete
-```
-
-**Path Parameters**:
-
-| Parameter | Type | Description        |
-|-----------|------|--------------------|
-| repair_id | int  | ID of the repair   |
-
-**Request Body**:
-
-```json
-{
-  "end_date": "2023-03-07",
-  "repair_cost": 275.00,
-  "parts_cost": 50.00,
-  "labor_cost": 225.00,
-  "notes": "Completed detailing work and full inspection."
-}
-```
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": {
-    "repair_id": 203,
-    "car_id": 126,
-    "description": "Pre-sale inspection and detailing",
-    "provider_id": 3,
-    "provider_name": "Premium Auto Detail",
-    "start_date": "2023-03-05",
-    "end_date": "2023-03-07",
-    "repair_cost": 275.00,
-    "parts_cost": 50.00,
-    "labor_cost": 225.00,
-    "duration_days": 2,
-    "notes": "Completed detailing work and full inspection.",
-    "links": {
-      "self": "/api/v1/repairs/203",
-      "vehicle": "/api/v1/vehicles/126",
+      "self": "/api/v1/repairs/46",
+      "car": "/api/v1/vehicles/126",
       "provider": "/api/v1/providers/3"
     }
   }
@@ -459,55 +471,6 @@ PUT /repairs/{repair_id}/complete
 ```
 
 ## Sales API
-
-### Record Sale
-
-Records a vehicle sale.
-
-```
-POST /sales
-```
-
-**Request Body**:
-
-```json
-{
-  "car_id": 126,
-  "dealer_id": 5,
-  "sale_price": 22500.00,
-  "sale_date": "2023-03-15",
-  "payment_method": "Finance",
-  "customer_name": "John Smith",
-  "customer_contact": "john.smith@example.com"
-}
-```
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": {
-    "sale_id": 87,
-    "car_id": 126,
-    "dealer_id": 5,
-    "dealer_name": "Sarah Johnson",
-    "sale_price": 22500.00,
-    "sale_date": "2023-03-15",
-    "payment_method": "Finance",
-    "customer_name": "John Smith",
-    "customer_contact": "john.smith@example.com",
-    "profit": 4675.00,
-    "profit_margin": 20.78,
-    "commission": 5000.00,
-    "links": {
-      "self": "/api/v1/sales/87",
-      "vehicle": "/api/v1/vehicles/126",
-      "dealer": "/api/v1/dealers/5"
-    }
-  }
-}
-```
 
 ### Get Sales List
 
@@ -519,13 +482,14 @@ GET /sales
 
 **Query Parameters**:
 
-| Parameter    | Type      | Description                       |
-|--------------|-----------|-----------------------------------|
-| start_date   | date      | Filter by start date              |
-| end_date     | date      | Filter by end date                |
-| dealer_id    | int       | Filter by dealer                  |
-| limit        | int       | Maximum number of results         |
-| offset       | int       | Offset for pagination             |
+| Parameter    | Type   | Description                       |
+|--------------|--------|-----------------------------------|
+| car_id       | int    | Filter by vehicle ID              |
+| dealer_id    | int    | Filter by dealer ID               |
+| start_date   | date   | Filter by sales after this date   |
+| end_date     | date   | Filter by sales before this date  |
+| limit        | int    | Maximum number of results         |
+| offset       | int    | Offset for pagination             |
 
 **Example Response**:
 
@@ -534,434 +498,108 @@ GET /sales
   "status": "success",
   "data": [
     {
-      "sale_id": 87,
-      "car_id": 126,
-      "vehicle_name": "2020 Honda Accord",
-      "dealer_id": 5,
-      "dealer_name": "Sarah Johnson",
-      "sale_price": 22500.00,
-      "sale_date": "2023-03-15",
-      "profit": 4675.00,
-      "profit_margin": 20.78,
-      "commission": 5000.00,
+      "sale_id": 25,
+      "car_id": 1,
+      "dealer_id": 2,
+      "sale_price": 19500.00,
+      "sale_date": "2023-02-20",
+      "payment_method": "Finance",
+      "profit": 4500.00,
+      "profit_margin": 23.08,
       "links": {
-        "self": "/api/v1/sales/87",
-        "vehicle": "/api/v1/vehicles/126",
-        "dealer": "/api/v1/dealers/5"
+        "self": "/api/v1/sales/25",
+        "car": "/api/v1/vehicles/1",
+        "dealer": "/api/v1/dealers/2"
       }
-    }
+    },
     // Additional sales...
   ],
   "meta": {
-    "total": 87,
+    "total": 67,
     "limit": 20,
-    "offset": 0,
-    "total_revenue": 1659750.00,
-    "total_profit": 342500.00,
-    "avg_profit_margin": 21.35,
-    "next": "/api/v1/sales?limit=20&offset=20",
-    "previous": null
+    "offset": 0
   }
 }
 ```
 
-## Dealers API
+### Create Sale
 
-### Get Dealers List
-
-Retrieves a list of dealers.
+Creates a new sale record.
 
 ```
-GET /dealers
-```
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "dealer_id": 1,
-      "name": "Michael Brown",
-      "contact_name": "Michael Brown",
-      "contact_email": "michael.brown@example.com",
-      "contact_phone": "555-123-4567",
-      "commission_rate": 10.00,
-      "active": true,
-      "links": {
-        "self": "/api/v1/dealers/1",
-        "sales": "/api/v1/dealers/1/sales"
-      }
-    }
-    // Additional dealers...
-  ],
-  "meta": {
-    "total": 8
-  }
-}
-```
-
-### Get Dealer Performance
-
-Retrieves performance metrics for a dealer.
-
-```
-GET /dealers/{dealer_id}/performance
-```
-
-**Path Parameters**:
-
-| Parameter  | Type | Description        |
-|------------|------|--------------------|
-| dealer_id  | int  | ID of the dealer   |
-
-**Query Parameters**:
-
-| Parameter  | Type      | Description                       |
-|------------|-----------|-----------------------------------|
-| start_date | date      | Filter by start date              |
-| end_date   | date      | Filter by end date                |
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": {
-    "dealer_id": 5,
-    "name": "Sarah Johnson",
-    "metrics": {
-      "total_sales": 15,
-      "total_revenue": 337500.00,
-      "total_profit": 67450.00,
-      "avg_profit_per_sale": 4496.67,
-      "avg_profit_margin": 19.85,
-      "total_commission": 75000.00,
-      "avg_days_to_sell": 18.3
-    },
-    "monthly_performance": [
-      {
-        "month": "2023-01",
-        "sales_count": 3,
-        "revenue": 67500.00,
-        "profit": 13280.00,
-        "avg_margin": 19.45
-      },
-      // Additional months...
-    ],
-    "links": {
-      "self": "/api/v1/dealers/5",
-      "sales": "/api/v1/dealers/5/sales"
-    }
-  }
-}
-```
-
-## Reports API
-
-### Generate Financial Report
-
-Generates a financial report.
-
-```
-GET /reports/financial
-```
-
-**Query Parameters**:
-
-| Parameter  | Type      | Description                       |
-|------------|-----------|-----------------------------------|
-| start_date | date      | Filter by start date              |
-| end_date   | date      | Filter by end date                |
-| type       | string    | Report type (profit, revenue)     |
-| format     | string    | Response format (json, csv, pdf)  |
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": {
-    "report_type": "financial",
-    "period": {
-      "start_date": "2023-01-01",
-      "end_date": "2023-03-31"
-    },
-    "summary": {
-      "total_revenue": 547250.00,
-      "total_costs": 428930.00,
-      "total_profit": 118320.00,
-      "profit_margin": 21.62,
-      "total_commission": 125000.00
-    },
-    "monthly_breakdown": [
-      {
-        "month": "2023-01",
-        "revenue": 183750.00,
-        "costs": 145650.00,
-        "profit": 38100.00,
-        "margin": 20.73
-      },
-      // Additional months...
-    ],
-    "links": {
-      "self": "/api/v1/reports/financial?start_date=2023-01-01&end_date=2023-03-31",
-      "csv": "/api/v1/reports/financial?start_date=2023-01-01&end_date=2023-03-31&format=csv",
-      "pdf": "/api/v1/reports/financial?start_date=2023-01-01&end_date=2023-03-31&format=pdf"
-    }
-  }
-}
-```
-
-### Generate Inventory Report
-
-Generates an inventory report.
-
-```
-GET /reports/inventory
-```
-
-**Query Parameters**:
-
-| Parameter  | Type      | Description                       |
-|------------|-----------|-----------------------------------|
-| status     | string    | Filter by vehicle status          |
-| format     | string    | Response format (json, csv, pdf)  |
-
-**Example Response**:
-
-```json
-{
-  "status": "success",
-  "data": {
-    "report_type": "inventory",
-    "generated_at": "2023-04-01T12:00:00Z",
-    "summary": {
-      "total_vehicles": 42,
-      "total_investment": 672450.00,
-      "average_days_in_inventory": 18.5
-    },
-    "status_breakdown": {
-      "Waiting for Repairs": 8,
-      "In Repair": 5,
-      "Ready for Display": 7,
-      "On Display": 22,
-      "Sold": 0
-    },
-    "location_breakdown": {
-      "Main Showroom": 15,
-      "North Lot": 7,
-      "Service Center": 13,
-      "Unassigned": 7
-    },
-    "aging_breakdown": {
-      "0-30 days": 25,
-      "31-60 days": 12,
-      "61-90 days": 3,
-      "91+ days": 2
-    },
-    "links": {
-      "self": "/api/v1/reports/inventory",
-      "csv": "/api/v1/reports/inventory?format=csv",
-      "pdf": "/api/v1/reports/inventory?format=pdf"
-    }
-  }
-}
-```
-
-## Error Codes
-
-| Code            | Description                                       |
-|-----------------|---------------------------------------------------|
-| UNAUTHORIZED    | Authentication required or failed                 |
-| FORBIDDEN       | User doesn't have permission                      |
-| NOT_FOUND       | Resource not found                                |
-| VALIDATION      | Validation error in input data                    |
-| BUSINESS_RULE   | Operation violates a business rule                |
-| CONFLICT        | Resource conflict (e.g., duplicate data)          |
-| SERVER_ERROR    | Internal server error                             |
-| SERVICE_DOWN    | External service dependency unavailable           |
-| RATE_LIMIT      | API rate limit exceeded                           |
-
-## Rate Limiting
-
-The API implements rate limiting to ensure stability:
-
-- Standard users: 100 requests per minute
-- Premium users: 300 requests per minute
-
-Rate limit information is included in response headers:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1617278400
-```
-
-## Webhooks
-
-The application can send webhook notifications for various events:
-
-### Webhook Registration
-
-```
-POST /webhooks
+POST /sales
 ```
 
 **Request Body**:
 
 ```json
 {
-  "url": "https://your-app.com/webhook-receiver",
-  "events": ["vehicle.created", "sale.recorded", "repair.completed"],
-  "secret": "your_webhook_secret"
+  "car_id": 126,
+  "dealer_id": 2,
+  "sale_price": 22500.00,
+  "sale_date": "2023-06-30",
+  "payment_method": "Cash",
+  "customer_name": "John Smith",
+  "customer_contact": "john.smith@example.com",
+  "notes": "Repeat customer"
 }
 ```
 
-**Example Response**:
+**Response**:
 
 ```json
 {
   "status": "success",
   "data": {
-    "webhook_id": 12,
-    "url": "https://your-app.com/webhook-receiver",
-    "events": ["vehicle.created", "sale.recorded", "repair.completed"],
-    "created_at": "2023-04-01T12:00:00Z",
-    "status": "active"
-  }
-}
-```
-
-### Webhook Payload Example
-
-```json
-{
-  "event": "sale.recorded",
-  "timestamp": "2023-03-15T14:35:22Z",
-  "webhook_id": 12,
-  "data": {
-    "sale_id": 87,
+    "sale_id": 68,
     "car_id": 126,
-    "vehicle_name": "2020 Honda Accord",
-    "dealer_id": 5,
-    "dealer_name": "Sarah Johnson",
+    "dealer_id": 2,
     "sale_price": 22500.00,
-    "sale_date": "2023-03-15",
-    "profit": 4675.00
+    "sale_date": "2023-06-30",
+    "payment_method": "Cash",
+    "customer_name": "John Smith",
+    "customer_contact": "john.smith@example.com",
+    "notes": "Repeat customer",
+    "profit": 5925.00,
+    "profit_margin": 26.33,
+    "links": {
+      "self": "/api/v1/sales/68",
+      "car": "/api/v1/vehicles/126",
+      "dealer": "/api/v1/dealers/2"
+    }
   }
 }
-```
-
-### Available Events
-
-| Event Name         | Description                                   |
-|--------------------|-----------------------------------------------|
-| vehicle.created    | New vehicle added to inventory                |
-| vehicle.updated    | Vehicle information updated                   |
-| vehicle.status     | Vehicle status changed                        |
-| repair.created     | New repair record created                     |
-| repair.completed   | Repair marked as complete                     |
-| sale.recorded      | Vehicle sale recorded                         |
-| report.generated   | Report generation completed                   |
-
-## API Versioning
-
-The API implements versioning to ensure backward compatibility:
-
-- Current version: v1
-- Versions are specified in the URL path: `/api/v1/...`
-- Version-specific documentation is available at: `/api/docs/v1`
-
-## Deprecation Policy
-
-When API features are deprecated:
-
-1. Deprecation warnings are included in response headers:
-   ```
-   X-API-Warning: The 'dealer_code' field is deprecated and will be removed in v2
-   ```
-
-2. Deprecated features remain available for at least 6 months
-
-3. Migration guides are published in the developer documentation
-
-## SDK Libraries
-
-Official client libraries are available for:
-
-- Python: `pip install car-tracking-api-client`
-- JavaScript: `npm install car-tracking-api-client`
-- PHP: `composer require car-tracking/api-client`
-
-Example usage (Python):
-
-```python
-from car_tracking_api import CarTrackingAPI
-
-api = CarTrackingAPI('your_api_key')
-
-# Get list of vehicles
-vehicles = api.vehicles.list(status='On Display')
-
-# Record a sale
-sale = api.sales.create(
-    car_id=126,
-    dealer_id=5,
-    sale_price=22500.00,
-    sale_date='2023-03-15'
-) 
 ```
 
 ## Settings API
 
 ### Get All Settings
 
-Retrieves all system settings.
+Retrieves all application settings.
 
 ```
 GET /settings
 ```
-
-**Query Parameters**:
-
-| Parameter | Type   | Description                    |
-|-----------|--------|--------------------------------|
-| category  | string | Filter settings by category    |
 
 **Example Response**:
 
 ```json
 {
   "status": "success",
-  "data": [
-    {
-      "id": 1,
-      "key": "stand_aging_threshold_days",
-      "value": 180,
-      "type": "int",
-      "description": "Number of days after which a car on a stand is considered aging",
-      "created_at": "2023-03-15T10:24:30",
-      "updated_at": "2023-03-15T10:24:30"
-    },
-    {
-      "id": 2,
-      "key": "enable_dark_mode",
-      "value": false,
-      "type": "bool",
-      "description": "Switch to a dark theme for the interface",
-      "created_at": "2023-03-15T10:24:30",
-      "updated_at": "2023-03-16T14:52:18"
-    },
-    // Additional settings...
-  ]
+  "data": {
+    "stand_aging_threshold_days": 180,
+    "status_inactivity_threshold_days": 30,
+    "enable_depreciation_tracking": false,
+    "enable_status_warnings": true,
+    "enable_subform_dropdowns": true,
+    "enable_dark_mode": false
+  }
 }
 ```
 
-### Get Setting
+### Get Setting By Key
 
-Retrieves a specific setting by key.
+Retrieves a specific setting by its key.
 
 ```
 GET /settings/{key}
@@ -969,9 +607,9 @@ GET /settings/{key}
 
 **Path Parameters**:
 
-| Parameter | Type   | Description              |
-|-----------|--------|--------------------------|
-| key       | string | Key of the setting       |
+| Parameter | Type   | Description        |
+|-----------|--------|--------------------|
+| key       | string | Setting key        |
 
 **Example Response**:
 
@@ -979,20 +617,17 @@ GET /settings/{key}
 {
   "status": "success",
   "data": {
-    "id": 1,
     "key": "stand_aging_threshold_days",
     "value": 180,
     "type": "int",
-    "description": "Number of days after which a car on a stand is considered aging",
-    "created_at": "2023-03-15T10:24:30",
-    "updated_at": "2023-03-15T10:24:30"
+    "description": "Number of days after which a car on a stand is considered aging"
   }
 }
 ```
 
 ### Update Setting
 
-Updates an existing setting.
+Updates a specific setting value.
 
 ```
 PUT /settings/{key}
@@ -1000,9 +635,9 @@ PUT /settings/{key}
 
 **Path Parameters**:
 
-| Parameter | Type   | Description              |
-|-----------|--------|--------------------------|
-| key       | string | Key of the setting       |
+| Parameter | Type   | Description        |
+|-----------|--------|--------------------|
+| key       | string | Setting key        |
 
 **Request Body**:
 
@@ -1013,111 +648,731 @@ PUT /settings/{key}
 }
 ```
 
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "key": "stand_aging_threshold_days",
+    "value": 90,
+    "type": "int",
+    "description": "Number of days after which a car on a stand is considered aging"
+  }
+}
+```
+
+## Vehicle Data API
+
+### Get Makes List
+
+Retrieves a list of vehicle makes.
+
+```
+GET /vehicle-data/makes
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Toyota"
+    },
+    {
+      "id": 2,
+      "name": "Honda"
+    },
+    {
+      "id": 3,
+      "name": "Ford"
+    }
+    // Additional makes...
+  ]
+}
+```
+
+### Create Make
+
+Creates a new vehicle make.
+
+```
+POST /vehicle-data/makes
+```
+
+**Request Body**:
+
+```json
+{
+  "name": "Mazda"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 4,
+    "name": "Mazda"
+  }
+}
+```
+
+### Get Models by Make
+
+Retrieves models for a specific make.
+
+```
+GET /vehicle-data/makes/{make_id}/models
+```
+
+**Path Parameters**:
+
+| Parameter | Type | Description        |
+|-----------|------|--------------------|
+| make_id   | int  | ID of the make     |
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Camry",
+      "make_id": 1
+    },
+    {
+      "id": 2,
+      "name": "Corolla",
+      "make_id": 1
+    },
+    {
+      "id": 3,
+      "name": "RAV4",
+      "make_id": 1
+    }
+    // Additional models...
+  ]
+}
+```
+
+### Create Model
+
+Creates a new vehicle model for a specific make.
+
+```
+POST /vehicle-data/makes/{make_id}/models
+```
+
+**Path Parameters**:
+
+| Parameter | Type | Description        |
+|-----------|------|--------------------|
+| make_id   | int  | ID of the make     |
+
+**Request Body**:
+
+```json
+{
+  "name": "Prius"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 4,
+    "name": "Prius",
+    "make_id": 1
+  }
+}
+```
+
+### Get Colors List
+
+Retrieves a list of vehicle colors.
+
+```
+GET /vehicle-data/colors
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Black"
+    },
+    {
+      "id": 2,
+      "name": "White"
+    },
+    {
+      "id": 3,
+      "name": "Silver"
+    }
+    // Additional colors...
+  ]
+}
+```
+
+### Create Color
+
+Creates a new vehicle color.
+
+```
+POST /vehicle-data/colors
+```
+
+**Request Body**:
+
+```json
+{
+  "name": "Blue"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 4,
+    "name": "Blue"
+  }
+}
+```
+
+## Import API
+
+### Get Import Templates
+
+Retrieves a list of available import templates.
+
+```
+GET /import/templates
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "entity_type": "cars",
+      "description": "Vehicle import template",
+      "download_url": "/api/v1/import/templates/cars"
+    },
+    {
+      "entity_type": "repairs",
+      "description": "Repairs import template",
+      "download_url": "/api/v1/import/templates/repairs"
+    },
+    {
+      "entity_type": "sales",
+      "description": "Sales import template",
+      "download_url": "/api/v1/import/templates/sales"
+    },
+    {
+      "entity_type": "dealers",
+      "description": "Dealers import template",
+      "download_url": "/api/v1/import/templates/dealers"
+    },
+    {
+      "entity_type": "parts",
+      "description": "Parts import template",
+      "download_url": "/api/v1/import/templates/parts"
+    },
+    {
+      "entity_type": "stands",
+      "description": "Stands import template",
+      "download_url": "/api/v1/import/templates/stands"
+    }
+  ]
+}
+```
+
+### Download Import Template
+
+Downloads a specific import template.
+
+```
+GET /import/templates/{entity_type}
+```
+
+**Path Parameters**:
+
+| Parameter   | Type   | Description                       |
+|-------------|--------|-----------------------------------|
+| entity_type | string | Type of entity (cars, repairs, etc.) |
+
+**Response**: Excel file download
+
+### Import Data
+
+Imports data for a specific entity type.
+
+```
+POST /import/{entity_type}
+```
+
+**Path Parameters**:
+
+| Parameter   | Type   | Description                       |
+|-------------|--------|-----------------------------------|
+| entity_type | string | Type of entity (cars, repairs, etc.) |
+
+**Request**: Form data with file upload
+
 **Example Response**:
 
 ```json
 {
   "status": "success",
   "data": {
-    "id": 1,
-    "key": "stand_aging_threshold_days",
-    "value": 90,
-    "type": "int",
-    "description": "Number of days after which a car on a stand is considered aging",
-    "created_at": "2023-03-15T10:24:30",
-    "updated_at": "2023-04-01T15:30:45"
+    "imported": 15,
+    "failed": 2,
+    "errors": [
+      "Row 3: Missing required field 'VIN'",
+      "Row 8: Invalid make 'Toyotta'"
+    ]
   }
 }
 ```
 
-## Settings Utility Methods
+## Reports API
 
-The application provides utility methods for working with settings throughout the codebase:
+### Get Available Reports
 
-### Get Setting
+Retrieves a list of available reports.
 
-```python
-from app.models.setting import Setting
-
-# Get a setting with a default fallback
-value = Setting.get_setting('key_name', default_value)
+```
+GET /reports
 ```
 
-**Parameters**:
+**Example Response**:
 
-| Parameter     | Type   | Description                              |
-|---------------|--------|------------------------------------------|
-| key           | string | Key of the setting to retrieve           |
-| default_value | any    | Default value to return if key not found |
-
-**Returns**: The setting value, converted to the appropriate type
-
-**Example Usage**:
-
-```python
-# Get an integer setting with default
-threshold = Setting.get_setting('stand_aging_threshold_days', 180)
-
-# Get a boolean setting with default
-dark_mode = Setting.get_setting('enable_dark_mode', False)
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": "profit_and_loss",
+      "name": "Profit and Loss Report",
+      "category": "Financial",
+      "description": "Provides a comprehensive view of business financial performance",
+      "endpoints": {
+        "generate": "/api/v1/reports/profit_and_loss",
+        "export": "/api/v1/reports/profit_and_loss/export"
+      }
+    },
+    // Additional reports...
+  ]
+}
 ```
 
-### Set Setting
+### Generate Report
 
-```python
-from app.models.setting import Setting
+Generates a specific report.
 
-# Set a setting value
-Setting.set_setting('key_name', value, description='Description', type='string')
+```
+GET /reports/{report_id}
 ```
 
-**Parameters**:
+**Path Parameters**:
 
-| Parameter   | Type   | Description                             |
-|-------------|--------|-----------------------------------------|
-| key         | string | Key of the setting                      |
-| value       | any    | Value to store                          |
-| description | string | Optional human-readable description     |
-| type        | string | Optional type indicator (int, bool, str)|
+| Parameter | Type   | Description    |
+|-----------|--------|----------------|
+| report_id | string | ID of report   |
 
-**Returns**: The Setting object
+**Query Parameters**: Vary by report type
 
-**Example Usage**:
+**Example Response**:
 
-```python
-# Set a boolean setting
-Setting.set_setting(
-    'enable_status_warnings',
-    True,
-    description='Show warnings for vehicles with stale status',
-    type='bool'
-)
-
-# Set an integer setting
-Setting.set_setting(
-    'status_inactivity_threshold_days',
-    30,
-    description='Number of days after which a car with unchanged status is considered inactive',
-    type='int'
-)
+```json
+{
+  "status": "success",
+  "data": {
+    "report_id": "profit_and_loss",
+    "generated_at": "2023-06-15T14:30:00Z",
+    "parameters": {
+      "start_date": "2023-01-01",
+      "end_date": "2023-06-01"
+    },
+    "summary": {
+      "total_revenue": 245000.00,
+      "total_costs": 175000.00,
+      "gross_profit": 70000.00,
+      "profit_margin": 28.57
+    },
+    "details": [
+      // Report-specific details...
+    ]
+  }
+}
 ```
 
-### Get All Settings
+### Export Report
 
-```python
-from app.models.setting import Setting
+Exports a report in a specific format.
 
-# Get all settings
-all_settings = Setting.get_all_settings()
+```
+GET /reports/{report_id}/export
 ```
 
-**Returns**: A dictionary of all settings, with keys as the setting keys and values as dictionaries containing the setting data
+**Path Parameters**:
 
-**Example Usage**:
+| Parameter | Type   | Description    |
+|-----------|--------|----------------|
+| report_id | string | ID of report   |
 
-```python
-# Get all settings and process them
-settings = Setting.get_all_settings()
-for key, data in settings.items():
-    print(f"{key}: {data['value']} ({data['type']})")
+**Query Parameters**:
+
+| Parameter | Type   | Description                   |
+|-----------|--------|-------------------------------|
+| format    | string | Export format (pdf, csv, xlsx) |
+
+**Response**: File download in requested format
+
+## User Management API
+
+### Get Users List
+
+Retrieves a list of users.
+
+```
+GET /users
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "user_id": 1,
+      "username": "admin",
+      "email": "admin@example.com",
+      "role": "admin",
+      "is_active": true,
+      "last_login": "2023-06-14T10:15:00Z"
+    },
+    // Additional users...
+  ]
+}
+```
+
+### Create User
+
+Creates a new user.
+
+```
+POST /users
+```
+
+**Request Body**:
+
+```json
+{
+  "username": "new_user",
+  "email": "user@example.com",
+  "password": "secure_password",
+  "role": "user",
+  "full_name": "New User"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "user_id": 5,
+    "username": "new_user",
+    "email": "user@example.com",
+    "role": "user",
+    "is_active": true
+  }
+}
+```
+
+## Subform Helper APIs
+
+### Quick Create Dealer
+
+Creates a new dealer from a simplified form.
+
+```
+POST /dealers/quick-create
+```
+
+**Request Body**:
+
+```json
+{
+  "name": "New Dealer",
+  "contact_name": "John Contact",
+  "contact_phone": "555-1234"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "dealer_id": 12,
+    "name": "New Dealer",
+    "contact_name": "John Contact",
+    "contact_phone": "555-1234"
+  }
+}
+```
+
+### Quick Create Provider
+
+Creates a new repair provider from a simplified form.
+
+```
+POST /providers/quick-create
+```
+
+**Request Body**:
+
+```json
+{
+  "name": "New Provider",
+  "specialization": "Electrical",
+  "contact_phone": "555-5678"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "provider_id": 8,
+    "name": "New Provider",
+    "specialization": "Electrical",
+    "contact_phone": "555-5678"
+  }
+}
+```
+
+### Quick Create Part
+
+Creates a new part from a simplified form.
+
+```
+POST /parts/quick-create
+```
+
+**Request Body**:
+
+```json
+{
+  "name": "Air Filter",
+  "unit_cost": 25.00,
+  "supplier": "Auto Parts Inc"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "part_id": 15,
+    "name": "Air Filter",
+    "unit_cost": 25.00,
+    "supplier": "Auto Parts Inc"
+  }
+}
+```
+
+## Helper Functions
+
+### Get Dashboard Summary
+
+Retrieves a summary of key metrics for the dashboard.
+
+```
+GET /dashboard/summary
+```
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "inventory_count": 42,
+    "vehicles_on_display": 25,
+    "vehicles_in_repair": 12,
+    "vehicles_waiting": 5,
+    "sales_this_month": 8,
+    "profit_this_month": 45000.00,
+    "average_profit_margin": 21.5,
+    "aging_vehicles": 3
+  }
+}
+```
+
+### Check Vehicle Status
+
+Checks the detailed status of a vehicle, including aging and inactivity.
+
+```
+GET /vehicles/{car_id}/status-check
+```
+
+**Path Parameters**:
+
+| Parameter | Type | Description        |
+|-----------|------|--------------------|
+| car_id    | int  | ID of the vehicle  |
+
+**Example Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "car_id": 126,
+    "repair_status": "On Display",
+    "days_on_stand": 45,
+    "is_aging": false,
+    "aging_threshold": 180,
+    "has_inactive_status": true,
+    "inactivity_threshold": 30,
+    "last_status_change": "2023-05-01",
+    "recommended_actions": [
+      "Review pricing",
+      "Consider promotional listing"
+    ]
+  }
+}
+```
+
+### Sanitize Vehicle Data
+
+Sanitizes and standardizes vehicle information.
+
+```
+POST /vehicle-data/sanitize
+```
+
+**Request Body**:
+
+```json
+{
+  "make": "  toyota ",
+  "model": "camrY",
+  "color": "SILVER metallic"
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "make": "Toyota",
+    "model": "Camry",
+    "color": "Silver Metallic",
+    "make_id": 1,
+    "model_id": 1,
+    "color_id": 3
+  }
+}
+```
+
+### Data Validation
+
+Validates data according to application rules.
+
+```
+POST /validate
+```
+
+**Request Body**:
+
+```json
+{
+  "validate_type": "vehicle",
+  "data": {
+    "vehicle_name": "2019 Honda Accord",
+    "vehicle_make": "Honda",
+    "vehicle_model": "Accord",
+    "year": 2019,
+    "colour": "Silver",
+    "purchase_price": 16500.00
+  }
+}
+```
+
+**Response**:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "is_valid": true,
+    "errors": [],
+    "warnings": []
+  }
+}
+```
+
+Or with validation errors:
+
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": {
+      "is_valid": false,
+      "errors": [
+        {
+          "field": "year",
+          "message": "Year cannot be in the future"
+        },
+        {
+          "field": "purchase_price",
+          "message": "Purchase price must be a positive number"
+        }
+      ],
+      "warnings": [
+        {
+          "field": "vehicle_make",
+          "message": "Uncommon vehicle make, please verify"
+        }
+      ]
+    }
+  }
+}
 ``` 
