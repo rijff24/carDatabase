@@ -21,7 +21,7 @@ The reporting system is implemented with varying levels of completion:
 | Financial Reports | Complete | All core financial reports are implemented |
 | Inventory Reports | Complete | All inventory reports are implemented with aging thresholds |
 | Sales Reports | Complete | All sales reports are implemented |
-| Repair Reports | Partial | Basic repair reports implemented, advanced analytics in development |
+| Repair Reports | Complete | All core repair reports are implemented including provider efficiency |
 | Custom Reports | In Development | Framework in place, UI for report building in progress |
 
 ## Financial Reports
@@ -62,6 +62,58 @@ The reporting system is implemented with varying levels of completion:
 
 **New Feature:** ROI calculation has been added to provide better investment analysis.
 
+**Dashboard Integration:**
+- The Top & Bottom Cars Profitability Card on the dashboard links directly to this report
+- Direct links for specific vehicle makes/models from the dashboard
+- Filtered view for the past 60 days from the main card link
+- Color-coded indicators for high profit (green) and negative profit (red)
+
+### Investment vs Profit Per Car Report
+
+**Status: Complete**
+
+**Purpose:** Provide a detailed breakdown of investment versus profit for each car with categorized ROI analysis.
+
+**Key Metrics:**
+- Purchase price
+- Recon cost
+- Refuel cost
+- Total investment
+- Sale price
+- Profit
+- ROI %
+
+**Features:**
+- Color-coded ROI bands (high/medium/low) for quick performance identification
+- Expandable drill-down by model for detailed per-car analysis
+- ROI distribution visualization
+- Comprehensive filtering options
+
+**Filters:**
+- Make
+- Model
+- Stand
+- Date range options (preset periods or custom date range)
+
+**Export Format:**
+- XLSX (default) with multiple worksheets (Summary, Cars, Models)
+- Filter settings included in export
+
+**Route:** `/reports/profitability`
+
+**Visualization:**
+- Color bands for different ROI brackets
+- High (≥30%): Green
+- Medium (15-30%): Yellow
+- Low (<15%): Red
+- Interactive tables with drill-down capability
+- ROI distribution progress bars
+
+**Additional Notes:**
+- Modular layout for better organization of data
+- Data export includes all applied filters
+- Designed for detailed investment analysis to inform purchasing decisions
+
 ## Inventory Reports
 
 ### Current Inventory Report
@@ -99,6 +151,29 @@ The reporting system is implemented with varying levels of completion:
 - 91+ days: Consider Discounting or Wholesale
 
 **Enhanced Feature:** Configurable aging thresholds via Settings page.
+
+**Dashboard Integration:** 
+- The dashboard Inventory Aging card directly links to this report
+- Shows count of vehicles exceeding the stand_aging_threshold_days
+- Color-coded indicators (red for exceeding threshold, yellow for approaching threshold)
+
+### Status Inactivity Report
+
+**Status: Complete (integrated with Inventory Aging Report)**
+
+**Purpose:** Identify vehicles that have remained in the same status for extended periods.
+
+**Key Metrics:**
+- Days in Current Status
+- Current Status
+- Days Since Last Status Change
+- Suggested Action
+
+**Dashboard Integration:**
+- The dashboard Status Inactivity card links to the Inventory Aging Report with appropriate filters
+- Shows count of vehicles with status unchanged for longer than status_inactivity_threshold_days
+- Color-coded indicators (red for exceeding threshold, yellow for approaching threshold)
+- Only displayed when enable_status_warnings setting is enabled
 
 ### Vehicle Depreciation Report
 
@@ -162,6 +237,43 @@ The reporting system is implemented with varying levels of completion:
 - Average Days to Sell by Make/Model
 - Most Profitable Makes/Models
 
+### Stand Performance Report
+
+**Status: Complete**
+
+**Purpose:** Evaluate and compare the performance of different car stands.
+
+**Key Metrics:**
+- Average days on stand (all cars)
+- Total profit from sold cars at each stand
+- Current cars on stand and their average age
+- Stand turnover rate (cars sold ÷ avg cars on stand)
+- Aging analysis for current inventory
+
+**Filters:**
+- Stand name (multi-select)
+- Time range based on purchase or sale date
+- Car model/make
+
+**Visualization:**
+- Bar chart comparing key metrics across stands
+- Aging bands analysis table
+- Stand performance comparison table
+
+**Export Options:**
+- XLSX (default)
+- CSV
+- JSON
+- Print view
+
+**Dashboard Integration:**
+- The dashboard Stand Statistics card directly links to this report
+- The card shows a visual breakdown of:
+  - Total unsold cars per stand using horizontal bar charts
+  - Average age of cars on each stand with color-coded thresholds
+- Allows quick access to detailed stand analysis from the dashboard
+- Visualizations highlight stands with aging inventory issues
+
 ## Repair Reports
 
 ### Repair Efficiency Report
@@ -176,6 +288,61 @@ The reporting system is implemented with varying levels of completion:
 - Repair Cost Distribution
 - Most Common Repair Types
 - Provider Performance Comparison
+
+### Repair Cost & History Report
+
+**Status: Complete**
+
+**Purpose:** Analyze repair costs and history patterns by various dimensions.
+
+**Key Metrics:**
+- Average Cost Per Repair Type
+- Average Duration from Purchase to First Repair
+- Repair Count Per Car
+- Average Duration Per Provider
+- Cost Trend by Repair Type
+- Repairs Grouped by Car Model
+
+**Filters:**
+- Repair Type
+- Provider
+- Vehicle Make/Model/Year
+- Date Range
+
+**Visualizations:**
+- Line Chart: Cost trend by repair type over time
+- Tables: Repair costs and durations by type, provider, and car model/make
+
+**Export Options:**
+- XLSX with multiple worksheets for detailed analysis
+
+This report helps identify which vehicle models require the most repairs, which repair types are most expensive, and which providers are most efficient. It provides both high-level trends and detailed breakdowns for repair cost management and planning.
+
+### Provider Efficiency Report
+
+**Status: Complete**
+
+**Purpose:** Track and compare repair provider performance metrics.
+
+**Key Metrics:**
+- Average repair cost per provider
+- Average duration per repair
+- Number of repairs handled
+- Cost/duration efficiency ratio
+
+**Filters:**
+- Repair Type
+- Date Range (start date and end date)
+
+**Visualizations:**
+- Bar Chart: Cost vs duration comparison
+- Table: Provider performance metrics
+
+**Export Options:**
+- XLSX default format
+- Print support
+
+This report helps identify the most cost-effective and efficient repair providers. It allows managers to compare providers based on various metrics and make data-driven decisions about which providers to use for different repair types.
 
 ### Parts Usage Report
 

@@ -79,74 +79,133 @@ def create():
             # Get form data
             data = request.form
             
-            # Get or create make
+            # Check required fields
+            vehicle_name = data.get('vehicle_name', '').strip()
+            if not vehicle_name:
+                flash('Vehicle name is required', 'danger')
+                return redirect(url_for('cars.create'))
+            
+            try:
+                purchase_price = float(data.get('purchase_price', 0))
+                if purchase_price < 0:
+                    flash('Purchase price cannot be negative', 'danger')
+                    return redirect(url_for('cars.create'))
+            except ValueError:
+                flash('Purchase price must be a valid number', 'danger')
+                return redirect(url_for('cars.create'))
+            
+            # Process make (optional)
+            make = None
             make_name = data.get('vehicle_make', '').strip()
-            if not make_name:
-                flash('Make is required', 'danger')
-                return redirect(url_for('cars.create'))
-                
-            make = VehicleMake.get_or_create(make_name)
-            if not make:
-                flash('Invalid make name', 'danger')
-                return redirect(url_for('cars.create'))
+            if make_name:
+                make = VehicleMake.get_or_create(make_name)
             
-            # Get or create model with relationship to make
+            # Process model (optional)
+            model = None
             model_name = data.get('vehicle_model', '').strip()
-            if not model_name:
-                flash('Model is required', 'danger')
-                return redirect(url_for('cars.create'))
-                
-            model = VehicleModel.get_or_create(model_name, make_id=make.id)
-            if not model:
-                flash('Invalid model name', 'danger')
-                return redirect(url_for('cars.create'))
+            if make and model_name:
+                model = VehicleModel.get_or_create(model_name, make_id=make.id)
             
-            # Get dealer info
+            # Get dealer (optional)
+            dealer = None
             dealer_id = data.get('source')
-            if not dealer_id:
-                flash('Source (Dealer) is required', 'danger')
-                return redirect(url_for('cars.create'))
-                
-            dealer = Dealer.query.get(dealer_id)
-            if not dealer:
-                flash('Invalid dealer selected', 'danger')
-                return redirect(url_for('cars.create'))
-            
-            # Create new car
-            car = Car(
-                vehicle_name=data.get('vehicle_name', '').strip(),
-                vehicle_make=make.name,
-                vehicle_model=model.name,
-                year=int(data.get('year')),
-                colour=data.get('colour', '').strip(),
-                dekra_condition=data.get('dekra_condition'),
-                licence_number=data.get('licence_number', '').strip(),
-                registration_number=data.get('registration_number', '').strip(),
-                purchase_price=float(data.get('purchase_price')),
-                source=dealer.dealer_name,
-                dealer_id=dealer.dealer_id,
-                date_bought=datetime.now().date(),
-                repair_status=data.get('repair_status')
-            )
-            
-            # Set the current location based on repair status
-            if car.repair_status == 'Purchased':
-                car.current_location = "Dealer's Lot"
-            elif car.repair_status == 'Waiting for Repairs':
-                car.current_location = 'Base (Awaiting Repairs)'
-            elif car.repair_status == 'In Repair':
-                provider = RepairProvider.query.first()
-                car.current_location = f"Repair: {provider.location if provider else 'Unknown'}"
-            elif car.repair_status == 'On Display':
-                stand = Stand.query.first()
-                car.current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
+            if dealer_id:
+                dealer = Dealer.query.get(dealer_id)
             else:
-                car.current_location = data.get('current_location', '').strip()
+                # Use default dealer if available
+                dealer = Dealer.query.first()
             
+            # Get stand (optional)
+            stand = None
+            stand_id = data.get('stand_id')
+            if stand_id and data.get('repair_status') == 'On Display':
+                try:
+                    stand_id = int(stand_id)
+                    stand = Stand.query.get(stand_id)
+                except (ValueError, TypeError):
+                    pass
+            
+            # Set default values for optional fields
+            year = None
+            try:
+                year_value = data.get('year')
+                if year_value:
+                    year = int(year_value)
+            except ValueError:
+                pass
+            
+            # Create car with available data
+            car_data = {
+                'vehicle_name': vehicle_name,
+                'purchase_price': purchase_price,
+                'date_bought': datetime.now().date(),
+                'repair_status': data.get('repair_status', 'Purchased'),
+                'current_location': data.get('current_location', "Dealer's Lot"),
+                'refuel_cost': float(data.get('refuel_cost', 0)) if data.get('refuel_cost') else 0
+            }
+            
+            # Add optional fields if they exist
+            if make:
+                car_data['vehicle_make'] = make.name
+            
+            if model:
+                car_data['vehicle_model'] = model.name
+            
+            if year:
+                car_data['year'] = year
+            
+            if data.get('colour', '').strip():
+                car_data['colour'] = VehicleColor.sanitize_name(data.get('colour', '').strip())
+            
+            if data.get('dekra_condition'):
+                car_data['dekra_condition'] = data.get('dekra_condition')
+            else:
+                car_data['dekra_condition'] = "Good"  # Default
+            
+            if data.get('licence_number', '').strip():
+                car_data['licence_number'] = data.get('licence_number', '').strip().upper()
+            
+            if data.get('registration_number', '').strip():
+                car_data['registration_number'] = data.get('registration_number', '').strip().upper()
+            elif car_data.get('licence_number'):
+                # Use licence number as registration if not provided
+                car_data['registration_number'] = car_data['licence_number']
+            
+            if dealer:
+                car_data['source'] = dealer.dealer_name
+                car_data['dealer_id'] = dealer.dealer_id
+            
+            # Handle stand relationship
+            if stand and car_data['repair_status'] == 'On Display':
+                car_data['stand_id'] = stand.stand_id
+                car_data['date_added_to_stand'] = datetime.now().date()
+                car_data['current_location'] = f"Stand: {stand.stand_name}"
+            
+            # Set the current location based on repair status if not already set by stand
+            if 'stand_id' not in car_data:
+                if car_data['repair_status'] == 'Purchased':
+                    car_data['current_location'] = "Dealer's Lot"
+                elif car_data['repair_status'] == 'Waiting for Repairs':
+                    car_data['current_location'] = 'Base (Awaiting Repairs)'
+                elif car_data['repair_status'] == 'In Repair':
+                    provider = RepairProvider.query.first()
+                    car_data['current_location'] = f"Repair: {provider.location if provider else 'Unknown'}"
+                elif car_data['repair_status'] == 'On Display':
+                    # If no specific stand was selected but status is On Display
+                    stand = Stand.query.first()
+                    if stand:
+                        car_data['stand_id'] = stand.stand_id
+                        car_data['date_added_to_stand'] = datetime.now().date()
+                        car_data['current_location'] = f"Stand: {stand.stand_name}"
+                    else:
+                        car_data['current_location'] = "On Display at Stand"
+            
+            # Create the car
+            car = Car(**car_data)
             db.session.add(car)
             db.session.commit()
             
-            flash(f'Car {car.full_name} added successfully', 'success')
+            flash(f'Car {car.vehicle_name} added successfully', 'success')
             return redirect(url_for('cars.index'))
             
         except Exception as e:
@@ -154,9 +213,10 @@ def create():
             flash(f'Error adding car: {str(e)}', 'danger')
             return redirect(url_for('cars.create'))
     
-    # GET request - fetch dealers for dropdown
+    # GET request - fetch dealers and stands for dropdowns
     dealers = Dealer.query.all()
-    return render_template('cars/create.html', dealers=dealers)
+    stands = Stand.query.all()
+    return render_template('cars/create.html', dealers=dealers, stands=stands)
 
 @cars_bp.route('/add', methods=['GET', 'POST'])
 @login_required
@@ -331,50 +391,149 @@ def edit(car_id):
         dealers = Dealer.query.all()
         form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
         
+        # Populate the stand field with stands
+        stands = Stand.query.all()
+        form.stand_id.choices = [(s.stand_id, s.stand_name) for s in stands]
+        
         if form.validate_on_submit():
-            # Handle the make field - get or create
-            make_name = form.vehicle_make.data
-            make = VehicleMake.get_or_create(make_name)
+            # Check the required fields
+            if not form.vehicle_name.data or not form.vehicle_name.data.strip():
+                form.vehicle_name.errors.append('Vehicle name is required')
+                return render_template('cars/edit.html', form=form, car=car)
+                
+            if form.purchase_price.data is None or form.purchase_price.data < 0:
+                form.purchase_price.errors.append('Purchase price is required and must be non-negative')
+                return render_template('cars/edit.html', form=form, car=car)
             
-            # Handle the model field - get or create
-            model_name = form.vehicle_model.data
-            VehicleModel.get_or_create(model_name, make_id=make.id)
+            # Handle optional make field
+            make = None
+            if form.vehicle_make.data and form.vehicle_make.data.strip():
+                make_name = form.vehicle_make.data.strip()
+                make = VehicleMake.get_or_create(make_name)
+                car.vehicle_make = VehicleMake.sanitize_name(make_name) if make else ''
+            else:
+                car.vehicle_make = ''
             
-            # First populate the car object with form data
-            form.populate_obj(car)
+            # Handle optional model field
+            if form.vehicle_model.data and form.vehicle_model.data.strip() and make:
+                model_name = form.vehicle_model.data.strip()
+                model = VehicleModel.get_or_create(model_name, make_id=make.id)
+                car.vehicle_model = VehicleModel.sanitize_name(model_name) if model else ''
+            else:
+                car.vehicle_model = ''
             
-            # Sanitize the make field
-            car.vehicle_make = VehicleMake.sanitize_name(car.vehicle_make)
+            # Update basic fields - handle these manually to skip optional fields if they're empty
+            car.vehicle_name = form.vehicle_name.data.strip()
+            car.purchase_price = form.purchase_price.data
             
-            # Sanitize the model field
-            car.vehicle_model = VehicleModel.sanitize_name(car.vehicle_model)
+            # Optional fields - only update if they have values
+            if form.year.data:
+                car.year = form.year.data
+                
+            if form.colour.data and form.colour.data.strip():
+                car.colour = VehicleColor.sanitize_name(form.colour.data.strip())
+                
+            if form.dekra_condition.data:
+                car.dekra_condition = form.dekra_condition.data
+            elif not car.dekra_condition:
+                car.dekra_condition = "Good"  # Default
+                
+            if form.licence_number.data and form.licence_number.data.strip():
+                car.licence_number = form.licence_number.data.strip().upper()
+                
+            if form.registration_number.data and form.registration_number.data.strip():
+                car.registration_number = form.registration_number.data.strip().upper()
+            elif car.licence_number and not car.registration_number:
+                # Use licence number if registration is empty
+                car.registration_number = car.licence_number
+                
+            if form.date_bought.data:
+                car.date_bought = form.date_bought.data
+            elif not car.date_bought:
+                car.date_bought = datetime.now().date()
+                
+            if form.refuel_cost.data is not None:
+                car.refuel_cost = form.refuel_cost.data
+                
+            if form.current_location.data:
+                car.current_location = form.current_location.data.strip()
+                
+            if form.repair_status.data:
+                car.repair_status = form.repair_status.data
+            elif not car.repair_status:
+                car.repair_status = 'Purchased'  # Default
+                
+            # Handle stand relationship and date_added_to_stand
+            previous_stand_id = car.stand_id
             
-            # Sanitize the color field
-            if form.colour.data:
-                form.colour.data = VehicleColor.sanitize_name(form.colour.data)
+            # Is the car newly being displayed at a stand?
+            if form.repair_status.data == 'On Display' and form.stand_id.data:
+                # Changing to a different stand or adding to a stand for the first time
+                if form.stand_id.data != previous_stand_id:
+                    car.stand_id = form.stand_id.data
+                    
+                    # Only update date_added_to_stand if the car is going to a new stand
+                    # or was not previously on a stand
+                    if previous_stand_id is None:
+                        car.date_added_to_stand = datetime.now().date()
+                    elif not form.date_added_to_stand.data:
+                        car.date_added_to_stand = datetime.now().date()
+                    
+                    # Update location based on the new stand
+                    stand = Stand.query.get(form.stand_id.data)
+                    if stand:
+                        car.current_location = f"Stand: {stand.stand_name}"
+            elif form.repair_status.data == 'On Display' and not form.stand_id.data:
+                # Status is On Display but no stand selected - find a default stand
+                stand = Stand.query.first()
+                if stand:
+                    car.stand_id = stand.stand_id
+                    
+                    # Only update date if necessary
+                    if previous_stand_id is None:
+                        car.date_added_to_stand = datetime.now().date()
+                    
+                    car.current_location = f"Stand: {stand.stand_name}"
+            elif form.repair_status.data and form.repair_status.data != 'On Display':
+                # Car is being moved out of a stand
+                car.stand_id = None
             
-            # Set fields that are not directly mapped
-            dealer = safe_get_or_404(Dealer, form.source.data, f"Dealer with ID {form.source.data} not found")
-            car.source = dealer.dealer_name
-            car.dealer_id = form.source.data
+            # Handle date_added_to_stand directly from form if provided
+            if form.date_added_to_stand.data:
+                car.date_added_to_stand = form.date_added_to_stand.data
+                
+            if form.date_sold.data:
+                car.date_sold = form.date_sold.data
             
-            # Set the current location based on repair status - do this AFTER populate_obj
-            if car.repair_status == 'Purchased':
-                car.current_location = "Dealer's Lot"
-            elif car.repair_status == 'Waiting for Repairs':
-                car.current_location = 'Base (Awaiting Repairs)'
-            elif car.repair_status == 'In Repair':
-                provider = RepairProvider.query.first()
-                car.current_location = f"Repair: {provider.location if provider else 'Unknown'}"
-            elif car.repair_status == 'On Display':
-                # If car is already on a stand, keep it there
-                if car.stand_id:
-                    stand = Stand.query.get(car.stand_id)
-                    car.current_location = f"Stand: {stand.stand_name if stand else 'Stand'}"
-                else:
-                    # Get all stands and use the first one found
+            # Optional dealer relationship
+            if form.source.data:
+                dealer = Dealer.query.get(form.source.data)
+                if dealer:
+                    car.source = dealer.dealer_name
+                    car.dealer_id = dealer.dealer_id
+            
+            # Set the current location based on repair status if not already set
+            if not form.current_location.data or not form.current_location.data.strip():
+                if car.repair_status == 'Purchased':
+                    car.current_location = "Dealer's Lot"
+                elif car.repair_status == 'Waiting for Repairs':
+                    car.current_location = 'Base (Awaiting Repairs)'
+                elif car.repair_status == 'In Repair':
+                    provider = RepairProvider.query.first()
+                    car.current_location = f"Repair: {provider.location if provider else 'Unknown'}"
+                elif car.repair_status == 'On Display' and not car.stand_id:
+                    # If status is On Display but no stand is assigned
                     stand = Stand.query.first()
-                    car.current_location = f"On Display at {stand.stand_name if stand else 'Stand'}"
+                    if stand:
+                        car.stand_id = stand.stand_id
+                        
+                        # Only update date if necessary
+                        if previous_stand_id is None:
+                            car.date_added_to_stand = datetime.now().date()
+                        
+                        car.current_location = f"Stand: {stand.stand_name}"
+                    else:
+                        car.current_location = "On Display at Stand"
             
             db.session.commit()
             
@@ -390,15 +549,24 @@ def edit(car_id):
     else:
         # GET request - create and populate form
         form = CarForm(obj=car)
+        
         # Populate the source field with dealers
         dealers = Dealer.query.all()
         form.source.choices = [(d.dealer_id, d.dealer_name) for d in dealers]
         
+        # Populate the stand field with stands
+        stands = Stand.query.all()
+        form.stand_id.choices = [(s.stand_id, s.stand_name) for s in stands]
+        
         # Set the current dealer as selected
         if car.dealer_id:
             form.source.data = car.dealer_id
+            
+        # Set the current stand as selected
+        if car.stand_id:
+            form.stand_id.data = car.stand_id
     
-    return render_template('cars/edit.html', form=form, car=car)
+    return render_template('cars/edit.html', form=form, car=car, stands=Stand.query.all())
 
 @cars_bp.route('/<int:car_id>/delete', methods=['POST'])
 @login_required

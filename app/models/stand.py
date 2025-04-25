@@ -25,7 +25,7 @@ class Stand(db.Model):
     def current_car_count(self):
         """Return the number of cars currently on this stand"""
         from app.models.car import Car
-        return Car.query.filter_by(stand_id=self.stand_id, status='available').count()
+        return Car.query.filter_by(stand_id=self.stand_id, date_sold=None).count()
     
     @hybrid_property
     def occupancy_rate(self):
@@ -38,23 +38,25 @@ class Stand(db.Model):
     def cars_sold_count(self):
         """Return the number of cars sold from this stand"""
         from app.models.car import Car
-        return Car.query.filter(Car.stand_id == self.stand_id, Car.status == 'sold').count()
+        return Car.query.filter(Car.stand_id == self.stand_id, Car.date_sold.isnot(None)).count()
     
     @hybrid_property
     def avg_days_on_stand(self):
         """Return the average number of days cars spent on this stand before being sold"""
         from app.models.car import Car
-        from sqlalchemy import func
         
         cars = Car.query.filter(
             Car.stand_id == self.stand_id, 
-            Car.status == 'sold'
+            Car.date_sold.isnot(None),
+            Car.date_added_to_stand.isnot(None)
         ).all()
         
         if not cars:
             return 0
             
-        total_days = sum((car.updated_at - car.created_at).days for car in cars)
+        total_days = sum((car.date_sold - car.date_added_to_stand).days for car in cars if car.date_sold and car.date_added_to_stand)
+        if total_days == 0:
+            return 0
         return total_days / len(cars)
     
     @hybrid_property
@@ -64,7 +66,10 @@ class Stand(db.Model):
         
         cars = Car.query.filter(
             Car.stand_id == self.stand_id,
-            Car.status == 'sold'
+            Car.date_sold.isnot(None)
         ).all()
         
-        return sum((car.price or 0) for car in cars) 
+        if not cars:
+            return 0
+        
+        return sum(float(car.sale_price or 0) for car in cars) 

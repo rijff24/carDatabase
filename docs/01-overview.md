@@ -28,6 +28,7 @@ This application serves automotive businesses that purchase vehicles, perform re
 - Track capacity and utilization of each stand
 - Record when vehicles are added to or removed from stands
 - Monitor how long vehicles have been on display
+- Analyze stand performance metrics including turnover rates
 
 ### Dealer Information Management
 - Maintain records of dealers/salespeople
@@ -45,8 +46,9 @@ This application serves automotive businesses that purchase vehicles, perform re
 - Generate detailed sales reports
 - Track inventory value and investment
 - Monitor profit margins and financial performance
+- Analyze stand performance including turnover rates and aging metrics
 - Identify trends and optimization opportunities
-- Export data for external financial systems
+- Export data for external financial systems in multiple formats (XLSX, CSV, JSON)
 
 ### User Authentication and Authorization
 - Secure login system for multiple user types

@@ -52,6 +52,14 @@
                                 {% endif %}
                             </a>
                         </th>
+                        <th>
+                            <a href="{{ url_for('parts.index', sort_by='stock_quantity', sort_dir='asc' if current_sort == 'stock_quantity' and current_sort_dir == 'desc' else 'desc') }}">
+                                Stock Quantity
+                                {% if current_sort == 'stock_quantity' %}
+                                    <i class="fas fa-sort-{{ 'up' if current_sort_dir == 'asc' else 'down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -61,7 +69,8 @@
                         <td>{{ part.part_id }}</td>
                         <td>{{ part.part_name }}</td>
                         <td>{{ part.manufacturer or 'N/A' }}</td>
-                        <td>{% if part.standard_price %}${{ "%.2f"|format(part.standard_price) }}{% else %}N/A{% endif %}</td>
+                        <td>{% if part.standard_price %}R{{ "%.2f"|format(part.standard_price) }}{% else %}N/A{% endif %}</td>
+                        <td>{{ part.stock_quantity }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <a href="{{ url_for('parts.view', part_id=part.part_id) }}" class="btn btn-info">

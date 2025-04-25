@@ -178,6 +178,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Add stand selection field that shows only when repair_status is 'On Display' -->
+            <div class="row mb-3" id="stand-selection-row" style="display: none;">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        {{ form.stand_id.label(class="form-label") }}
+                        <div class="input-group">
+                            {{ form.stand_id(class="form-select") }}
+                            <button type="button" class="btn btn-outline-primary" id="create-stand-btn">
+                                <i class="fas fa-plus"></i> Create New Stand
+                            </button>
+                        </div>
+                        <div class="form-text">Select the stand where this car will be displayed</div>
+                        {% for error in form.stand_id.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="card-footer">
             <div class="d-flex justify-content-between">
@@ -197,19 +216,65 @@
     </div>
 </div>
 
+<!-- Create Stand Modal -->
+<div class="modal fade" id="createStandModal" tabindex="-1" aria-labelledby="createStandModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createStandModalLabel">Create New Stand</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createStandForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="stand_name" class="form-label">Stand Name</label>
+                        <input type="text" class="form-control" id="stand_name" name="stand_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Capacity</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" min="1" max="100" value="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="additional_info" class="form-label">Additional Information</label>
+                        <textarea class="form-control" id="additional_info" name="additional_info" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStandBtn">Create Stand</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Remove the readonly attribute from current_location to allow form submission
 document.addEventListener('DOMContentLoaded', function() {
     const currentLocationField = document.getElementById('current_location');
+    const repairStatusField = document.getElementById('repair_status');
+    const standSelectionRow = document.getElementById('stand-selection-row');
+    const standIdField = document.getElementById('stand_id');
+    const createStandBtn = document.getElementById('create-stand-btn');
+    const createStandModal = new bootstrap.Modal(document.getElementById('createStandModal'));
+    const saveStandBtn = document.getElementById('saveStandBtn');
     
-    // On form submit, make the field editable so it can be submitted
-    document.querySelector('form').addEventListener('submit', function() {
-        currentLocationField.removeAttribute('readonly');
-    });
-    
-    // Optional: Update location preview when repair status changes
-    document.getElementById('repair_status').addEventListener('change', function() {
-        const status = this.value;
+    // Show/hide stand selection based on repair status
+    function updateFormBasedOnStatus() {
+        const status = repairStatusField.value;
+        
+        // Only show stand selection when status is 'On Display'
+        if (status === 'On Display') {
+            standSelectionRow.style.display = 'flex';
+        } else {
+            standSelectionRow.style.display = 'none';
+        }
+        
+        // Update location preview based on status
         let newLocation = '';
         
         switch(status) {
@@ -223,7 +288,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 newLocation = 'Repair: Service Provider';
                 break;
             case 'On Display':
-                newLocation = 'On Display at Stand';
+                if (standIdField.options[standIdField.selectedIndex]) {
+                    const standName = standIdField.options[standIdField.selectedIndex].text;
+                    newLocation = `Stand: ${standName}`;
+                } else {
+                    newLocation = 'On Display at Stand';
+                }
                 break;
             case 'Waiting for Payment':
                 newLocation = 'Paperwork Processing';
@@ -236,6 +306,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         currentLocationField.value = newLocation;
+    }
+    
+    // Update stand selection visibility on page load
+    updateFormBasedOnStatus();
+    
+    // Update when repair status changes
+    repairStatusField.addEventListener('change', updateFormBasedOnStatus);
+    
+    // Update location when stand changes (if status is 'On Display')
+    standIdField.addEventListener('change', function() {
+        if (repairStatusField.value === 'On Display') {
+            const standName = this.options[this.selectedIndex].text;
+            currentLocationField.value = `Stand: ${standName}`;
+        }
+    });
+    
+    // On form submit, make the current location field editable so it can be submitted
+    document.querySelector('form').addEventListener('submit', function() {
+        currentLocationField.removeAttribute('readonly');
+    });
+    
+    // Open create stand modal
+    createStandBtn.addEventListener('click', function() {
+        createStandModal.show();
+    });
+    
+    // Handle new stand creation via AJAX
+    saveStandBtn.addEventListener('click', function() {
+        const form = document.getElementById('createStandForm');
+        const formData = new FormData(form);
+        
+        fetch('{{ url_for("cars.create_stand_ajax") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Add the new stand to the dropdown
+                const option = new Option(data.stand_name, data.stand_id);
+                standIdField.add(option);
+                
+                // Select the new stand
+                standIdField.value = data.stand_id;
+                
+                // Update location to reflect the new stand
+                if (repairStatusField.value === 'On Display') {
+                    currentLocationField.value = `Stand: ${data.stand_name}`;
+                }
+                
+                // Show success message
+                alert(data.message);
+                
+                // Close the modal
+                createStandModal.hide();
+                
+                // Clear the form
+                form.reset();
+            } else {
+                // Show error message
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while creating the stand. Please try again.');
+        });
     });
 });
 </script>

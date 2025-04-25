@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+
+{% block title %}Parts Usage Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Report Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Parts Usage Analysis</h6>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" id="printReport">
+                            <i class="fas fa-print me-1"></i> Print
+                        </button>
+                        <a href="{{ url_for('reports.parts_usage_export') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-file-excel me-1"></i> Export XLSX
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <p>Analysis of part usage patterns, costs, and distribution across vehicle models.</p>
+                            <p><strong>Report generated:</strong> {{ report_data.report_date }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('reports.parts_usage') }}" id="filterForm">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="part_name" class="form-label">Part Name</label>
+                                    <select class="form-select" id="part_name" name="part_name">
+                                        <option value="">All Parts</option>
+                                        {% for part in report_data.available_parts %}
+                                        <option value="{{ part.part_name }}" {% if report_data.part_name == part.part_name %}selected{% endif %}>
+                                            {{ part.part_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="vehicle_model" class="form-label">Vehicle Model</label>
+                                    <select class="form-select" id="vehicle_model" name="vehicle_model">
+                                        <option value="">All Models</option>
+                                        {% for model in report_data.available_models %}
+                                        <option value="{{ model }}" {% if report_data.vehicle_model == model %}selected{% endif %}>
+                                            {{ model }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                                <a href="{{ url_for('reports.parts_usage') }}" class="btn btn-secondary">Reset</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 10 Parts by Frequency Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 Parts by Frequency</h6>
+                    <div class="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
+                            <li><div class="dropdown-header">Options:</div></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ report_data.tooltips.frequency }}">
+                                <i class="fas fa-info-circle me-1"></i> What is this?
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="partsFrequencyChart" height="300"></canvas>
+                    </div>
+                    {% if report_data.top_parts_by_frequency|length <= 1 %}
+                    <div class="text-center mt-3 text-muted">
+                        <small>This chart shows limited data because there are few parts records in the system. Add more parts usage data to see a more detailed analysis.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Cost Over Time -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Average Unit Cost Over Time</h6>
+                    <div class="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink2" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink2">
+                            <li><div class="dropdown-header">Options:</div></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ report_data.tooltips.unit_cost }}">
+                                <i class="fas fa-info-circle me-1"></i> What is this?
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-line">
+                        <canvas id="unitCostChart" height="300"></canvas>
+                    </div>
+                    {% if not report_data.avg_unit_cost_over_time.datasets or report_data.avg_unit_cost_over_time.datasets|length == 0 %}
+                    <div class="text-center mt-3 text-muted">
+                        <small>No historical cost data is available. Add more parts with different purchase dates to see cost trends over time.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Parts Tables -->
+    <div class="row mb-4">
+        <!-- Most Used Parts -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Most Used Parts</h6>
+                    <div class="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink3" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink3">
+                            <li><div class="dropdown-header">Options:</div></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ report_data.tooltips.most_used }}">
+                                <i class="fas fa-info-circle me-1"></i> What is this?
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="mostUsedTable">
+                            <thead>
+                                <tr>
+                                    <th>Part Name</th>
+                                    <th>Manufacturer</th>
+                                    <th>Count</th>
+                                    <th>Avg Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for part in report_data.most_used_parts[:10] %}
+                                <tr>
+                                    <td>{{ part.part_name }}</td>
+                                    <td>{{ part.manufacturer }}</td>
+                                    <td>{{ part.count }}</td>
+                                    <td>${{ "%.2f"|format(part.avg_cost) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parts Most Used Per Model -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Parts Most Used Per Model</h6>
+                    <div class="dropdown">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink4" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink4">
+                            <li><div class="dropdown-header">Options:</div></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="tooltip" data-bs-placement="left" title="{{ report_data.tooltips.per_model }}">
+                                <i class="fas fa-info-circle me-1"></i> What is this?
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="modelsAccordion">
+                        {% for model_data in report_data.parts_most_used_per_model[:5] %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button {% if loop.index != 1 %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.index == 1 else 'false' }}" aria-controls="collapse{{ loop.index }}">
+                                    {{ model_data.make }} {{ model_data.model }} ({{ model_data.total_parts_used }} parts)
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == 1 %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#modelsAccordion">
+                                <div class="accordion-body p-0">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Part Name</th>
+                                                <th>Count</th>
+                                                <th>Total Cost</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for part in model_data.top_parts %}
+                                            <tr>
+                                                <td>{{ part.part_name }}</td>
+                                                <td>{{ part.count }}</td>
+                                                <td>${{ "%.2f"|format(part.total_cost) }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize tables with DataTables if jQuery is available
+        if (typeof $ !== 'undefined') {
+            $('#mostUsedTable').DataTable({
+                order: [[2, "desc"]],
+                pageLength: 5,
+                lengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]]
+            });
+        }
+        
+        // Bar Chart - Parts Frequency
+        var partsLabels = [{% for part in report_data.top_parts_by_frequency %}'{{ part.part_name }}'{{ "," if not loop.last }}{% endfor %}];
+        var partsData = [{% for part in report_data.top_parts_by_frequency %}{{ part.count }}{{ "," if not loop.last }}{% endfor %}];
+        
+        // Check if we have data to display
+        var hasData = partsLabels.length > 0;
+        
+        var frequencyChartData = {
+            labels: hasData ? partsLabels : ['No data available'],
+            datasets: [{
+                label: "Frequency",
+                backgroundColor: "#4e73df",
+                hoverBackgroundColor: "#2e59d9",
+                borderColor: "#4e73df",
+                data: hasData ? partsData : [0]
+            }]
+        };
+        
+        var ctx = document.getElementById("partsFrequencyChart");
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: frequencyChartData,
+                options: {
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            titleMarginBottom: 10,
+                            titleFont: {
+                                size: 14
+                            },
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            padding: 15,
+                            displayColors: false,
+                            caretPadding: 10
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                beginAtZero: true,
+                                maxTicksLimit: 5,
+                                padding: 10,
+                                precision: 0
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return partsLabels[index];
+                                },
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                }
+            });
+        }
+        
+        // Line Chart - Unit Cost
+        var unitCostData = {{ report_data.avg_unit_cost_over_time|tojson }};
+        
+        // Check if we have datasets
+        var hasTimeData = unitCostData && unitCostData.datasets && unitCostData.datasets.length > 0;
+        
+        // If no data, provide a placeholder
+        if (!hasTimeData) {
+            unitCostData = {
+                labels: ['No data available'],
+                datasets: [{
+                    label: 'No parts data',
+                    data: [0],
+                    backgroundColor: "#4e73df",
+                    borderColor: "#4e73df"
+                }]
+            };
+        }
+        
+        var ctxLine = document.getElementById("unitCostChart");
+        if (ctxLine) {
+            new Chart(ctxLine, {
+                type: 'line',
+                data: unitCostData,
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            backgroundColor: "rgb(255,255,255)",
+                            bodyColor: "#858796",
+                            titleMarginBottom: 10,
+                            titleFont: {
+                                size: 14
+                            },
+                            borderColor: '#dddfeb',
+                            borderWidth: 1,
+                            padding: 15,
+                            displayColors: false,
+                            intersect: false,
+                            mode: 'index',
+                            caretPadding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    var label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '$' + context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                maxTicksLimit: 7
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                maxTicksLimit: 5,
+                                padding: 10,
+                                callback: function(value, index, values) {
+                                    return '$' + value;
+                                }
+                            },
+                            grid: {
+                                color: "rgb(234, 236, 244)",
+                                zeroLineColor: "rgb(234, 236, 244)",
+                                drawBorder: false,
+                                borderDash: [2],
+                                zeroLineBorderDash: [2]
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Print report functionality
+        document.getElementById('printReport').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %} 

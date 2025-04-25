@@ -3,13 +3,23 @@ from app.reports.standard.sales_performance import SalesPerformanceReport
 from app.reports.standard.repair_analysis import RepairAnalysisReport
 from app.reports.standard.inventory_aging import InventoryAgingReport
 from app.reports.standard.profit_margin import ProfitMarginReport
+from app.reports.standard.stand_performance import StandPerformanceReport
+from app.reports.repair_history import RepairHistoryReport
+from app.reports.standard.parts_usage import PartsUsageReport
+from app.reports.provider_efficiency import ProviderEfficiencyReport
+from app.reports.standard.profitability import ProfitabilityReport
 
 # Dictionary mapping report names to report classes
 REPORT_REGISTRY = {
     'sales_performance': SalesPerformanceReport,
     'repair_analysis': RepairAnalysisReport,
     'inventory_aging': InventoryAgingReport,
-    'profit_margin': ProfitMarginReport
+    'profit_margin': ProfitMarginReport,
+    'stand_performance': StandPerformanceReport,
+    'repair_history': RepairHistoryReport,
+    'parts_usage': PartsUsageReport,
+    'provider_efficiency': ProviderEfficiencyReport,
+    'profitability': ProfitabilityReport
 }
 
 # Function to get report by name

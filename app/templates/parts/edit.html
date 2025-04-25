@@ -51,6 +51,18 @@
                         </div>
                         
                         <div class="mb-3">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.location.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
                             {{ form.standard_price.label(class="form-label") }}
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
@@ -59,6 +71,33 @@
                             {% if form.standard_price.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.standard_price.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.weight.label(class="form-label") }}
+                            <div class="input-group">
+                                {{ form.weight(class="form-control") }}
+                                <span class="input-group-text">kg</span>
+                            </div>
+                            {% if form.weight.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.weight.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.stock_quantity.label(class="form-label") }}
+                            {{ form.stock_quantity(class="form-control") }}
+                            {% if form.stock_quantity.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.stock_quantity.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>

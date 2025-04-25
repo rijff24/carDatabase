@@ -49,20 +49,27 @@ def index():
     if max_capacity is not None:
         query = query.filter(Stand.capacity <= max_capacity)
     
-    # Apply sorting for model attributes
-    if sort_by in ['stand_name', 'location', 'capacity']:
+    # Apply sorting for model attributes - check if field exists in model
+    if sort_by in ['stand_name', 'location', 'capacity'] and hasattr(Stand, sort_by):
         if sort_dir == 'desc':
             query = query.order_by(getattr(Stand, sort_by).desc())
         else:
             query = query.order_by(getattr(Stand, sort_by))
+    else:
+        # Default sort by stand_name if invalid field specified
+        query = query.order_by(Stand.stand_name)
     
     stands = query.all()
     
     # For computed properties, sort after query
-    if sort_by in ['current_car_count', 'cars_sold_count']:
-        stands = sorted(stands, 
-                       key=lambda x: getattr(x, sort_by),
-                       reverse=(sort_dir == 'desc'))
+    if sort_by in ['current_car_count', 'cars_sold_count'] and hasattr(Stand, sort_by):
+        try:
+            stands = sorted(stands, 
+                        key=lambda x: getattr(x, sort_by, 0) or 0,  # Handle None values
+                        reverse=(sort_dir == 'desc'))
+        except (AttributeError, TypeError):
+            # If sorting fails, just leave the stands as is
+            pass
     
     return render_template(
         'stands/index.html', 

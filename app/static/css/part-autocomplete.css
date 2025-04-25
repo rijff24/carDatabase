@@ -1,0 +1,74 @@
+/**
+ * Styles for part form autocomplete elements
+ */
+
+/* Autocomplete menu styling */
+.part-autocomplete-menu {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    background-color: white;
+    z-index: 1050;
+    font-size: 0.9rem;
+}
+
+/* Individual item styling */
+.part-autocomplete-menu .ui-menu-item {
+    padding: 5px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+/* Hover state */
+.part-autocomplete-menu .ui-menu-item:hover,
+.part-autocomplete-menu .ui-menu-item .ui-state-active {
+    background-color: #f8f9fa;
+}
+
+/* Custom entry styling */
+.part-autocomplete-menu .ui-menu-item .ui-menu-item-wrapper[data-custom="true"] {
+    font-style: italic;
+    color: #6c757d;
+}
+
+/* Input field with autocomplete */
+input.ui-autocomplete-input {
+    background-image: url('../img/search-icon.svg');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 35px;
+}
+
+/* Loading state */
+input.ui-autocomplete-loading {
+    background-image: url('../img/spinner.gif');
+}
+
+/* Focus state */
+input.ui-autocomplete-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Autocomplete fields container */
+.autocomplete-fields {
+    margin-bottom: 1.5rem;
+}
+
+/* Field label for autocomplete inputs */
+.autocomplete-fields label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Helper text */
+.autocomplete-helper {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+} 

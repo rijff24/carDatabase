@@ -111,6 +111,9 @@ def create_app(config_name='default'):
     app.register_blueprint(api_bp)
     app.register_blueprint(import_bp, url_prefix='/import')
     
+    # Temporarily disable CSRF for import routes to debug issues
+    csrf.exempt(import_bp)
+    
     # Register Jinja2 filters
     app.jinja_env.filters['format_date'] = format_date
     app.jinja_env.filters['format_price'] = format_price

@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+
+{% block title %}Investment vs Profit Per Car - Car Sales Tracking{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Investment vs Profit Per Car</h1>
+        <div>
+            <button type="button" class="btn btn-outline-primary me-2" onclick="printReport()">
+                <i class="fas fa-print me-1"></i>Print
+            </button>
+            <a href="{{ url_for('reports.profitability_export', timeframe=timeframe, start_date=start_date, end_date=end_date, vehicle_make=vehicle_make, vehicle_model=vehicle_model, stand_id=stand_id, dealer_id=dealer_id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-export me-1"></i>Export
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter Panel -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Report Filters</h5>
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="fas fa-filter me-1"></i>Toggle Filters
+            </button>
+        </div>
+        <div class="collapse" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" action="{{ url_for('reports.profitability') }}" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Time Range:</label>
+                            <div class="col-sm-8">
+                                <select name="timeframe" class="form-select" id="timeframeSelect">
+                                    <option value="last_30_days" {% if timeframe == 'last_30_days' %}selected{% endif %}>Last 30 Days</option>
+                                    <option value="last_90_days" {% if timeframe == 'last_90_days' %}selected{% endif %}>Last 90 Days</option>
+                                    <option value="year_to_date" {% if timeframe == 'year_to_date' %}selected{% endif %}>Year to Date</option>
+                                    <option value="last_year" {% if timeframe == 'last_year' %}selected{% endif %}>Last Year</option>
+                                    <option value="all_time" {% if timeframe == 'all_time' %}selected{% endif %}>All Time</option>
+                                    <option value="custom" {% if timeframe == 'custom' %}selected{% endif %}>Custom Date Range</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3 custom-date-inputs" {% if timeframe != 'custom' %}style="display: none;"{% endif %}>
+                            <label class="col-sm-4 col-form-label">Date Range:</label>
+                            <div class="col-sm-8">
+                                <div class="input-group">
+                                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}" placeholder="Start Date">
+                                    <span class="input-group-text">to</span>
+                                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}" placeholder="End Date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Make:</label>
+                            <div class="col-sm-8">
+                                <select name="vehicle_make" class="form-select" id="makeSelect">
+                                    <option value="">All Makes</option>
+                                    {% for make in available_makes_models.makes %}
+                                    <option value="{{ make }}" {% if vehicle_make == make %}selected{% endif %}>{{ make }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Model:</label>
+                            <div class="col-sm-8">
+                                <select name="vehicle_model" class="form-select" id="modelSelect" {% if not vehicle_make %}disabled{% endif %}>
+                                    <option value="">All Models</option>
+                                    {% if vehicle_make and vehicle_make in available_makes_models.makes_models %}
+                                        {% for model in available_makes_models.makes_models[vehicle_make] %}
+                                        <option value="{{ model }}" {% if vehicle_model == model %}selected{% endif %}>{{ model }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Stand:</label>
+                            <div class="col-sm-8">
+                                <select name="stand_id" class="form-select">
+                                    <option value="">All Stands</option>
+                                    {% for stand in available_stands %}
+                                    <option value="{{ stand.stand_id }}" {% if stand_id == stand.stand_id %}selected{% endif %}>{{ stand.stand_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row mb-3">
+                            <label class="col-sm-4 col-form-label">Dealer:</label>
+                            <div class="col-sm-8">
+                                <select name="dealer_id" class="form-select">
+                                    <option value="">All Dealers</option>
+                                    {% for dealer in available_dealers %}
+                                    <option value="{{ dealer.dealer_id }}" {% if dealer_id == dealer.dealer_id %}selected{% endif %}>{{ dealer.dealer_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('reports.profitability') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Section -->
+    <div class="row mb-4" id="summary-section">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between">
+                    <h5 class="mb-0">Profitability Summary</h5>
+                    <small>Report generated on {{ report_date }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Cars Sold</h6>
+                                    <h3>{{ total_cars_sold|default(0) }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Revenue</h6>
+                                    <h3>${{ total_revenue|default(0)|round(2) }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Investment</h6>
+                                    <h3>${{ total_investment|default(0)|round(2) }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Total Profit</h6>
+                                    <h3>${{ total_profit|default(0)|round(2) }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Average ROI</h6>
+                                    <h3>{{ average_roi|default(0)|round(1) }}%</h3>
+                                    <small class="text-muted" data-bs-toggle="tooltip" title="Return on Investment = (Profit ÷ Investment) × 100">
+                                        <i class="fas fa-info-circle"></i>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ROI Distribution -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">ROI Distribution</h5>
+                            <div class="progress mb-2" style="height: 25px;">
+                                {% if total_cars_sold > 0 %}
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ roi_distribution.high_percent }}%" 
+                                    aria-valuenow="{{ roi_distribution.high_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    High ROI: {{ roi_distribution.high }} ({{ roi_distribution.high_percent|round(1) }}%)
+                                </div>
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ roi_distribution.medium_percent }}%" 
+                                    aria-valuenow="{{ roi_distribution.medium_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    Medium ROI: {{ roi_distribution.medium }} ({{ roi_distribution.medium_percent|round(1) }}%)
+                                </div>
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: {{ roi_distribution.low_percent }}%" 
+                                    aria-valuenow="{{ roi_distribution.low_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                    Low ROI: {{ roi_distribution.low }} ({{ roi_distribution.low_percent|round(1) }}%)
+                                </div>
+                                {% else %}
+                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%" 
+                                    aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                    No data available
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="small mt-2">
+                                <span class="badge bg-success">High ROI</span> ≥ 30% &nbsp;|&nbsp;
+                                <span class="badge bg-warning">Medium ROI</span> 15-30% &nbsp;|&nbsp;
+                                <span class="badge bg-danger">Low ROI</span> < 15%
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Average Metrics Per Car</h5>
+                            <table class="table table-sm table-bordered">
+                                <tr>
+                                    <th>Average Sale Price</th>
+                                    <td class="text-end">${{ average_revenue|default(0)|round(2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Average Investment</th>
+                                    <td class="text-end">${{ average_investment|default(0)|round(2) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Average Profit</th>
+                                    <td class="text-end">${{ average_profit|default(0)|round(2) }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Make/Model Profitability Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Make/Model Profitability</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="modelProfitabilityTable">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Make/Model</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-end">Avg Purchase</th>
+                                    <th class="text-end">Avg Recon</th>
+                                    <th class="text-end">Avg Investment</th>
+                                    <th class="text-end">Avg Sale Price</th>
+                                    <th class="text-end">Avg Profit</th>
+                                    <th class="text-end">ROI %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model in model_profitability %}
+                                <tr class="make-model-row" data-make-model-id="{{ model.make }}_{{ model.model }}">
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary toggle-details" data-make-model-id="{{ model.make }}_{{ model.model }}">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </td>
+                                    <td>{{ model.make }} {{ model.model }}</td>
+                                    <td class="text-center">{{ model.count }}</td>
+                                    <td class="text-end">${{ model.avg_purchase|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ model.avg_repair|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ model.avg_investment|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ model.avg_revenue|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ model.avg_profit|default(0)|round(2) }}</td>
+                                    <td class="text-end roi-cell {{ model.roi_band }}">{{ model.roi|default(0)|round(1) }}%</td>
+                                </tr>
+                                <!-- Car Details Row (Hidden by Default) -->
+                                <tr class="car-details-row d-none" id="details_{{ model.make }}_{{ model.model }}">
+                                    <td colspan="9" class="p-0">
+                                        <div class="car-details-container p-3 bg-light">
+                                            <h6 class="mb-3">Individual Vehicles ({{ model.make }} {{ model.model }})</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered car-details-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Year</th>
+                                                            <th>VIN</th>
+                                                            <th>Color</th>
+                                                            <th>Stand</th>
+                                                            <th>Dealer</th>
+                                                            <th class="text-end">Purchase</th>
+                                                            <th class="text-end">Recon</th>
+                                                            <th class="text-end">Refuel</th>
+                                                            <th class="text-end">Investment</th>
+                                                            <th class="text-end">Sale Price</th>
+                                                            <th class="text-end">Profit</th>
+                                                            <th class="text-end">ROI %</th>
+                                                            <th>Sale Date</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for car in model.cars %}
+                                                        <tr>
+                                                            <td>{{ car.year }}</td>
+                                                            <td>{{ car.vin }}</td>
+                                                            <td>{{ car.color }}</td>
+                                                            <td>{{ car.stand_name }}</td>
+                                                            <td>{{ car.dealer_name }}</td>
+                                                            <td class="text-end">${{ car.purchase_price|default(0)|round(2) }}</td>
+                                                            <td class="text-end">${{ car.repair_cost|default(0)|round(2) }}</td>
+                                                            <td class="text-end">${{ car.refuel_cost|default(0)|round(2) }}</td>
+                                                            <td class="text-end">${{ car.total_investment|default(0)|round(2) }}</td>
+                                                            <td class="text-end">${{ car.sale_price|default(0)|round(2) }}</td>
+                                                            <td class="text-end">${{ car.profit|default(0)|round(2) }}</td>
+                                                            <td class="text-end roi-cell {{ car.roi_band }}">{{ car.roi|default(0)|round(1) }}%</td>
+                                                            <td>{{ car.sale_date }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Individual Cars Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Individual Cars Profitability</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="carProfitabilityTable">
+                            <thead>
+                                <tr>
+                                    <th>Make/Model</th>
+                                    <th>Year</th>
+                                    <th>VIN</th>
+                                    <th>Color</th>
+                                    <th>Stand</th>
+                                    <th class="text-end">Purchase</th>
+                                    <th class="text-end">Recon</th>
+                                    <th class="text-end">Refuel</th>
+                                    <th class="text-end">Investment</th>
+                                    <th class="text-end">Sale Price</th>
+                                    <th class="text-end">Profit</th>
+                                    <th class="text-end">ROI %</th>
+                                    <th>Sale Date</th>
+                                    <th>Dealer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for car in cars_data %}
+                                <tr>
+                                    <td>{{ car.make }} {{ car.model }}</td>
+                                    <td>{{ car.year }}</td>
+                                    <td>{{ car.vin }}</td>
+                                    <td>{{ car.color }}</td>
+                                    <td>{{ car.stand_name }}</td>
+                                    <td class="text-end">${{ car.purchase_price|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ car.repair_cost|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ car.refuel_cost|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ car.total_investment|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ car.sale_price|default(0)|round(2) }}</td>
+                                    <td class="text-end">${{ car.profit|default(0)|round(2) }}</td>
+                                    <td class="text-end roi-cell {{ car.roi_band }}">{{ car.roi|default(0)|round(1) }}%</td>
+                                    <td>{{ car.sale_date }}</td>
+                                    <td>{{ car.dealer_name }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block styles %}
+<style>
+    .roi-cell.high {
+        background-color: #d1e7dd !important; /* Light green */
+        color: #0f5132;
+        font-weight: bold;
+    }
+    
+    .roi-cell.medium {
+        background-color: #fff3cd !important; /* Light yellow */
+        color: #664d03;
+        font-weight: bold;
+    }
+    
+    .roi-cell.low {
+        background-color: #f8d7da !important; /* Light red */
+        color: #842029;
+        font-weight: bold;
+    }
+    
+    .car-details-container {
+        border-top: 1px solid #dee2e6;
+    }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+            border-bottom: 1px solid #dee2e6 !important;
+        }
+        
+        .table {
+            width: 100% !important;
+        }
+        
+        .roi-cell.high {
+            background-color: #d1e7dd !important;
+            color: #0f5132 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .roi-cell.medium {
+            background-color: #fff3cd !important;
+            color: #664d03 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        .roi-cell.low {
+            background-color: #f8d7da !important;
+            color: #842029 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Handle timeframe select change
+        $('#timeframeSelect').change(function() {
+            if ($(this).val() === 'custom') {
+                $('.custom-date-inputs').show();
+            } else {
+                $('.custom-date-inputs').hide();
+            }
+        });
+        
+        // Handle make select change
+        $('#makeSelect').change(function() {
+            var make = $(this).val();
+            var modelSelect = $('#modelSelect');
+            
+            modelSelect.empty();
+            modelSelect.append('<option value="">All Models</option>');
+            
+            if (make) {
+                // Get models for selected make from the available_makes_models data
+                var models = {{ available_makes_models.makes_models|tojson }};
+                if (models[make]) {
+                    $.each(models[make], function(i, model) {
+                        modelSelect.append('<option value="' + model + '">' + model + '</option>');
+                    });
+                    modelSelect.prop('disabled', false);
+                } else {
+                    modelSelect.prop('disabled', true);
+                }
+            } else {
+                modelSelect.prop('disabled', true);
+            }
+        });
+        
+        // Toggle car details for make/model
+        $('.toggle-details').click(function() {
+            var makeModelId = $(this).data('make-model-id');
+            var detailsRow = $('#details_' + makeModelId);
+            
+            if (detailsRow.hasClass('d-none')) {
+                detailsRow.removeClass('d-none');
+                $(this).find('i').removeClass('fa-plus').addClass('fa-minus');
+            } else {
+                detailsRow.addClass('d-none');
+                $(this).find('i').removeClass('fa-minus').addClass('fa-plus');
+            }
+        });
+        
+        // Initialize DataTables - these will only work if DataTables is loaded
+        if ($.fn.DataTable) {
+            $('#carProfitabilityTable').DataTable({
+                "pageLength": 25,
+                "order": [[11, 'desc']],
+                "dom": 'Bfrtip',
+                "buttons": ['copy', 'excel', 'pdf']
+            });
+            
+            $('#modelProfitabilityTable').DataTable({
+                "pageLength": 25,
+                "order": [[8, 'desc']],
+                "dom": 'Bfrtip',
+                "buttons": ['copy', 'excel', 'pdf']
+            });
+        }
+    });
+    
+    // Print report function
+    function printReport() {
+        window.print();
+    }
+</script>
+{% endblock %}
+{% endblock %} 

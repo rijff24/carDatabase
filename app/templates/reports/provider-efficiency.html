@@ -1,0 +1,420 @@
+{% extends 'base.html' %}
+
+{% block title %}Provider Efficiency Report{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .chart-container {
+        height: 300px;
+        width: 100%;
+    }
+    .clickable-row {
+        cursor: pointer;
+    }
+    .filter-badge {
+        background-color: #4e73df;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-right: 0.5rem;
+        font-size: 0.8rem;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .card {
+            break-inside: avoid;
+        }
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Provider Efficiency Report</h1>
+        <div class="no-print">
+            <a href="{{ url_for('reports.provider_efficiency_export', format='xlsx') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}" class="btn btn-success">
+                <i class="fas fa-file-excel mr-1"></i> Export to Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print mr-1"></i> Print Report
+            </button>
+        </div>
+    </div>
+    
+    <!-- Applied Filters -->
+    {% if has_filters_applied %}
+    <div class="alert alert-info mb-4">
+        <strong>Filters Applied:</strong>
+        {% if start_date %}<span class="filter-badge">Start Date: {{ start_date }}</span>{% endif %}
+        {% if end_date %}<span class="filter-badge">End Date: {{ end_date }}</span>{% endif %}
+        {% if repair_type %}<span class="filter-badge">Repair Type: {{ repair_type }}</span>{% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Filter Form Card -->
+    <div class="card shadow mb-4 no-print">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filter Options</h5>
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="fas fa-filter me-1"></i>Toggle Filters
+            </button>
+        </div>
+        <div class="collapse" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" action="{{ url_for('reports.provider_efficiency') }}" id="filter-form" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date:</label>
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date:</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="repair_type" class="form-label">Repair Type:</label>
+                            <select name="repair_type" id="repair_type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for type in available_repair_types %}
+                                <option value="{{ type }}" {% if repair_type == type %}selected{% endif %}>{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('reports.provider_efficiency') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Stats Row -->
+    {% if provider_metrics %}
+    <div class="row mb-4">
+        <!-- Average Cost Per Provider -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Average Repair Cost
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.avg_cost }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ${{ provider_metrics[0].avg_cost|round(2) }} ({{ provider_metrics[0].provider_name }})
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Avg Duration -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avg Repair Duration
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.avg_duration }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% set fastest_provider = provider_metrics|sort(attribute='avg_duration')|first %}
+                                {{ fastest_provider.avg_duration|round(1) }} days ({{ fastest_provider.provider_name }})
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Repairs -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Most Repairs Handled
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.total_repairs }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% set busiest_provider = provider_metrics|sort(attribute='total_repairs')|reverse|first %}
+                                {{ busiest_provider.total_repairs }} ({{ busiest_provider.provider_name }})
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Efficiency Ratio -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Best Cost/Duration Ratio
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.cost_duration_ratio }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% set providers_with_ratio = provider_metrics|selectattr('cost_duration_ratio', 'defined')|selectattr('cost_duration_ratio', 'ne', None)|list %}
+                                {% if providers_with_ratio %}
+                                    {% set most_efficient = providers_with_ratio|sort(attribute='cost_duration_ratio')|first %}
+                                    {{ most_efficient.cost_duration_ratio|round(2) }} ({{ most_efficient.provider_name }})
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wrench fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Provider Metrics Table -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Provider Performance Metrics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="providers-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Provider Name</th>
+                                    <th>Service Type</th>
+                                    <th>Total Repairs</th>
+                                    <th>Avg Cost</th>
+                                    <th>Avg Duration (days)</th>
+                                    <th>Cost/Duration Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for provider in provider_metrics %}
+                                <tr>
+                                    <td>{{ provider.provider_name }}</td>
+                                    <td>{{ provider.service_type }}</td>
+                                    <td>{{ provider.total_repairs }}</td>
+                                    <td>${{ provider.avg_cost|round(2) }}</td>
+                                    <td>{{ provider.avg_duration|round(1) if provider.avg_duration != None else 'N/A' }}</td>
+                                    <td>{{ provider.cost_duration_ratio|round(2) if provider.cost_duration_ratio != None else 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cost vs Duration Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Cost vs Duration Comparison</h6>
+                </div>
+                <div class="card-body">
+                    {% if cost_vs_duration and cost_vs_duration|length > 0 %}
+                        <div class="chart-container">
+                            <canvas id="costDurationChart"></canvas>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No data available for chart. Please make sure there are completed repairs with durations recorded.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Debug information - will show available cost_vs_duration data -->
+                    <div class="small mt-3 no-print">
+                        <details>
+                            <summary>Debug Data ({{ cost_vs_duration|length if cost_vs_duration else 0 }} providers)</summary>
+                            <div class="mt-2">
+                                {% if cost_vs_duration and cost_vs_duration|length > 0 %}
+                                    <ul class="list-group">
+                                    {% for provider in cost_vs_duration %}
+                                        <li class="list-group-item">
+                                            <strong>{{ provider.provider_name }}</strong><br>
+                                            Avg Cost: ${{ provider.avg_cost|round(2) }}<br>
+                                            Avg Duration: {{ provider.avg_duration|round(1) }} days<br>
+                                            Count: {{ provider.count }}
+                                        </li>
+                                    {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>No cost_vs_duration data available.</p>
+                                {% endif %}
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Date -->
+    <div class="mt-4 text-muted small">
+        Report generated on: {{ report_date }}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize filter collapse
+        {% if has_filters_applied %}
+        var filterCollapse = new bootstrap.Collapse(document.getElementById('filterCollapse'), {
+            toggle: true
+        });
+        {% endif %}
+        
+        // Check for Chart.js
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js not loaded. Loading from CDN...');
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+            script.onload = initChart;
+            document.head.appendChild(script);
+        } else {
+            initChart();
+        }
+    });
+    
+    function initChart() {
+        {% if cost_vs_duration and cost_vs_duration|length > 0 %}
+            console.log('Initializing chart...');
+            var canvas = document.getElementById('costDurationChart');
+            
+            if (!canvas) {
+                console.error('Chart canvas not found');
+                return;
+            }
+            
+            var ctx = canvas.getContext('2d');
+            
+            // Prepare data arrays
+            var providerNames = [
+                {% for provider in cost_vs_duration %}
+                    "{{ provider.provider_name }}"{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            var avgCosts = [
+                {% for provider in cost_vs_duration %}
+                    {{ provider.avg_cost|round(2) }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            var avgDurations = [
+                {% for provider in cost_vs_duration %}
+                    {{ provider.avg_duration|round(1) }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
+            
+            console.log('Provider names:', providerNames);
+            console.log('Avg costs:', avgCosts);
+            console.log('Avg durations:', avgDurations);
+            
+            // Create the chart
+            var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: providerNames,
+                    datasets: [
+                        {
+                            label: 'Avg Cost ($)',
+                            backgroundColor: 'rgba(78, 115, 223, 0.6)',
+                            data: avgCosts,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg Duration (days)',
+                            backgroundColor: 'rgba(28, 200, 138, 0.6)',
+                            data: avgDurations,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Avg Cost ($)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Avg Duration (days)'
+                            }
+                        }
+                    }
+                }
+            });
+        {% else %}
+            console.log('No chart data available');
+        {% endif %}
+    }
+</script>
+{% endblock %} 

@@ -35,8 +35,20 @@
                                 <td>{{ part.manufacturer or 'Not specified' }}</td>
                             </tr>
                             <tr>
+                                <th>Storage Location</th>
+                                <td>{{ part.location or 'Not specified' }}</td>
+                            </tr>
+                            <tr>
                                 <th>Standard Price</th>
                                 <td>{% if part.standard_price %}${{ "%.2f"|format(part.standard_price) }}{% else %}Not specified{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <th>Weight</th>
+                                <td>{% if part.weight %}{{ "%.3f"|format(part.weight) }} kg{% else %}Not specified{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <th>Stock Quantity</th>
+                                <td>{{ part.stock_quantity }}</td>
                             </tr>
                             {% if part.description %}
                             <tr>

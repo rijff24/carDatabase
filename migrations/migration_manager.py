@@ -8,12 +8,14 @@ import sys
 from migrations import create_tables
 from migrations import make_provider_fields_optional
 from migrations import normalize_provider_service_types
+from migrations.versions import update_part_model
 
 # List of migrations in order of execution
 MIGRATIONS = [
     create_tables,
     make_provider_fields_optional,
-    normalize_provider_service_types
+    normalize_provider_service_types,
+    update_part_model
 ]
 
 def run_migrations():

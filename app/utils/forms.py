@@ -26,48 +26,49 @@ class LoginForm(FlaskForm):
 class CarForm(FlaskForm):
     """Form for adding or editing a car"""
     vehicle_name = StringField('Vehicle Name', validators=[DataRequired(), Length(1, 100)])
-    vehicle_make = StringField('Make', validators=[DataRequired(), Length(1, 50)])
-    vehicle_model = StringField('Model', validators=[DataRequired(), Length(1, 50)])
+    vehicle_make = StringField('Make', validators=[Optional(), Length(1, 50)])
+    vehicle_model = StringField('Model', validators=[Optional(), Length(1, 50)])
     year = IntegerField('Year', validators=[
-        DataRequired(), 
+        Optional(), 
         NumberRange(min=1990, max=datetime.now().year, 
                    message=f'Year must be between 1990 and {datetime.now().year}')
     ])
-    colour = StringField('Colour', validators=[DataRequired(), Length(1, 50)])
-    dekra_condition = SelectField('Dekra Condition', validators=[DataRequired()], 
+    colour = StringField('Colour', validators=[Optional(), Length(1, 50)])
+    dekra_condition = SelectField('Dekra Condition', validators=[Optional()], 
                                 choices=[('Platinum', 'Platinum'), 
                                         ('Gold', 'Gold'),
                                         ('Green', 'Green'),
                                         ('Other', 'Other')])
     licence_number = StringField('Licence Number', validators=[
-        DataRequired(), 
+        Optional(), 
         Length(1, 20),
         Regexp(r'^[A-Z0-9 ]{5,20}$', message='Licence number must be in South African format')
     ])
     registration_number = StringField('Registration Number', validators=[
-        DataRequired(), 
+        Optional(), 
         Length(1, 20),
         Regexp(r'^[A-Z0-9 ]{5,20}$', message='Registration number must be in South African format')
     ])
     purchase_price = FloatField('Purchase Price (R)', validators=[DataRequired(), NumberRange(min=0)])
-    source = SelectField('Source (Dealer)', validators=[DataRequired()], coerce=int)
-    date_bought = DateField('Date Bought', validators=[DataRequired()], format='%Y-%m-%d', default=datetime.now().date())
+    source = SelectField('Source (Dealer)', validators=[Optional()], coerce=int)
+    date_bought = DateField('Date Bought', validators=[Optional()], format='%Y-%m-%d', default=datetime.now().date())
     refuel_cost = FloatField('Refuel Cost (R)', validators=[Optional(), NumberRange(min=0)])
     current_location = StringField('Current Location', validators=[Optional(), Length(max=100)])
-    repair_status = SelectField('Repair Status', validators=[DataRequired()],
+    repair_status = SelectField('Repair Status', validators=[Optional()],
                                choices=[('Purchased', 'Purchased (awaiting collection)'),
                                        ('Waiting for Repairs', 'Waiting for Repairs'),
                                        ('In Repair', 'In Repair'),
                                        ('On Display', 'On Display at Stand'),
                                        ('Waiting for Payment', 'Waiting for Payment/Paperwork'),
                                        ('Sold', 'Sold')])
+    stand_id = SelectField('Stand', validators=[Optional()], coerce=int)
     date_added_to_stand = DateField('Date Added to Stand (leave empty if not on stand yet)', validators=[Optional()], format='%Y-%m-%d')
     date_sold = DateField('Date Sold (leave empty if not sold yet)', validators=[Optional()], format='%Y-%m-%d')
     submit = SubmitField('Submit')
 
     def validate_date_bought(self, field):
         """Ensure date_bought is not in the future"""
-        if field.data > datetime.now().date():
+        if field.data and field.data > datetime.now().date():
             raise ValidationError('Purchase date cannot be in the future')
 
     def validate_date_added_to_stand(self, field):
@@ -160,6 +161,14 @@ class PartForm(FlaskForm):
         Optional(), 
         NumberRange(min=0, message='Price cannot be negative')
     ])
+    stock_quantity = IntegerField('Stock Quantity', validators=[
+        NumberRange(min=0, message='Stock quantity cannot be negative')
+    ], default=0)
+    storage_location = StringField('Storage Location', validators=[
+        Optional(), 
+        Length(max=100),
+        Regexp(r'^[a-zA-Z0-9\-\.\,\/ ]*$', message='Location format is invalid')
+    ])
     submit = SubmitField('Submit')
 
     def validate_standard_price(self, field):
@@ -171,14 +180,28 @@ class PartForm(FlaskForm):
                 decimals = len(str_value.split('.')[1])
                 if decimals > 2:
                     raise ValidationError('Price cannot have more than 2 decimal places')
+                    
+    def validate_weight(self, field):
+        """Validate the weight format"""
+        if field.data is not None:
+            # Check if it has more than 3 decimal places
+            str_value = str(field.data)
+            if '.' in str_value:
+                decimals = len(str_value.split('.')[1])
+                if decimals > 3:
+                    raise ValidationError('Weight cannot have more than 3 decimal places')
 
 class RepairPartForm(FlaskForm):
     """Form for adding a part to a repair"""
     repair_id = HiddenField('Repair ID', validators=[DataRequired()])
     part_id = SelectField('Part', validators=[DataRequired()], coerce=int)
+    quantity = IntegerField('Quantity', validators=[
+        DataRequired(),
+        NumberRange(min=1, message='Quantity must be at least 1')
+    ], default=1)
     purchase_price = FloatField('Purchase Price', validators=[DataRequired(), NumberRange(min=0)])
-    purchase_date = DateField('Purchase Date', validators=[DataRequired()], format='%Y-%m-%d')
-    vendor = StringField('Vendor', validators=[
+    purchase_date = DateField('Purchase Date', validators=[Optional()], format='%Y-%m-%d', default=datetime.now().date)
+    vendor = StringField('Manufacturer/Vendor', validators=[
         DataRequired(), 
         Length(1, 100),
         Regexp(r'^[a-zA-Z0-9\-\.\& ]+$', message='Vendor name can only contain letters, numbers, spaces, hyphens, dots and ampersands')
@@ -186,8 +209,8 @@ class RepairPartForm(FlaskForm):
     submit = SubmitField('Add Part')
 
     def validate_purchase_date(self, field):
-        """Ensure purchase_date is not in the future"""
-        if field.data > datetime.now().date():
+        """Ensure purchase_date is not in the future if provided"""
+        if field.data and field.data > datetime.now().date():
             raise ValidationError('Purchase date cannot be in the future')
 
 class StandForm(FlaskForm):

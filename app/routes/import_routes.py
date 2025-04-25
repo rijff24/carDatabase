@@ -17,6 +17,8 @@ from werkzeug.utils import secure_filename
 import os
 import logging
 import io
+from flask_wtf.csrf import generate_csrf
+from flask import current_app
 
 # Import helper functions (these will be implemented separately)
 from app.utils.import_helpers import (
@@ -49,6 +51,9 @@ def index():
     if template_type:
         return download_template(template_type)
         
+    # Debug info on CSRF
+    logging.info(f"CSRF is {'enabled' if current_app.config.get('WTF_CSRF_ENABLED', True) else 'disabled'}")
+    
     return render_template('import/import.html')
 
 @import_bp.route('/download-template/<entity_type>')
@@ -86,37 +91,48 @@ def download_template(entity_type):
 @requires_role('admin')
 def import_cars_route():
     """Handle car import"""
-    if 'file' not in request.files:
-        flash('No file part', 'danger')
-        return redirect(url_for('import.index'))
-    
-    file = request.files['file']
-    if file.filename == '':
-        flash('No file selected', 'danger')
-        return redirect(url_for('import.index'))
-    
-    if file and allowed_file(file.filename):
-        try:
-            # Process the uploaded file
-            filename = secure_filename(file.filename)
-            result = import_cars(file)
-            
-            # Flash the results
-            flash(f'Import completed: {result["success"]} cars imported successfully, {result["failed"]} failed', 
-                  'success' if result["success"] > 0 else 'warning')
-            
-            if result["errors"]:
-                for error in result["errors"][:5]:  # Show first 5 errors
-                    flash(f'Error: {error}', 'danger')
-                if len(result["errors"]) > 5:
-                    flash(f'... and {len(result["errors"]) - 5} more errors', 'danger')
-                    
-        except Exception as e:
-            logging.error(f"Error importing cars: {str(e)}")
-            flash(f'Error importing cars: {str(e)}', 'danger')
-    else:
-        flash('Invalid file type. Please upload a CSV or Excel file.', 'danger')
+    try:
+        logging.info("Car import route started")
         
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(url_for('import.index'))
+        
+        file = request.files['file']
+        if file.filename == '':
+            flash('No file selected', 'danger')
+            return redirect(url_for('import.index'))
+        
+        if file and allowed_file(file.filename):
+            try:
+                # Process the uploaded file
+                filename = secure_filename(file.filename)
+                logging.info(f"Processing file: {filename}")
+                result = import_cars(file)
+                
+                # Flash the results
+                flash(f'Import completed: {result["success"]} cars imported successfully, {result["failed"]} failed', 
+                      'success' if result["success"] > 0 else 'warning')
+                
+                if result["errors"]:
+                    for error in result["errors"][:5]:  # Show first 5 errors
+                        flash(f'Error: {error}', 'danger')
+                    if len(result["errors"]) > 5:
+                        flash(f'... and {len(result["errors"]) - 5} more errors', 'danger')
+                        
+            except Exception as e:
+                logging.error(f"Error in import_cars_route when processing file: {str(e)}")
+                import traceback
+                logging.error(traceback.format_exc())
+                flash(f'Error importing cars: {str(e)}', 'danger')
+        else:
+            flash('Invalid file type. Please upload a CSV or Excel file.', 'danger')
+    except Exception as e:
+        logging.error(f"Unexpected error in import_cars_route: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
+        flash(f'An unexpected error occurred: {str(e)}', 'danger')
+            
     return redirect(url_for('import.index'))
 
 @import_bp.route('/repairs', methods=['POST'])

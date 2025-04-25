@@ -114,6 +114,14 @@
                                     <td>R {{ part.purchase_price }}</td>
                                     <td>{{ part.vendor }}</td>
                                     <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-part-btn" data-bs-toggle="modal" data-bs-target="#editPartModal" 
+                                                data-record-id="{{ part.record_id }}"
+                                                data-part-id="{{ part.part_id }}"
+                                                data-purchase-date="{{ part.purchase_date.strftime('%Y-%m-%d') }}"
+                                                data-purchase-price="{{ part.purchase_price }}"
+                                                data-vendor="{{ part.vendor }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                         <form action="{{ url_for('repairs.remove_part', record_id=part.record_id) }}" method="POST" class="d-inline">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -143,23 +151,63 @@
                     <form method="POST" action="{{ url_for('repairs.add_part', repair_id=repair.repair_id) }}" id="add-repair-part-form">
                         {{ part_form.hidden_tag() }}
                         
+                        <div class="mb-3">
+                            {{ part_form.part_id.label(class="form-label") }}
+                            <select class="form-select" id="{{ part_form.part_id.id }}" name="{{ part_form.part_id.name }}" required>
+                                <option value="">Select a part</option>
+                                {% for part_id, part_name in part_form.part_id.choices %}
+                                    {% set part = parts_dict[part_id] %}
+                                    <option value="{{ part_id }}" 
+                                            data-stock="{{ part.stock_quantity }}"
+                                            data-price="{{ part.standard_price }}"
+                                            data-manufacturer="{{ part.manufacturer }}"
+                                            data-location="{{ part.location }}">
+                                        {% if part.stock_quantity > 0 %}
+                                            {{ part_name }} ({{ part.stock_quantity }} in stock)
+                                        {% else %}
+                                            {{ part_name }} (Out of Stock)
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if part_form.part_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in part_form.part_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small id="stockInfo" class="form-text text-muted"></small>
+                        </div>
+                        
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    {{ part_form.part_id.label(class="form-label") }}
-                                    <select class="form-select" id="{{ part_form.part_id.id }}" name="{{ part_form.part_id.name }}">
-                                        {% for value, label in part_form.part_id.choices %}
-                                            <option value="{{ value }}">{{ label }}</option>
-                                        {% endfor %}
-                                        <option disabled>──────────</option>
-                                        <option value="add_new" class="text-primary">+ Add New Part</option>
-                                    </select>
+                                    {{ part_form.quantity.label(class="form-label") }}
+                                    <input type="number" class="form-control" id="{{ part_form.quantity.id }}" name="{{ part_form.quantity.name }}" value="1" min="1">
+                                    {% if part_form.quantity.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in part_form.quantity.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small id="quantityWarning" class="form-text text-danger" style="display: none;">
+                                        Warning: Requested quantity exceeds available stock!
+                                    </small>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     {{ part_form.purchase_price.label(class="form-label") }}
                                     {{ part_form.purchase_price(class="form-control") }}
+                                    {% if part_form.purchase_price.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in part_form.purchase_price.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -169,17 +217,30 @@
                                 <div class="mb-3">
                                     {{ part_form.purchase_date.label(class="form-label") }}
                                     {{ part_form.purchase_date(class="form-control", type="date") }}
+                                    {% if part_form.purchase_date.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in part_form.purchase_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     {{ part_form.vendor.label(class="form-label") }}
                                     {{ part_form.vendor(class="form-control") }}
+                                    <small class="text-muted">This will be used as the default vendor for this part</small>
                                 </div>
                             </div>
                         </div>
                         
-                        {{ part_form.submit(class="btn btn-primary") }}
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addNewPartModal">
+                                <i class="fas fa-plus-circle"></i> New Part
+                            </button>
+                            <button type="submit" class="btn btn-primary">Add Part</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -187,109 +248,494 @@
     </div>
 </div>
 
-<!-- Add New Part Modal -->
-<div class="modal fade" id="addPartModal" tabindex="-1" aria-labelledby="addPartModalLabel" aria-hidden="true">
+<!-- Add New Part to Inventory Modal -->
+<div class="modal fade" id="addNewPartModal" tabindex="-1" aria-labelledby="addNewPartModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addPartModalLabel">Add New Part</h5>
+                <h5 class="modal-title" id="addNewPartModalLabel">Add New Part to Inventory</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Content will be loaded dynamically -->
-                <div id="addPartFormContainer"></div>
+                <form id="newPartForm" method="POST" action="{{ url_for('parts.create') }}?return_to={{ url_for('repairs.view', repair_id=repair.repair_id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="part_name" class="form-label">Part Name</label>
+                        <input type="text" class="form-control" id="part_name" name="part_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="manufacturer" class="form-label">Manufacturer/Vendor</label>
+                                <input type="text" class="form-control" id="manufacturer" name="manufacturer">
+                                <small class="text-muted">This will be used as the default vendor for this part</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="location" class="form-label">Storage Location</label>
+                                <input type="text" class="form-control" id="location" name="location">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="standard_price" class="form-label">Standard Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="number" step="0.01" class="form-control" id="standard_price" name="standard_price" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="stock_quantity" class="form-label">Initial Stock Quantity</label>
+                                <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="0" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add to Inventory</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Part Modal -->
+<div class="modal fade" id="editPartModal" tabindex="-1" aria-labelledby="editPartModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPartModalLabel">Edit Part</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-part-form" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="edit-part-id" class="form-label">Part</label>
+                        <select class="form-select" id="edit-part-id" name="part_id">
+                            {% for value, label in part_form.part_id.choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Changing the part will update inventory counts automatically.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-purchase-price" class="form-label">Purchase Price</label>
+                        <input type="number" step="0.01" class="form-control" id="edit-purchase-price" name="purchase_price" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-purchase-date" class="form-label">Purchase Date</label>
+                        <input type="date" class="form-control" id="edit-purchase-date" name="purchase_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-vendor" class="form-label">Manufacturer/Vendor</label>
+                        <input type="text" class="form-control" id="edit-vendor" name="vendor" required list="vendorOptions">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-part-btn">Save Changes</button>
             </div>
         </div>
     </div>
 </div>
 
 {% block extra_js %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Get references to the form elements
         const partSelect = document.getElementById('{{ part_form.part_id.id }}');
-        const enableSubformDropdowns = {{ 'true' if settings.get_setting('enable_subform_dropdowns', True) else 'false' }};
+        const priceInput = document.getElementById('{{ part_form.purchase_price.id }}');
+        const quantityInput = document.getElementById('{{ part_form.quantity.id }}');
+        const vendorInput = document.getElementById('{{ part_form.vendor.id }}');
+        const stockInfo = document.getElementById('stockInfo');
+        const quantityWarning = document.getElementById('quantityWarning');
         
-        partSelect.addEventListener('change', function(e) {
-            if (e.target.value === 'add_new') {
-                // Reset back to first option to prevent the "Add New" option from being selected
-                e.target.selectedIndex = 0;
+        // Map to store last used vendor for each part
+        const partVendors = {};
+        
+        // Add an event listener to the part selection dropdown
+        partSelect.addEventListener('change', function() {
+            const selectedOption = partSelect.options[partSelect.selectedIndex];
+            const selectedValue = selectedOption.value;
+            
+            // Check if "Add New Part" option is selected
+            if (selectedValue === 'new') {
+                // Store form states to restore later
+                const formState = {
+                    partValue: partSelect.value,
+                    priceValue: priceInput.value,
+                    quantityValue: quantityInput.value,
+                    vendorValue: vendorInput.value
+                };
                 
-                if (enableSubformDropdowns) {
-                    // Show modal with part form
-                    const modal = new bootstrap.Modal(document.getElementById('addPartModal'));
-                    
-                    // Load part form into modal
-                    fetch('{{ url_for("parts.create", modal=1) }}')
-                        .then(function(response) { 
-                            return response.text(); 
-                        })
-                        .then(function(html) {
-                            document.getElementById('addPartFormContainer').innerHTML = html;
-                            modal.show();
-                            
-                            // Setup form submission
-                            const form = document.getElementById('modalPartForm');
-                            if (form) {
-                                form.addEventListener('submit', function(e) {
-                                    e.preventDefault();
-                                    
-                                    const formData = new FormData(form);
-                                    
-                                    fetch(form.action, {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: {
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        }
-                                    })
-                                    .then(function(response) { 
-                                        return response.json(); 
-                                    })
-                                    .then(function(data) {
-                                        if (data.success) {
-                                            // Close modal
-                                            modal.hide();
-                                            
-                                            // Add new option to dropdown and select it
-                                            const newOption = new Option(data.part_name, data.part_id, true, true);
-                                            partSelect.insertBefore(newOption, partSelect.firstChild);
-                                            partSelect.selectedIndex = 0;
-                                            
-                                            // Show success message
-                                            const alertContainer = document.createElement('div');
-                                            alertContainer.className = 'alert alert-success alert-dismissible fade show';
-                                            alertContainer.innerHTML = data.message + 
-                                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
-                                            document.querySelector('.container.mt-3').appendChild(alertContainer);
-                                        } else {
-                                            // Show validation errors in the modal
-                                            let errorDiv = document.getElementById('form-errors');
-                                            if (!errorDiv) {
-                                                errorDiv = document.createElement('div');
-                                                errorDiv.id = 'form-errors';
-                                                errorDiv.className = 'alert alert-danger';
-                                                form.prepend(errorDiv);
-                                            }
-                                            errorDiv.textContent = data.message;
-                                        }
-                                    })
-                                    .catch(function(error) {
-                                        console.error('Error:', error);
-                                        alert('An error occurred while processing your request.');
-                                    });
-                                });
-                            }
-                        })
-                        .catch(function(error) {
-                            console.error('Error loading form:', error);
-                            alert('Could not load the form. Please try again.');
-                        });
+                // Store in sessionStorage to restore after modal closes
+                sessionStorage.setItem('repairPartFormState', JSON.stringify(formState));
+                
+                // Open the add new part modal
+                const newPartModal = new bootstrap.Modal(document.querySelector('#addNewPartModal'));
+                newPartModal.show();
+                
+                // Reset the select back to empty after a short delay
+                setTimeout(() => {
+                    partSelect.value = '';
+                }, 100);
+                
+                return;
+            }
+            
+            // Get part data from data attributes
+            const stockQuantity = selectedOption.dataset.stock;
+            const price = selectedOption.dataset.price;
+            const manufacturer = selectedOption.dataset.manufacturer;
+            const location = selectedOption.dataset.location;
+            
+            if (selectedOption.value) {
+                const partId = selectedOption.value;
+                
+                // Update the stock info text
+                if (stockQuantity > 0) {
+                    stockInfo.textContent = `Available stock: ${stockQuantity}` + 
+                        (location ? ` | Location: ${location}` : '');
+                    stockInfo.classList.remove('text-danger');
+                    stockInfo.classList.add('text-success');
                 } else {
-                    // Redirect to the regular part creation page
-                    window.location.href = '{{ url_for("parts.create", return_to=request.path) }}';
+                    stockInfo.textContent = 'Out of Stock' + 
+                        (location ? ` | Location: ${location}` : '');
+                    stockInfo.classList.remove('text-success');
+                    stockInfo.classList.add('text-danger');
+                }
+                
+                // Auto-populate the price field
+                if (price) {
+                    priceInput.value = price;
+                }
+                
+                // Set quantity to 1 by default if in stock, but don't disable
+                if (stockQuantity > 0) {
+                    quantityInput.value = 1;
+                } else {
+                    quantityInput.value = 1; // Still allow ordering even if out of stock
+                }
+                
+                // Auto-populate vendor field - first check if manufacturer is available
+                if (manufacturer && !partVendors[partId]) {
+                    vendorInput.value = manufacturer;
+                } else if (partVendors[partId]) {
+                    // Otherwise use saved vendor if available
+                    vendorInput.value = partVendors[partId];
+                } else {
+                    // Try to get the vendor from previously added parts in the table
+                    const vendorFromHistory = getVendorFromHistory(partId);
+                    if (vendorFromHistory) {
+                        vendorInput.value = vendorFromHistory;
+                        partVendors[partId] = vendorFromHistory;
+                    }
+                }
+            } else {
+                // Clear fields if no part selected
+                stockInfo.textContent = '';
+                priceInput.value = '';
+                quantityInput.value = '';
+                quantityWarning.style.display = 'none';
+            }
+        });
+        
+        // Check quantity against available stock
+        quantityInput.addEventListener('input', function() {
+            const selectedOption = partSelect.options[partSelect.selectedIndex];
+            if (selectedOption.value) {
+                const stockQuantity = parseInt(selectedOption.dataset.stock);
+                const requestedQuantity = parseInt(quantityInput.value);
+                
+                if (requestedQuantity > stockQuantity) {
+                    quantityWarning.style.display = 'block';
+                } else {
+                    quantityWarning.style.display = 'none';
                 }
             }
         });
+        
+        // Store vendor when form is submitted
+        document.querySelector('#add-repair-part-form').addEventListener('submit', function() {
+            const partId = partSelect.value;
+            const vendor = vendorInput.value;
+            if (partId && vendor) {
+                partVendors[partId] = vendor;
+                // Also save to localStorage for persistence
+                try {
+                    const savedVendors = JSON.parse(localStorage.getItem('partVendors') || '{}');
+                    savedVendors[partId] = vendor;
+                    localStorage.setItem('partVendors', JSON.stringify(savedVendors));
+                } catch (e) {
+                    console.error('Error saving vendor to localStorage', e);
+                }
+            }
+        });
+        
+        // Initialize vendor autocomplete
+        initVendorAutocomplete();
+        
+        // Setup jQuery UI autocomplete for vendor fields
+        setupJQueryAutocomplete("#" + vendorInput.id, '/parts/autocomplete/manufacturers');
+        setupJQueryAutocomplete("#edit-vendor", '/parts/autocomplete/manufacturers');
+        
+        // Setup jQuery UI autocomplete for manufacturer field
+        const manufacturerInput = document.getElementById('manufacturer');
+        if (manufacturerInput) {
+            setupJQueryAutocomplete("#manufacturer", '/parts/autocomplete/manufacturers');
+        }
+        
+        // Setup jQuery UI autocomplete for location field
+        const locationInput = document.getElementById('location');
+        if (locationInput) {
+            setupJQueryAutocomplete("#location", '/parts/autocomplete/storage-locations');
+        }
+        
+        /**
+         * Setup jQuery UI autocomplete for a given input field
+         */
+        function setupJQueryAutocomplete(selector, url) {
+            $(selector).autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: url,
+                        data: { query: request.term },
+                        success: function(data) {
+                            if (data.length === 0) {
+                                // If no suggestions, still allow custom entry
+                                response([{
+                                    label: 'Custom: ' + request.term,
+                                    value: request.term,
+                                    isCustom: true
+                                }]);
+                            } else {
+                                response($.map(data, function(item) {
+                                    return {
+                                        label: item,
+                                        value: item
+                                    };
+                                }));
+                            }
+                        }
+                    });
+                },
+                minLength: 0,
+                select: function(event, ui) {
+                    // If a custom value is selected, just use the raw term
+                    if (ui.item.isCustom) {
+                        $(this).val(ui.item.value.replace('Custom: ', ''));
+                        return false;
+                    }
+                }
+            }).autocomplete("widget").addClass("repair-autocomplete");
+            
+            // Show dropdown on focus/click
+            $(selector).on('focus click', function() {
+                // If the autocomplete list is not visible, show it
+                if ($(this).autocomplete("widget").css("display") === "none") {
+                    $(this).autocomplete("search", "");
+                }
+            });
+        }
+        
+        // Load saved vendors from localStorage
+        try {
+            const savedVendors = JSON.parse(localStorage.getItem('partVendors') || '{}');
+            Object.assign(partVendors, savedVendors);
+        } catch (e) {
+            console.error('Error loading vendors from localStorage', e);
+        }
+        
+        // Function to extract vendor from previously added parts
+        function getVendorFromHistory(partId) {
+            const rows = document.querySelectorAll('table tbody tr');
+            for (const row of rows) {
+                const editBtn = row.querySelector('.edit-part-btn');
+                if (editBtn && editBtn.getAttribute('data-part-id') === partId) {
+                    return editBtn.getAttribute('data-vendor');
+                }
+            }
+            return null;
+        }
+        
+        // Handle Edit Part Modal
+        const editPartBtns = document.querySelectorAll('.edit-part-btn');
+        const editPartForm = document.getElementById('edit-part-form');
+        const savePartBtn = document.getElementById('save-part-btn');
+        
+        editPartBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const recordId = this.getAttribute('data-record-id');
+                const partId = this.getAttribute('data-part-id');
+                const purchaseDate = this.getAttribute('data-purchase-date');
+                const purchasePrice = this.getAttribute('data-purchase-price');
+                const vendor = this.getAttribute('data-vendor');
+                
+                // Set form action
+                editPartForm.action = "{{ url_for('repairs.replace_part', record_id=0) }}".replace('0', recordId);
+                
+                // Set form values
+                document.getElementById('edit-part-id').value = partId;
+                document.getElementById('edit-purchase-date').value = purchaseDate;
+                document.getElementById('edit-purchase-price').value = purchasePrice;
+                document.getElementById('edit-vendor').value = vendor;
+                
+                // Update stored vendor
+                if (partId && vendor) {
+                    partVendors[partId] = vendor;
+                }
+            });
+        });
+        
+        // Handle save button click
+        savePartBtn.addEventListener('click', function() {
+            const partId = document.getElementById('edit-part-id').value;
+            const vendor = document.getElementById('edit-vendor').value;
+            
+            // Update stored vendor
+            if (partId && vendor) {
+                partVendors[partId] = vendor;
+                
+                // Save to localStorage
+                try {
+                    const savedVendors = JSON.parse(localStorage.getItem('partVendors') || '{}');
+                    savedVendors[partId] = vendor;
+                    localStorage.setItem('partVendors', JSON.stringify(savedVendors));
+                } catch (e) {
+                    console.error('Error saving vendor to localStorage', e);
+                }
+            }
+            
+            editPartForm.submit();
+        });
+        
+        // Handle modal interactions
+        const addNewPartBtn = document.querySelector('[data-bs-target="#addNewPartModal"]');
+        if (addNewPartBtn) {
+            addNewPartBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Show the new part modal
+                const newPartModal = new bootstrap.Modal(document.querySelector('#addNewPartModal'));
+                newPartModal.show();
+            });
+        }
+        
+        // Ensure proper cleanup of modals when closed with cancel buttons
+        const modalCancelBtns = document.querySelectorAll('[data-bs-dismiss="modal"]');
+        modalCancelBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Make sure all backdrops are removed
+                const modalBackdrops = document.querySelectorAll('.modal-backdrop');
+                modalBackdrops.forEach(backdrop => {
+                    backdrop.remove();
+                });
+                // Remove modal-open class from body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            });
+        });
+        
+        // Set today's date as default for purchase date if the field is empty
+        const purchaseDateInput = document.querySelector('input[name="purchase_date"]');
+        if (purchaseDateInput && !purchaseDateInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            purchaseDateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+        
+        // Handle new part form submission
+        const newPartForm = document.getElementById('newPartForm');
+        if (newPartForm) {
+            newPartForm.addEventListener('submit', function(e) {
+                // Get the manufacturer value (to use as default vendor)
+                const manufacturer = document.getElementById('manufacturer').value.trim();
+                
+                // If manufacturer is provided, we'll save it as the default vendor
+                if (manufacturer) {
+                    // We need to store this temporarily since we don't have the part ID yet
+                    // We'll use local storage with a special key
+                    localStorage.setItem('lastAddedPartVendor', manufacturer);
+                }
+            });
+        }
+        
+        // Check if we have a recently created part with a default vendor
+        const lastAddedPartVendor = localStorage.getItem('lastAddedPartVendor');
+        if (lastAddedPartVendor) {
+            // If we have a newly created part ID from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const newPartId = urlParams.get('new_part_id');
+            
+            if (newPartId) {
+                // Save the vendor for this part
+                partVendors[newPartId] = lastAddedPartVendor;
+                
+                // Also save to localStorage
+                try {
+                    const savedVendors = JSON.parse(localStorage.getItem('partVendors') || '{}');
+                    savedVendors[newPartId] = lastAddedPartVendor;
+                    localStorage.setItem('partVendors', JSON.stringify(savedVendors));
+                } catch (e) {
+                    console.error('Error saving vendor to localStorage', e);
+                }
+                
+                // Clear the temporary vendor
+                localStorage.removeItem('lastAddedPartVendor');
+                
+                // Select the newly created part in the dropdown
+                const partOption = Array.from(partSelect.options).find(option => option.value === newPartId);
+                if (partOption) {
+                    partSelect.value = newPartId;
+                    // Trigger change event to populate fields
+                    partSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+        
+        // Handle modal closing properly
+        const addNewPartModal = document.getElementById('addNewPartModal');
+        if (addNewPartModal) {
+            addNewPartModal.addEventListener('hidden.bs.modal', function() {
+                // Restore the form state from sessionStorage
+                try {
+                    const formState = JSON.parse(sessionStorage.getItem('repairPartFormState'));
+                    if (formState) {
+                        // Don't restore part ID as it would trigger another change event
+                        // Just make sure the part dropdown is re-enabled
+                        partSelect.disabled = false;
+                        partSelect.focus();
+                    }
+                } catch (e) {
+                    console.error('Error restoring form state', e);
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

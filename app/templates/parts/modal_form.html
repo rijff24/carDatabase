@@ -4,28 +4,56 @@
     <div class="mb-3">
         {{ form.part_name.label(class="form-label") }}
         {{ form.part_name(class="form-control") }}
+        <small class="form-text text-muted">Enter a descriptive name for the part</small>
     </div>
     
     <div class="mb-3">
         {{ form.description.label(class="form-label") }}
         {{ form.description(class="form-control", rows=3) }}
+        <small class="form-text text-muted">Optional detailed description</small>
     </div>
     
-    <div class="mb-3">
+    <div class="mb-3 autocomplete-fields">
         {{ form.manufacturer.label(class="form-label") }}
         {{ form.manufacturer(class="form-control") }}
+        <small class="form-text text-muted autocomplete-helper">Start typing for suggestions or enter a new manufacturer</small>
     </div>
     
-    <div class="mb-3">
-        {{ form.standard_price.label(class="form-label") }}
-        <div class="input-group">
-            <span class="input-group-text">R</span>
-            {{ form.standard_price(class="form-control") }}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                {{ form.standard_price.label(class="form-label") }}
+                <div class="input-group">
+                    <span class="input-group-text">R</span>
+                    {{ form.standard_price(class="form-control") }}
+                </div>
+                <small class="form-text text-muted">Standard sale price</small>
+            </div>
         </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                {{ form.stock_quantity.label(class="form-label") }}
+                <div class="input-group">
+                    {{ form.stock_quantity(class="form-control") }}
+                    <span class="input-group-text">units</span>
+                </div>
+                <small class="form-text text-muted">Current inventory count</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-3 autocomplete-fields">
+        {{ form.storage_location.label(class="form-label") }}
+        {{ form.storage_location(class="form-control") }}
+        <small class="form-text text-muted">Where this part is stored (warehouse, shelf, etc.)</small>
     </div>
     
     <div class="d-flex justify-content-between">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         {{ form.submit(class="btn btn-success") }}
     </div>
-</form> 
+</form>
+
+<!-- Include autocomplete scripts -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/part-autocomplete.css') }}">
+<script src="{{ url_for('static', filename='js/part-autocomplete.js') }}"></script> 

@@ -126,11 +126,16 @@ def view(repair_id):
     
     repair_parts = RepairPart.query.filter_by(repair_id=repair_id).all()
     
+    # Create a dictionary of parts with their details for the dropdown
+    all_parts = Part.query.all()
+    parts_dict = {p.part_id: p for p in all_parts}
+    
     return render_template(
         'repairs/view.html', 
         repair=repair, 
         part_form=part_form,
         repair_parts=repair_parts,
+        parts_dict=parts_dict,
         settings=Setting
     )
 
@@ -280,18 +285,33 @@ def add_part(repair_id):
     if form.validate_on_submit():
         part = safe_get_or_404(Part, form.part_id.data, f"Part with ID {form.part_id.data} not found")
         
+        # Set default purchase date to today if not provided
+        purchase_date = form.purchase_date.data if form.purchase_date.data else datetime.now().date()
+        
+        # Create repair part record
         repair_part = RepairPart(
             repair_id=repair_id,
             part_id=form.part_id.data,
             purchase_price=form.purchase_price.data,
-            purchase_date=form.purchase_date.data,
+            purchase_date=purchase_date,
             vendor=form.vendor.data
         )
         
         db.session.add(repair_part)
+        
+        # Check part stock and decrement if greater than 0
+        quantity = form.quantity.data
+        if part.stock_quantity >= quantity:
+            part.stock_quantity -= quantity
+            flash(f'{part.part_name} added to repair successfully. Stock decremented to {part.stock_quantity}.', 'success')
+        else:
+            # If not enough stock, warn the user but still add the part
+            flash(f'Warning: Requested {quantity} of {part.part_name} but only {part.stock_quantity} in stock. Part added with limited inventory change.', 'warning')
+            if part.stock_quantity > 0:
+                part.stock_quantity = 0
+        
         db.session.commit()
         
-        flash(f'{part.part_name} added to repair successfully', 'success')
     else:
         # Show what validation errors occurred
         error_messages = []
@@ -310,10 +330,94 @@ def remove_part(record_id):
     repair_part = safe_get_or_404(RepairPart, record_id, f"Repair part with ID {record_id} not found")
     repair_id = repair_part.repair_id
     
-    part_name = repair_part.part.part_name if repair_part.part else 'Part'
+    part = repair_part.part
+    part_name = part.part_name if part else 'Part'
     
-    db.session.delete(repair_part)
-    db.session.commit()
+    # If we have a valid part, increment its stock
+    if part:
+        # Record the current stock for messaging
+        old_stock = part.stock_quantity
+        
+        # Increment the part's stock
+        part.stock_quantity += 1
+        
+        db.session.delete(repair_part)
+        db.session.commit()
+        
+        flash(f'{part_name} removed from repair successfully. Stock incremented from {old_stock} to {part.stock_quantity}.', 'success')
+    else:
+        # If for some reason we don't have a valid part, just delete the repair_part
+        db.session.delete(repair_part)
+        db.session.commit()
+        
+        flash(f'{part_name} removed from repair successfully.', 'success')
     
-    flash(f'{part_name} removed from repair successfully', 'success')
+    return redirect(url_for('repairs.view', repair_id=repair_id))
+
+@repairs_bp.route('/parts/<int:record_id>/replace', methods=['POST'])
+@login_required
+@validate_params(record_id=(int, True))
+def replace_part(record_id):
+    """Replace a part on a repair with a new part"""
+    repair_part = safe_get_or_404(RepairPart, record_id, f"Repair part with ID {record_id} not found")
+    repair_id = repair_part.repair_id
+    
+    # Get the form data for the new part
+    form = RepairPartForm(formdata=request.form)
+    form.part_id.choices = [(p.part_id, p.part_name) for p in Part.query.all()]
+    
+    if form.validate_on_submit():
+        # Check if the part is actually changing
+        if repair_part.part_id == form.part_id.data:
+            # Only update other fields if the part isn't changing
+            repair_part.purchase_price = form.purchase_price.data
+            repair_part.purchase_date = form.purchase_date.data
+            repair_part.vendor = form.vendor.data
+            db.session.commit()
+            flash('Part details updated successfully.', 'success')
+            return redirect(url_for('repairs.view', repair_id=repair_id))
+        
+        # Get the old and new parts
+        old_part = repair_part.part
+        new_part = safe_get_or_404(Part, form.part_id.data, f"Part with ID {form.part_id.data} not found")
+        
+        # Increment the old part's stock if it exists
+        if old_part:
+            old_part.stock_quantity += 1
+            old_part_name = old_part.part_name
+        else:
+            old_part_name = 'Unknown Part'
+        
+        # Check the new part's stock and decrement if possible
+        stock_warning = False
+        if new_part.stock_quantity > 0:
+            new_part.stock_quantity -= 1
+        else:
+            stock_warning = True
+        
+        # Update the repair part with the new information
+        repair_part.part_id = form.part_id.data
+        repair_part.purchase_price = form.purchase_price.data
+        repair_part.purchase_date = form.purchase_date.data
+        repair_part.vendor = form.vendor.data
+        
+        db.session.commit()
+        
+        # Show appropriate messages
+        if stock_warning:
+            flash(f'Warning: {new_part.part_name} has no stock (0 quantity). Part added to repair without changing inventory.', 'warning')
+        
+        flash(f'Part replaced successfully: {old_part_name} → {new_part.part_name}', 'success')
+        if old_part:
+            flash(f'{old_part_name} stock increased to {old_part.stock_quantity}.', 'info')
+        if not stock_warning:
+            flash(f'{new_part.part_name} stock decreased to {new_part.stock_quantity}.', 'info')
+    else:
+        # Show validation errors
+        error_messages = []
+        for field, errors in form.errors.items():
+            for error in errors:
+                error_messages.append(f"{field}: {error}")
+        flash(f"Form validation failed: {', '.join(error_messages)}", 'danger')
+    
     return redirect(url_for('repairs.view', repair_id=repair_id)) 

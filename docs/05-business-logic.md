@@ -71,6 +71,75 @@ def roi(self):
 
 This metric evaluates how efficiently the business is using its capital by showing the percentage return on the total investment made in the vehicle.
 
+#### ROI Performance Categories
+
+For reporting and analysis purposes, ROI is categorized into three performance bands:
+
+```python
+def get_roi_band(roi):
+    """Determine ROI color band (high, medium, low)"""
+    if roi >= 30.0:
+        return "high"
+    elif roi >= 15.0:
+        return "medium"
+    else:
+        return "low"
+```
+
+- **High ROI (≥30%)**: Represents excellent investment performance
+- **Medium ROI (15-30%)**: Represents good investment performance
+- **Low ROI (<15%)**: Represents below-target investment performance
+
+These categorizations are used in the Profitability Report for color-coding and visual analysis, helping to quickly identify high-performing and underperforming vehicles.
+
+### Top & Bottom Cars Profitability Analysis
+
+The dashboard's Top & Bottom Cars Profitability card implements specific business logic to highlight the best and worst performing vehicles:
+
+```python
+# Get top 3 cars by profit in past 60 days
+sixty_days_ago = datetime.now().date() - timedelta(days=60)
+top_profit_cars = Car.query.filter(Car.date_sold >= sixty_days_ago).all()
+# Sort by profit (highest to lowest) and get top 3
+top_profit_cars = sorted([car for car in top_profit_cars if car.profit is not None], 
+                        key=lambda x: x.profit, reverse=True)[:3]
+
+# Get bottom 3 cars by profit or unsold cars beyond aging threshold
+aging_threshold_date = current_date - timedelta(days=stand_aging_threshold_days)
+
+# Get cars that have been on display too long (exceeding aging threshold)
+aging_cars = Car.query.filter(
+    Car.date_added_to_stand <= aging_threshold_date,
+    Car.date_sold == None,
+    Car.repair_status == 'On Display'
+).all()
+
+# Also get recent low-profit sales
+bottom_profit_cars = Car.query.filter(Car.date_sold >= sixty_days_ago).all()
+# Sort by profit (lowest to highest)
+bottom_profit_cars = sorted([car for car in bottom_profit_cars if car.profit is not None], 
+                           key=lambda x: x.profit)[:3]
+```
+
+The implementation follows these business rules:
+
+1. **Top Cars Selection:**
+   - Only considers vehicles sold within the past 60 days
+   - Ranks by absolute profit value (highest to lowest)
+   - Displays the top 3 performers
+
+2. **Bottom Cars Selection - Hybrid Approach:**
+   - Prioritizes aging inventory (cars on display longer than the aging threshold)
+   - If fewer than 3 aging cars exist, fills the remaining slots with lowest-profit recent sales
+   - Combines operational concerns (aging inventory) with financial performance (low profit)
+
+3. **Display Logic:**
+   - Profit values are color-coded (green for top performers, red for negative profits)
+   - Status indicators differentiate between aging inventory and low-profit sold vehicles
+   - Links to detailed profit reports for deeper analysis
+
+This approach provides a balanced view that addresses both immediate profitability concerns and inventory management issues in a single widget.
+
 ### Days in Reconditioning Calculation
 
 The number of days a car spent in reconditioning is calculated as:
@@ -84,6 +153,42 @@ def days_in_recon(self):
 ```
 
 This calculation measures the time from vehicle purchase to when it's ready for display, which is an important operational efficiency metric.
+
+### Average Reconditioning Time Calculation
+
+For the dashboard's "Ready for Display" card, the application calculates the average time cars spend in reconditioning before they reach the "Ready for Display" status:
+
+```python
+# Count cars ready for display and calculate average recon time
+cars_ready_for_display = Car.query.filter(
+    Car.repair_status == 'Ready for Display',
+    Car.date_sold == None
+).all()
+
+ready_for_display_count = len(cars_ready_for_display)
+
+# Calculate average reconditioning time (days from purchase to 'Ready for Display' status)
+recon_times = []
+current_date = datetime.now().date()
+
+for car in cars_ready_for_display:
+    if car.date_bought:
+        # For cars with date_bought, calculate days to reach 'Ready for Display'
+        # In a full implementation, you would use the actual date the status changed
+        recon_time = (current_date - car.date_bought).days
+        if recon_time >= 0:  # Ensure we don't include negative values
+            recon_times.append(recon_time)
+
+avg_recon_time = sum(recon_times) / len(recon_times) if recon_times else None
+```
+
+This calculation uses the current date as a proxy for when the car reached "Ready for Display" status. In a full implementation, the system would store the exact date each car's status changed to provide more accurate reconditioning time metrics.
+
+The average reconditioning time is a critical business metric as it:
+- Helps identify bottlenecks in the repair process
+- Allows for better prediction of when cars will be available for sale
+- Provides insights into operational efficiency
+- Can be used to optimize resource allocation
 
 ### Days on Stand Calculation
 
@@ -390,6 +495,81 @@ Default settings include:
 - `enable_subform_dropdowns`: Toggle for using dropdown modals for subforms (default: true)
 - `enable_dark_mode`: Toggle for UI dark theme (default: false)
 
+### Warning Threshold Logic
+
+The application implements warning logic based on configurable thresholds:
+
+#### Inventory Aging Warnings
+
+When vehicles remain on stand for extended periods, they're identified by warning indicators:
+
+```python
+# Get threshold settings
+stand_aging_threshold_days = Setting.get_setting('stand_aging_threshold_days', 180, 'int')
+
+# Count vehicles exceeding aging threshold
+current_date = datetime.now().date()
+aging_threshold_date = current_date - timedelta(days=stand_aging_threshold_days)
+aging_warning_date = current_date - timedelta(days=stand_aging_threshold_days / 2)
+
+# Vehicles exceeding threshold (red warning)
+vehicles_exceeding_aging = Car.query.filter(
+    Car.date_added_to_stand <= aging_threshold_date,
+    Car.date_sold == None,
+    Car.repair_status == 'On Display'
+).count()
+
+# Vehicles approaching threshold - over 50% (yellow warning)
+vehicles_approaching_aging = Car.query.filter(
+    Car.date_added_to_stand <= aging_warning_date,
+    Car.date_added_to_stand > aging_threshold_date,
+    Car.date_sold == None,
+    Car.repair_status == 'On Display'
+).count()
+```
+
+The dashboard displays these counts with appropriate color coding:
+- Red: Vehicles exceeding stand_aging_threshold_days
+- Yellow: Vehicles over 50% of the threshold but not exceeding it
+- Green: No vehicles exceeding or approaching the threshold
+
+#### Status Inactivity Warnings
+
+When the `enable_status_warnings` setting is enabled, the system also tracks vehicles with status unchanged for extended periods:
+
+```python
+# Get threshold settings
+status_inactivity_threshold_days = Setting.get_setting('status_inactivity_threshold_days', 30, 'int')
+enable_status_warnings = Setting.get_setting('enable_status_warnings', True, 'bool')
+
+# Status inactivity counts
+vehicles_inactive_status = 0
+vehicles_approaching_inactive = 0
+
+if enable_status_warnings:
+    status_inactive_threshold_date = current_date - timedelta(days=status_inactivity_threshold_days)
+    status_warning_threshold_date = current_date - timedelta(days=status_inactivity_threshold_days / 2)
+    
+    # Count vehicles with inactive status (exceeding threshold)
+    # Using a simplified calculation based on status and purchase date
+    # In a full implementation, this would use a dedicated last_status_change field
+    for car in all_unsold_cars:
+        if car.repair_status == 'Waiting for Repairs' and car.date_bought:
+            days_since_bought = (current_date - car.date_bought).days
+            
+            if days_since_bought > status_inactivity_threshold_days:
+                vehicles_inactive_status += 1
+            elif days_since_bought > status_inactivity_threshold_days / 2:
+                vehicles_approaching_inactive += 1
+```
+
+The status inactivity warning card follows the same color-coding pattern:
+- Red: Vehicles exceeding status_inactivity_threshold_days
+- Yellow: Vehicles over 50% of the threshold but not exceeding it
+- Green: No vehicles exceeding or approaching the threshold
+
+These warning mechanisms help identify inventory that may require attention or special handling.
+
 ### Car-Sale Consistency Checking
 
 The application enforces consistency between car and sale records using event listeners:
@@ -618,6 +798,57 @@ The application tracks and calculates several key business metrics:
        }
    ```
 
+5. **Repair History Analysis**: Metrics for repair cost and pattern analysis
+   ```python
+   def avg_cost_per_repair_type(repairs):
+       """Calculate average cost per repair type"""
+       repair_types = {}
+       
+       for repair in repairs:
+           repair_type = repair.repair_type
+           if repair_type not in repair_types:
+               repair_types[repair_type] = {'count': 0, 'total_cost': 0}
+           
+           repair_types[repair_type]['count'] += 1
+           repair_types[repair_type]['total_cost'] += float(repair.repair_cost)
+       
+       # Calculate averages
+       for repair_type, data in repair_types.items():
+           data['average_cost'] = data['total_cost'] / data['count'] if data['count'] > 0 else 0
+       
+       return repair_types
+   
+   def avg_duration_from_purchase(repairs):
+       """Calculate average days from purchase to first repair for each car"""
+       car_first_repairs = {}
+       
+       for repair in repairs:
+           car_id = repair.car_id
+           if car_id in car_first_repairs or not repair.car.date_bought:
+               continue
+           
+           # Calculate days from purchase to repair start
+           days_to_first_repair = (repair.start_date - repair.car.date_bought).days
+           car_first_repairs[car_id] = days_to_first_repair
+       
+       # Calculate average
+       if not car_first_repairs:
+           return 0
+       return sum(car_first_repairs.values()) / len(car_first_repairs)
+       
+   def repair_count_per_car(repairs):
+       """Calculate repair count per car"""
+       car_counts = {}
+       
+       for repair in repairs:
+           car_id = repair.car_id
+           if car_id not in car_counts:
+               car_counts[car_id] = 0
+           car_counts[car_id] += 1
+       
+       return car_counts
+   ```
+
 ## Business Validation Rules
 
 The application implements numerous validation rules to ensure data integrity:
@@ -746,4 +977,182 @@ def index():
     # Settings management code
 ```
 
-This ensures that only authorized users can modify system-wide configurations. 
+This ensures that only authorized users can modify system-wide configurations.
+
+## Repair Provider Management
+
+The application tracks and manages relationships with repair providers.
+
+### Provider Relationship Model
+
+The `RepairProvider` model maintains information about service providers:
+
+```python
+class RepairProvider(db.Model):
+    """RepairProvider model representing the repair_providers table"""
+    __tablename__ = 'repair_providers'
+
+    provider_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    provider_name = db.Column(db.String(100), nullable=False)
+    service_type = db.Column(db.String(50), nullable=False)
+    contact_info = db.Column(db.String(150), nullable=True)
+    location = db.Column(db.String(100), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    date_added = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    rating = db.Column(db.Integer, nullable=True)  # Rating out of 5
+
+    # Add the repairs relationship
+    repairs = db.relationship('Repair', back_populates='provider')
+```
+
+### Provider Performance Tracking
+
+The application includes functionality to track and analyze provider performance:
+
+1. **Total Repairs Handled**: Count of all repairs assigned to a provider
+2. **Average Repair Cost**: Average cost of repairs done by the provider
+3. **Average Repair Duration**: Average time taken to complete repairs
+4. **Cost/Duration Efficiency Ratio**: Metric to measure provider efficiency
+
+The `RepairProvider` model includes properties for these metrics:
+
+```python
+@property
+def total_repairs(self):
+    """Get the total number of repairs handled by this provider"""
+    return len(self.repairs)
+
+@property
+def total_repair_cost(self):
+    """Get the total cost of all repairs done by this provider"""
+    return sum(repair.repair_cost for repair in self.repairs) if self.repairs else 0
+
+@property
+def average_repair_duration(self):
+    """Calculate the average repair duration in days"""
+    completed_repairs = [r for r in self.repairs if r.end_date is not None]
+    if not completed_repairs:
+        return None
+    durations = [(r.end_date - r.start_date).days for r in completed_repairs]
+    return sum(durations) / len(durations) if durations else None
+```
+
+These metrics are used in the Provider Efficiency Report to compare and analyze provider performance. For more details, see the [Provider Efficiency Report](/docs/07-reports.md#provider-efficiency-report) section.
+
+### Provider Selection Logic
+
+When assigning repairs, the system considers:
+
+1. Provider service type match
+2. Provider availability
+3. Historical performance metrics
+4. Proximity to current location (when available)
+
+### Part Inventory Management
+
+The application includes an inventory management system for parts that automatically adjusts stock quantities when parts are used in repairs or removed from repairs. This ensures accurate tracking of available parts.
+
+#### Part Stock Management
+
+Parts in the system have a `stock_quantity` field that tracks current inventory. Key features:
+
+- The `stock_quantity` must always be greater than or equal to 0 (enforced by database constraint)
+- Parts can be filtered by their stock status to identify items needing reorder
+- Vehicle-specific parts can be filtered by make and model
+- Parts can be assigned a storage location for physical inventory management
+
+#### Part Duplication Detection
+
+The Part model includes an `is_duplicate` method to detect potential duplicate parts in the system:
+
+```python
+def is_duplicate(self, name, make=None, model=None):
+    """
+    Check if a part with the same name, make, and model already exists
+    
+    Args:
+        name (str): Part name to check
+        make (str, optional): Vehicle make
+        model (str, optional): Vehicle model
+        
+    Returns:
+        bool: True if a duplicate exists, False otherwise
+    """
+    # Convert values for case-insensitive comparison
+    name = name.lower().strip() if name else None
+    make = make.lower().strip() if make else None
+    model = model.lower().strip() if model else None
+    
+    # Check for parts with the same name (case-insensitive)
+    query = Part.query.filter(db.func.lower(Part.part_name).strip() == name)
+    
+    # Add make filter if provided
+    if make:
+        query = query.filter(db.func.lower(Part.make).strip() == make)
+        
+    # Add model filter if provided
+    if model:
+        query = query.filter(db.func.lower(Part.model).strip() == model)
+        
+    # Check if any parts match the criteria (excluding self)
+    existing_parts = query.filter(Part.part_id != self.part_id).all()
+    
+    return len(existing_parts) > 0
+```
+
+This method performs a case-insensitive and spacing-insensitive check to identify potential duplicate parts, taking into account vehicle-specific attributes. This helps maintain data quality and prevents creating redundant inventory items.
+
+#### Part Decrement Logic
+
+When a part is added to a repair, the system follows these rules:
+
+```python
+# Check part stock and decrement if greater than 0
+if part.stock_quantity > 0:
+    part.stock_quantity -= 1
+    flash(f'{part.part_name} added to repair successfully. Stock decremented to {part.stock_quantity}.', 'success')
+else:
+    flash(f'Warning: {part.part_name} has no stock (0 quantity). Part added to repair without changing inventory.', 'warning')
+```
+
+Key business rules:
+- If the part has available stock (stock_quantity > 0), decrement the stock by 1
+- If the part has zero stock, allow its use in the repair but do not decrement further
+- Display a warning message when using a part with zero stock
+- Never allow stock to go negative
+
+#### Part Increment Logic
+
+When a part is removed from a repair, the stock is incremented:
+
+```python
+# If we have a valid part, increment its stock
+if part:
+    # Record the current stock for messaging
+    old_stock = part.stock_quantity
+    
+    # Increment the part's stock
+    part.stock_quantity += 1
+    
+    db.session.delete(repair_part)
+    db.session.commit()
+```
+
+This ensures that parts removed from repairs are returned to inventory, maintaining accurate stock levels.
+
+#### Part Replacement Logic
+
+When a part is changed on repair edit:
+1. The old part's stock is incremented by 1 (if present)
+2. The new part's stock is decremented by 1 (unless it's already at 0)
+
+This swap process ensures proper inventory tracking when parts are exchanged in the repair process.
+
+#### Inventory Warnings
+
+The system provides visual feedback about inventory actions:
+- Success messages show the updated stock quantity after each operation
+- Warning messages alert users when they're using parts that have zero inventory
+- This helps prevent accidental use of unavailable parts while still allowing flexibility when needed
+
+This inventory management approach balances accuracy with operational flexibility, allowing repair work to continue even when parts inventory is depleted.

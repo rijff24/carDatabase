@@ -13,6 +13,57 @@ The application uses separate database files for different environments:
 - `data-test.sqlite`: Testing database
 - `data.sqlite`: Production database (if not overridden by DATABASE_URL)
 
+## Dashboard Queries
+
+The dashboard utilizes several optimized queries to present key metrics and visualizations. These queries retrieve data from various tables and apply filtering, grouping, and calculations.
+
+### Stand Statistics Query
+
+The Stand Statistics card on the dashboard uses the following logic to retrieve and calculate stand statistics:
+
+1. **Query for Stands with Unsold Cars**:
+   ```python
+   # Fetch all stands
+   all_stands = Stand.query.order_by(Stand.stand_name).all()
+   
+   # For each stand, get unsold cars
+   for stand in all_stands:
+       cars_on_this_stand = Car.query.filter(
+           Car.stand_id == stand.stand_id,
+           Car.date_sold == None
+       ).all()
+   ```
+
+2. **Calculate Statistics for Each Stand**:
+   ```python
+   # Calculate average age (days on stand)
+   total_age = 0
+   for car in cars_on_this_stand:
+       if car.date_added_to_stand:
+           days_on_stand = (current_date - car.date_added_to_stand).days
+           total_age += days_on_stand
+   
+   avg_age = round(total_age / total_cars_on_stand if total_cars_on_stand > 0 else 0)
+   ```
+
+3. **Build Data Structure for Visualization**:
+   ```python
+   stands_with_stats.append({
+       'stand_id': stand.stand_id,
+       'stand_name': stand.stand_name,
+       'total_cars': total_cars_on_stand,
+       'avg_age': avg_age
+   })
+   ```
+
+4. **Sort for Optimal Display**:
+   ```python
+   # Sort stands by those with highest average age first (potential issues)
+   stands_with_stats.sort(key=lambda x: x['avg_age'], reverse=True)
+   ```
+
+This approach allows the dashboard to present stand occupancy and aging information in a visually intuitive way, highlighting potential inventory issues without requiring a separate database view or materialized data.
+
 ## Database Schema
 
 ### Cars Table
@@ -312,39 +363,50 @@ class Repair(db.Model):
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | part_id | Integer | Primary Key | Unique identifier for each part |
-| name | String(100) | Not Null | Name of the part |
-| part_number | String(50) | Nullable | Manufacturer part number |
+| part_name | String(100) | Not Null | Name of the part |
 | description | Text | Nullable | Description of the part |
-| unit_cost | Numeric(10,2) | Not Null | Cost per unit |
-| inventory_count | Integer | Default=0 | Current inventory level |
-| reorder_level | Integer | Default=5 | Level at which reordering is needed |
-| supplier | String(100) | Nullable | Supplier of the part |
-| created_at | DateTime | Default=Current Time | When part was added |
-| updated_at | DateTime | Default=Current Time, OnUpdate=Current Time | When part record was last updated |
+| manufacturer | String(100) | Nullable | Manufacturer of the part |
+| standard_price | Numeric(10,2) | Nullable | Standard price of the part |
+| stock_quantity | Integer | Not Null, Default=0, ≥0 | Current inventory level |
+| make | String(100) | Nullable | Vehicle make this part is for |
+| model | String(100) | Nullable | Vehicle model this part is for |
+| storage_location | String(100) | Nullable | Where the part is stored |
 
 **Indexes**:
 - Primary Key: `part_id`
-- Index on `name` for searching
-- Index on `part_number` for searching
+- Index on `part_name` for searching
+- Index on `manufacturer` for filtering
+- Index on `make` and `model` for vehicle-specific parts lookup
+
+**Constraints**:
+- The `stock_quantity` must be greater than or equal to 0 (enforced by check constraint)
 
 **Model Definition** (simplified):
 ```python
 class Part(db.Model):
     __tablename__ = 'parts'
     
-    part_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    part_number = db.Column(db.String(50))
-    description = db.Column(db.Text)
-    unit_cost = db.Column(db.Numeric(10, 2), nullable=False)
-    inventory_count = db.Column(db.Integer, default=0)
-    reorder_level = db.Column(db.Integer, default=5)
-    supplier = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    part_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    part_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    manufacturer = db.Column(db.String(100), nullable=True)
+    standard_price = db.Column(db.Numeric(10, 2), nullable=True)
+    stock_quantity = db.Column(db.Integer, nullable=False, default=0)
+    make = db.Column(db.String(100), nullable=True)
+    model = db.Column(db.String(100), nullable=True)
+    storage_location = db.Column(db.String(100), nullable=True)
+    
+    # Add check constraint to prevent negative stock values
+    __table_args__ = (
+        CheckConstraint('stock_quantity >= 0', name='check_stock_quantity_non_negative'),
+    )
     
     # Relationships
-    repair_parts = db.relationship('RepairPart', backref='part')
+    repairs = db.relationship('Repair', secondary='repair_parts', back_populates='parts')
+    
+    def is_duplicate(self, name, make=None, model=None):
+        """Case-insensitive + spacing-insensitive check for duplication"""
+        # Implementation details...
 ```
 
 ### RepairPart Association Table

@@ -48,23 +48,85 @@ The application has a consistent navigation structure throughout:
 
 ![Dashboard](../app/static/img/docs/dashboard.png)
 
-The dashboard provides an at-a-glance view of the business status:
+The dashboard provides a quick overview of the entire operation, with key metrics displayed prominently.
 
-- **Key Performance Indicators**:
-  - Cars in inventory
-  - Cars sold this month
-  - Average profit margin
-  - Total profit this month
+#### Key Metrics Cards
 
-- **Recent Activity**:
-  - Latest sales
-  - Recently added vehicles
-  - Vehicles ready for display
+The dashboard includes several key metric cards that provide at-a-glance information about the current state of the business:
 
-- **Charts and Graphs**:
-  - Monthly sales trend
-  - Profit margin by vehicle type
-  - Repair time distribution
+1. **Total Cars**: Displays the total number of cars currently in inventory
+2. **Cars in Repair**: Shows how many cars are currently undergoing repairs
+3. **Cars For Sale**: Indicates the number of cars currently on the sales stand
+4. **Recent Sales**: Shows the number of cars sold in the last 30 days
+
+#### Warning Cards
+
+The dashboard also includes warning cards that highlight potential issues:
+
+1. **Ready for Display**: Shows the count of cars that have completed repairs and are ready to be placed on a sales stand.
+   - Displays the number of cars with status 'Ready for Display'
+   - Shows the average reconditioning time (days from purchase to ready status)
+   - Includes a "View Inventory" button that links to the inventory list with a filter applied
+   - Helps identify cars that are ready for the next stage in the sales process
+
+2. **Inventory Aging**: Shows vehicles that are approaching or exceeding the aging threshold on the sales stand. The card changes color based on severity:
+   - Green: No vehicles exceeding threshold
+   - Yellow: Vehicles approaching threshold
+   - Red: Vehicles exceeding threshold
+   
+   The card includes a link to the Inventory Aging Report for more detailed information.
+
+3. **Status Inactivity**: Warns about vehicles that have had no status change for an extended period:
+   - Green: No vehicles with inactive status
+   - Yellow: Vehicles approaching inactive threshold
+   - Red: Vehicles exceeding inactive threshold
+   
+   The card includes a link to the Status Inactivity Report for more detailed information.
+
+#### Profitability Metrics Card
+
+The Profitability Metrics card displays key profit-related information for the last 30 days:
+
+1. **Total Profit**: Shows the combined profit from all cars sold in the past 30 days, formatted as currency.
+2. **Average ROI**: Displays the average Return on Investment percentage for cars sold in the past 30 days.
+
+The card includes a link to the Profitability Report for more detailed information on sales performance and ROI calculations.
+
+#### Top & Bottom Cars Profitability Card
+
+The Top & Bottom Cars Profitability card provides a quick overview of the best and worst performing vehicles in terms of profit:
+
+1. **Top 3 Cars by Profit**: Lists the three vehicles with the highest profit margin sold in the past 60 days.
+   - Shows vehicle name, profit amount (in green), ROI percentage, status, and a link to the vehicle's profit report
+   - Helps identify the most profitable vehicle models for future purchasing decisions
+
+2. **Bottom Cars / Aging Inventory**: Lists the three vehicles that require attention due to either:
+   - Poor profitability (recent sales with low or negative profit margins)
+   - Aging inventory (vehicles on stand exceeding the aging threshold days)
+   - Displays profit in red for negative values
+   - Includes status indicators to distinguish between sold low-profit vehicles and aging inventory
+   - Links to detailed profit reports for further analysis
+
+The card provides a direct link to the full Profitability Report with a 60-day timeframe for more comprehensive analysis.
+
+#### Stand Statistics
+
+The Stand Statistics card shows:
+1. **Cars per Stand**: A bar chart showing the number of cars on each stand
+2. **Average Age of Cars**: A bar chart showing the average age (in days) of cars on each stand
+
+The colors of the bars in the Average Age chart change based on the age of the cars relative to the aging threshold:
+- Green: Average age is less than half the aging threshold
+- Yellow: Average age is between half and full aging threshold
+- Red: Average age exceeds the aging threshold
+
+#### Activity Tables
+
+The dashboard also includes several tables showing recent activity:
+
+1. **Cars Waiting for Repair**: Shows cars that have been purchased but are not yet in the repair process
+2. **Cars on Stand the Longest**: Shows cars that have been on the sales stand for the longest time
+3. **Recent Repairs Completed**: Shows details of recently completed repairs
 
 ### 2. Inventory Management
 
@@ -150,18 +212,55 @@ The dashboard provides an at-a-glance view of the business status:
 - **Features**:
   - Detailed repair information
   - Parts list with costs
-  - Status update controls
-  - Subform modals for adding parts
-  
+  - Total cost calculation
+  - Status updates
+  - Note management
+
 - **Sections**:
   - Basic Information
-  - Vehicle Details
-  - Repair Provider
+  - Service Provider Details
   - Parts Used
-  - Status Timeline
-  - Cost Summary
+  - Cost Breakdown
+  - Notes and Attachments
 
-#### 3.3 Parts Management
+#### 3.3 Repair Form
+
+The repair form allows users to create and edit repair records with the following features:
+
+- **Basic Information**:
+  - Vehicle selection (dropdown with search)
+  - Repair type selection
+  - Provider selection
+  - Date fields (start/end)
+  - Cost entry
+  - Notes
+
+- **Parts Management**:
+  - Add parts to the repair
+  - Remove parts from the repair
+  - Part cost tracking
+  - Purchase date and vendor recording
+
+- **Inventory Integration**:
+  - Automatic part stock management
+  - When a part is added to a repair:
+    - If stock > 0: Stock is automatically decremented by 1
+    - If stock = 0: A warning is displayed, but the part can still be used
+  - When a part is removed from a repair:
+    - Stock is automatically incremented by 1
+  - When a part is changed during repair edit:
+    - Old part's stock is incremented by 1
+    - New part's stock is decremented by 1 (unless at 0)
+  - Stock levels never go negative
+  - Warning messages are displayed when using parts with zero stock
+
+- **Validation**:
+  - Required fields enforcement
+  - Date validation (start before end)
+  - Cost validation (positive numbers)
+  - Status change validation
+
+#### 3.4 Parts Management
 
 ![Parts Management](../app/static/img/docs/parts_management.png)
 
@@ -169,12 +268,40 @@ The dashboard provides an at-a-glance view of the business status:
   - Inventory of parts
   - Usage tracking
   - Add/Edit part controls
+  - Duplicate detection and stock merging
   
 - **Elements**:
   - Parts list with search
   - Stock level indicators
   - Cost history
   - Usage reports
+
+##### Part Creation & Duplication Handling
+
+When adding a new part, the system provides intelligent duplicate detection:
+
+- **Part Duplicate Detection**: 
+  - When a user submits a new part, the system checks if a part with the same name, make, and model already exists
+  - The comparison is case-insensitive and space-insensitive for better matching
+  - The system takes into account vehicle targeting (make and model) when determining duplicates
+
+- **Duplicate Handling Behavior**:
+  - If a duplicate is found, the system increases the stock quantity of the existing part by the submitted amount
+  - The system optionally updates other fields (description, price, etc.) if they were provided
+  - A confirmation message "Part already exists — stock updated" is displayed
+  - No new database record is created
+
+- **New Part Creation**:
+  - If no duplicate is found, a new part is created normally
+  - A confirmation message "New part added" is displayed
+
+- **Subform Integration**:
+  - When adding a part through a subform (like during repair creation):
+    - The duplicate detection still applies
+    - After updating an existing part or creating a new one, the part is immediately available for selection
+    - The newly created or updated part is automatically selected in the parent form
+
+This intelligent duplicate handling ensures inventory accuracy while providing a seamless user experience.
 
 ### 4. Sales Management
 

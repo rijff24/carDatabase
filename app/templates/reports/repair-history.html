@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block title %}Repair Cost & History Report{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .chart-container {
+        height: 300px;
+        width: 100%;
+    }
+    .clickable-row {
+        cursor: pointer;
+    }
+    .filter-badge {
+        background-color: #4e73df;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-right: 0.5rem;
+        font-size: 0.8rem;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .card {
+            break-inside: avoid;
+        }
+        .chart-container {
+            height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Repair Cost & History Report</h1>
+        <div class="no-print">
+            <a href="{{ url_for('reports.repair_history_export', format='xlsx') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}" class="btn btn-success">
+                <i class="fas fa-file-excel mr-1"></i> Export to Excel
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print mr-1"></i> Print Report
+            </button>
+        </div>
+    </div>
+    
+    <!-- Applied Filters -->
+    {% if has_filters_applied %}
+    <div class="alert alert-info mb-4">
+        <strong>Filters Applied:</strong>
+        {% if start_date %}<span class="filter-badge">Start Date: {{ start_date }}</span>{% endif %}
+        {% if end_date %}<span class="filter-badge">End Date: {{ end_date }}</span>{% endif %}
+        {% if repair_type %}<span class="filter-badge">Repair Type: {{ repair_type }}</span>{% endif %}
+        {% if provider_id %}
+            {% for provider in available_providers %}
+                {% if provider.provider_id == provider_id %}
+                    <span class="filter-badge">Provider: {{ provider.provider_name }}</span>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        {% if vehicle_make %}<span class="filter-badge">Make: {{ vehicle_make }}</span>{% endif %}
+        {% if vehicle_model %}<span class="filter-badge">Model: {{ vehicle_model }}</span>{% endif %}
+        {% if year %}<span class="filter-badge">Year: {{ year }}</span>{% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Filter Form Card -->
+    <div class="card shadow mb-4 no-print">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Filter Options</h5>
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="fas fa-filter me-1"></i>Toggle Filters
+            </button>
+        </div>
+        <div class="collapse" id="filterCollapse">
+            <div class="card-body">
+                <form method="get" action="{{ url_for('reports.repair_history') }}" id="filter-form" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date:</label>
+                            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date:</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="repair_type" class="form-label">Repair Type:</label>
+                            <select name="repair_type" id="repair_type" class="form-select">
+                                <option value="">All Types</option>
+                                {% for type in available_repair_types %}
+                                <option value="{{ type }}" {% if repair_type == type %}selected{% endif %}>{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="provider_id" class="form-label">Provider:</label>
+                            <select name="provider_id" id="provider_id" class="form-select">
+                                <option value="">All Providers</option>
+                                {% for provider in available_providers %}
+                                <option value="{{ provider.provider_id }}" {% if provider_id == provider.provider_id %}selected{% endif %}>{{ provider.provider_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="vehicle_make" class="form-label">Vehicle Make:</label>
+                            <select name="vehicle_make" id="vehicle_make" class="form-select">
+                                <option value="">All Makes</option>
+                                {% for make in available_makes %}
+                                <option value="{{ make }}" {% if vehicle_make == make %}selected{% endif %}>{{ make }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicle_model" class="form-label">Vehicle Model:</label>
+                            <select name="vehicle_model" id="vehicle_model" class="form-select">
+                                <option value="">All Models</option>
+                                {% for model in available_models %}
+                                <option value="{{ model }}" {% if vehicle_model == model %}selected{% endif %}>{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="year" class="form-label">Year:</label>
+                            <select name="year" id="year" class="form-select">
+                                <option value="">All Years</option>
+                                {% for yr in available_years %}
+                                <option value="{{ yr }}" {% if year == yr %}selected{% endif %}>{{ yr }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        <a href="{{ url_for('reports.repair_history') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Stats Row -->
+    <div class="row mb-4">
+        <!-- Average Cost Per Type -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Average Cost Per Type
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.avg_cost }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if avg_cost_per_type %}
+                                    ${{ avg_cost_per_type[0].average_cost|round(2) }} ({{ avg_cost_per_type[0].type }})
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Avg Days to First Repair -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avg Days to First Repair
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.first_repair }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ avg_duration_from_purchase.average_days|round(1) }} days
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Highest Repair Count Car -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Highest Repair Count
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.repair_count }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if repair_count_per_car %}
+                                    {{ repair_count_per_car[0].repairs }} repairs
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fastest Provider -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Fastest Provider
+                                <span data-bs-toggle="tooltip" title="{{ tooltips.duration }}">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if avg_duration_per_provider %}
+                                    {{ avg_duration_per_provider[0].average_duration }} days
+                                {% else %}
+                                    No data
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-business-time fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cost Trend Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Average Repair Cost Trend by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="costTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Repair Cost Tables -->
+    <div class="row mb-4">
+        <!-- Average Cost Per Type -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Average Cost by Repair Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="costTypeTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Repair Type</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-end">Total Cost</th>
+                                    <th class="text-end">Average Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for repair_type in avg_cost_per_type %}
+                                <tr>
+                                    <td>{{ repair_type.type }}</td>
+                                    <td class="text-center">{{ repair_type.count }}</td>
+                                    <td class="text-end">${{ repair_type.total_cost|round(2) }}</td>
+                                    <td class="text-end">${{ repair_type.average_cost|round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Avg Duration Per Provider -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Average Duration by Provider</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="durationTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Provider</th>
+                                    <th>Service Type</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-end">Avg Duration (days)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for provider in avg_duration_per_provider %}
+                                <tr>
+                                    <td>{{ provider.provider_name }}</td>
+                                    <td>{{ provider.service_type }}</td>
+                                    <td class="text-center">{{ provider.count }}</td>
+                                    <td class="text-end">{{ provider.average_duration }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Repairs By Car Model -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Repairs Grouped by Car Model</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="modelTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Make</th>
+                                    <th>Model</th>
+                                    <th>Year</th>
+                                    <th class="text-center">Cars</th>
+                                    <th class="text-center">Repairs</th>
+                                    <th class="text-end">Total Cost</th>
+                                    <th class="text-end">Avg Cost Per Car</th>
+                                    <th>Most Common Repair</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for model in repairs_by_model %}
+                                <tr>
+                                    <td>{{ model.make }}</td>
+                                    <td>{{ model.model }}</td>
+                                    <td>{{ model.year }}</td>
+                                    <td class="text-center">{{ model.car_count }}</td>
+                                    <td class="text-center">{{ model.repair_count }}</td>
+                                    <td class="text-end">${{ model.total_cost|round(2) }}</td>
+                                    <td class="text-end">${{ model.avg_cost_per_car|round(2) }}</td>
+                                    <td>{{ model.common_repair }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Repair Count Per Car -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Repair Count Per Car</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="carTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Car</th>
+                                    <th>License Number</th>
+                                    <th class="text-center">Repair Count</th>
+                                    <th class="text-end">Total Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for car in repair_count_per_car %}
+                                <tr>
+                                    <td>{{ car.car_name }}</td>
+                                    <td>{{ car.licence_number }}</td>
+                                    <td class="text-center">{{ car.repairs }}</td>
+                                    <td class="text-end">${{ car.total_cost|round(2) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Footer -->
+    <div class="text-center mb-4">
+        <p class="small text-muted">
+            Report generated on {{ report_date }}
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Cost Trend Chart
+        var costTrendData = {{ cost_trend_per_type|tojson }};
+        var ctx = document.getElementById('costTrendChart').getContext('2d');
+        
+        var costTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: costTrendData.labels,
+                datasets: costTrendData.datasets.map(function(ds) {
+                    return {
+                        label: ds.label,
+                        data: ds.data,
+                        backgroundColor: ds.backgroundColor,
+                        borderColor: ds.backgroundColor,
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    };
+                })
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Average Repair Cost Trend by Type'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Make tables sortable with DataTables if available
+        if (typeof $.fn.DataTable !== 'undefined') {
+            $('#costTypeTable').DataTable({
+                order: [[3, 'desc']], // Sort by average cost
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50],
+                dom: 'Bfrtip',
+                buttons: ['copy', 'excel', 'pdf', 'print']
+            });
+            
+            $('#durationTable').DataTable({
+                order: [[3, 'asc']], // Sort by duration (fastest first)
+                pageLength: 5,
+                lengthMenu: [5, 10, 25, 50]
+            });
+            
+            $('#modelTable').DataTable({
+                order: [[4, 'desc']], // Sort by repair count
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50]
+            });
+            
+            $('#carTable').DataTable({
+                order: [[2, 'desc']], // Sort by repair count
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50]
+            });
+        }
+        
+        // Vehicle make/model cascading selection
+        $('#vehicle_make').change(function() {
+            var make = $(this).val();
+            if (make) {
+                // You could implement an AJAX call here to get models for the selected make
+                // For now, we'll just reset the model selection
+                $('#vehicle_model').val('');
+            }
+        });
+    });
+</script>
+{% endblock %} 
