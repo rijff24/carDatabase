@@ -4,17 +4,30 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-header">
         <h1>Dealers Management</h1>
-        <a href="{{ url_for('dealers.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Dealer
-        </a>
+        <div class="header-actions">
+            <a href="{{ url_for('dealers.create') }}" class="btn btn-standard btn-primary-standard">
+                <i class="fas fa-plus"></i> Add New Dealer
+            </a>
+        </div>
     </div>
     
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
+    <!-- Search bar -->
+    <div class="filter-bar">
+        <form method="GET">
+            <input type="text" name="search" class="form-control form-control-standard" placeholder="Search dealers..." value="{{ request.args.get('search', '') }}">
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-standard btn-secondary-standard">
+                    <i class="fas fa-search"></i>
+                    <span class="d-none d-sm-inline">Search</span>
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="data-table-container">
+        <table class="data-table data-table-mobile-stack">
                     <thead>
                         <tr>
                             <th>Dealer Name</th>
@@ -27,16 +40,16 @@
                         {% if dealers %}
                             {% for dealer in dealers %}
                             <tr>
-                                <td>{{ dealer.dealer_name }}</td>
-                                <td>{{ dealer.contact_info|truncate(50) }}</td>
-                                <td>{{ dealer.total_sales }}</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('dealers.view', dealer_id=dealer.dealer_id) }}" class="btn btn-outline-primary">
-                                            <i class="fas fa-eye"></i> View
+                                <td data-label="Dealer Name">{{ dealer.dealer_name }}</td>
+                                <td data-label="Contact Info">{{ dealer.contact_info|truncate(50) }}</td>
+                                <td data-label="Sales Count">{{ dealer.total_sales }}</td>
+                                <td data-label="Actions">
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('dealers.view', dealer_id=dealer.dealer_id) }}" class="btn btn-standard btn-standard-sm btn-primary-standard">
+                                            <i class="fas fa-eye"></i><span class="d-none d-sm-inline">View</span>
                                         </a>
-                                        <a href="{{ url_for('dealers.edit', dealer_id=dealer.dealer_id) }}" class="btn btn-outline-secondary">
-                                            <i class="fas fa-edit"></i> Edit
+                                        <a href="{{ url_for('dealers.edit', dealer_id=dealer.dealer_id) }}" class="btn btn-standard btn-standard-sm btn-secondary-standard">
+                                            <i class="fas fa-edit"></i><span class="d-none d-sm-inline">Edit</span>
                                         </a>
                                     </div>
                                 </td>
@@ -44,18 +57,11 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="text-center py-4">
-                                    <div class="text-muted">No dealers found</div>
-                                    <a href="{{ url_for('dealers.create') }}" class="btn btn-primary mt-3">
-                                        <i class="fas fa-plus"></i> Add New Dealer
-                                    </a>
-                                </td>
+                                <td colspan="4" class="table-no-results">No dealers found</td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %} 

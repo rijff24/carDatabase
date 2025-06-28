@@ -1,0 +1,204 @@
+/* ===========================================
+   GLOBAL CSS VARIABLES - Design System
+   =========================================== */
+
+:root {
+  /* ===== COLOR PALETTE ===== */
+  /* Primary Brand Colors */
+  --color-primary: #0d6efd;
+  --color-primary-hover: #0b5ed7;
+  --color-primary-light: #e7f1ff;
+  --color-primary-dark: #084298;
+
+  /* Secondary Colors */
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #5c636a;
+  --color-secondary-light: #f8f9fa;
+  --color-secondary-dark: #495057;
+
+  /* Semantic Colors */
+  --color-success: #198754;
+  --color-success-hover: #157347;
+  --color-success-light: #d1e7dd;
+  --color-success-dark: #0f5132;
+
+  --color-warning: #ffc107;
+  --color-warning-hover: #ffcd39;
+  --color-warning-light: #fff3cd;
+  --color-warning-dark: #664d03;
+
+  --color-danger: #dc3545;
+  --color-danger-hover: #bb2d3b;
+  --color-danger-light: #f8d7da;
+  --color-danger-dark: #842029;
+
+  --color-info: #0dcaf0;
+  --color-info-hover: #3dd5f3;
+  --color-info-light: #cff4fc;
+  --color-info-dark: #055160;
+
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text Colors */
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  --text-inverse: #ffffff;
+
+  /* Border Colors */
+  --border-primary: #dee2e6;
+  --border-secondary: #ced4da;
+  --border-focus: #86b7fe;
+
+  /* ===== SPACING SCALE ===== */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-xxl: 3rem;     /* 48px */
+  --spacing-xxxl: 4rem;    /* 64px */
+
+  /* ===== TYPOGRAPHY ===== */
+  /* Font Families */
+  --font-family-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-family-monospace: 'Courier New', monospace;
+
+  /* Font Sizes */
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-xxl: 1.5rem;    /* 24px */
+  --font-size-xxxl: 2rem;     /* 32px */
+
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ===== BORDER RADIUS ===== */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.375rem;
+  --border-radius-lg: 0.5rem;
+  --border-radius-xl: 0.75rem;
+  --border-radius-full: 50%;
+
+  /* ===== SHADOWS ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-normal: 0.3s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+
+  /* ===== RESPONSIVE BREAKPOINTS ===== */
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1400px;
+
+  /* ===== COMPONENT VARIABLES ===== */
+  /* Buttons */
+  --btn-padding-y: var(--spacing-sm);
+  --btn-padding-x: var(--spacing-md);
+  --btn-padding-y-sm: var(--spacing-xs);
+  --btn-padding-x-sm: var(--spacing-sm);
+  --btn-border-radius: var(--border-radius-md);
+  --btn-font-weight: var(--font-weight-medium);
+  --btn-min-height: 44px; /* Touch-friendly minimum */
+
+  /* Tables */
+  --table-cell-padding-y: var(--spacing-sm);
+  --table-cell-padding-x: var(--spacing-md);
+  --table-border-color: var(--border-primary);
+  --table-hover-bg: rgba(13, 110, 253, 0.05);
+  --table-striped-bg: rgba(0, 0, 0, 0.025);
+
+  /* Cards */
+  --card-border-radius: var(--border-radius-lg);
+  --card-border-color: var(--border-primary);
+  --card-shadow: var(--shadow-sm);
+  --card-padding: var(--spacing-lg);
+  --card-header-bg: var(--bg-secondary);
+  --card-header-padding: var(--spacing-md) var(--spacing-lg);
+
+  /* Forms */
+  --form-control-padding-y: var(--spacing-sm);
+  --form-control-padding-x: var(--spacing-md);
+  --form-control-border-radius: var(--border-radius-md);
+  --form-control-border-color: var(--border-secondary);
+  --form-control-focus-border-color: var(--border-focus);
+  --form-label-margin-bottom: var(--spacing-sm);
+  --form-label-font-weight: var(--font-weight-medium);
+
+  /* Navigation */
+  --navbar-padding-y: var(--spacing-md);
+  --navbar-brand-font-size: var(--font-size-xl);
+  --navbar-nav-link-padding: var(--spacing-sm) var(--spacing-md);
+
+  /* Status Colors */
+  --status-purchased-bg: #cff4fc;
+  --status-purchased-color: #055160;
+  --status-waiting-bg: #fff3cd;
+  --status-waiting-color: #664d03;
+  --status-repair-bg: #f8d7da;
+  --status-repair-color: #842029;
+  --status-display-bg: #d1e7dd;
+  --status-display-color: #0f5132;
+  --status-sold-bg: #c3e6cb;
+  --status-sold-color: #155724;
+}
+
+/* ===== DARK MODE VARIABLES ===== */
+[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: #212529;
+  --bg-secondary: #343a40;
+  --bg-tertiary: #495057;
+  --bg-overlay: rgba(255, 255, 255, 0.1);
+
+  /* Text Colors */
+  --text-primary: #f8f9fa;
+  --text-secondary: #adb5bd;
+  --text-muted: #6c757d;
+  --text-inverse: #212529;
+
+  /* Border Colors */
+  --border-primary: #495057;
+  --border-secondary: #6c757d;
+
+  /* Component Adjustments */
+  --table-hover-bg: rgba(255, 255, 255, 0.075);
+  --table-striped-bg: rgba(255, 255, 255, 0.05);
+  --card-header-bg: var(--bg-tertiary);
+  --form-control-border-color: var(--border-primary);
+
+  /* Status Colors (Dark Mode) */
+  --status-purchased-bg: #055160;
+  --status-purchased-color: #cff4fc;
+  --status-waiting-bg: #664d03;
+  --status-waiting-color: #fff3cd;
+  --status-repair-bg: #842029;
+  --status-repair-color: #f8d7da;
+  --status-display-bg: #0f5132;
+  --status-display-color: #d1e7dd;
+  --status-sold-bg: #155724;
+  --status-sold-color: #c3e6cb;
+} 

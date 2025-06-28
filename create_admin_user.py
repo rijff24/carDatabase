@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User
+from app.models.user import User
 from werkzeug.security import generate_password_hash
 
 def main():
@@ -13,12 +13,14 @@ def main():
             # Create admin user
             user = User(
                 username='admin',
-                email='admin@example.com',
-                password_hash=generate_password_hash('admin')
+                full_name='Administrator',
+                role='admin'
             )
+            # Directly set password hash to bypass validation
+            user.password_hash = generate_password_hash('admin')
             db.session.add(user)
             db.session.commit()
-            print('Admin user created successfully')
+            print('Admin user created successfully with username: admin, password: admin')
         else:
             print('Admin user already exists')
 

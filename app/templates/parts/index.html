@@ -4,23 +4,34 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="page-header">
         <h1>Parts Management</h1>
-        <a href="{{ url_for('parts.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Part
-        </a>
+        <div class="header-actions">
+            <a href="{{ url_for('parts.create') }}" class="btn btn-standard btn-primary-standard">
+                <i class="fas fa-plus"></i> Add New Part
+            </a>
+        </div>
+    </div>
+    
+    <!-- Search bar -->
+    <div class="filter-bar">
+        <form method="GET">
+            <input type="text" name="search" class="form-control form-control-standard" placeholder="Search parts..." value="{{ request.args.get('search', '') }}">
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-standard btn-secondary-standard">
+                    <i class="fas fa-search"></i>
+                    <span class="d-none d-sm-inline">Search</span>
+                </button>
+            </div>
+        </form>
     </div>
     
     {% if parts %}
-    <div class="card">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Parts Inventory</h5>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
+    <div class="data-table-container">
+        <table class="data-table data-table-mobile-stack">
                 <thead>
                     <tr>
-                        <th>
+                        <th class="sortable">
                             <a href="{{ url_for('parts.index', sort_by='part_id', sort_dir='asc' if current_sort == 'part_id' and current_sort_dir == 'desc' else 'desc') }}">
                                 ID
                                 {% if current_sort == 'part_id' %}
@@ -28,7 +39,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
+                        <th class="sortable">
                             <a href="{{ url_for('parts.index', sort_by='part_name', sort_dir='asc' if current_sort == 'part_name' and current_sort_dir == 'desc' else 'desc') }}">
                                 Part Name
                                 {% if current_sort == 'part_name' %}
@@ -36,7 +47,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
+                        <th class="sortable">
                             <a href="{{ url_for('parts.index', sort_by='manufacturer', sort_dir='asc' if current_sort == 'manufacturer' and current_sort_dir == 'desc' else 'desc') }}">
                                 Manufacturer
                                 {% if current_sort == 'manufacturer' %}
@@ -44,7 +55,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
+                        <th class="sortable">
                             <a href="{{ url_for('parts.index', sort_by='standard_price', sort_dir='asc' if current_sort == 'standard_price' and current_sort_dir == 'desc' else 'desc') }}">
                                 Standard Price
                                 {% if current_sort == 'standard_price' %}
@@ -52,7 +63,7 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
+                        <th class="sortable">
                             <a href="{{ url_for('parts.index', sort_by='stock_quantity', sort_dir='asc' if current_sort == 'stock_quantity' and current_sort_dir == 'desc' else 'desc') }}">
                                 Stock Quantity
                                 {% if current_sort == 'stock_quantity' %}
@@ -66,18 +77,18 @@
                 <tbody>
                     {% for part in parts %}
                     <tr>
-                        <td>{{ part.part_id }}</td>
-                        <td>{{ part.part_name }}</td>
-                        <td>{{ part.manufacturer or 'N/A' }}</td>
-                        <td>{% if part.standard_price %}R{{ "%.2f"|format(part.standard_price) }}{% else %}N/A{% endif %}</td>
-                        <td>{{ part.stock_quantity }}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ url_for('parts.view', part_id=part.part_id) }}" class="btn btn-info">
-                                    <i class="fas fa-eye"></i>
+                        <td data-label="ID">{{ part.part_id }}</td>
+                        <td data-label="Part Name">{{ part.part_name }}</td>
+                        <td data-label="Manufacturer">{{ part.manufacturer or 'N/A' }}</td>
+                        <td data-label="Standard Price">{% if part.standard_price %}R{{ "%.2f"|format(part.standard_price) }}{% else %}N/A{% endif %}</td>
+                        <td data-label="Stock Quantity">{{ part.stock_quantity }}</td>
+                        <td data-label="Actions">
+                            <div class="action-buttons">
+                                <a href="{{ url_for('parts.view', part_id=part.part_id) }}" class="btn btn-standard btn-standard-sm btn-primary-standard">
+                                    <i class="fas fa-eye"></i><span class="d-none d-sm-inline">View</span>
                                 </a>
-                                <a href="{{ url_for('parts.edit', part_id=part.part_id) }}" class="btn btn-warning">
-                                    <i class="fas fa-edit"></i>
+                                <a href="{{ url_for('parts.edit', part_id=part.part_id) }}" class="btn btn-standard btn-standard-sm btn-secondary-standard">
+                                    <i class="fas fa-edit"></i><span class="d-none d-sm-inline">Edit</span>
                                 </a>
                             </div>
                         </td>
@@ -85,10 +96,9 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
     </div>
     {% else %}
-    <div class="alert alert-info">
+    <div class="alert-standard alert-info">
         <i class="fas fa-info-circle"></i> No parts have been added yet. Click "Add New Part" to create one.
     </div>
     {% endif %}

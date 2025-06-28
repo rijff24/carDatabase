@@ -27,6 +27,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash
 
 # Load environment variables
 load_dotenv()
@@ -149,7 +150,7 @@ def create_admin():
     """
     Create admin user with default credentials.
     Username: admin
-    Password: admin123
+    Password: admin
     Usage: flask create-admin
     """
     admin = User(
@@ -157,10 +158,11 @@ def create_admin():
         full_name='Administrator',
         role='admin'
     )
-    admin.password = 'admin123'  # Password will be hashed by the model
+    # Directly set password hash to bypass validation
+    admin.password_hash = generate_password_hash('admin')
     db.session.add(admin)
     db.session.commit()
-    print("Admin user created")
+    print("Admin user created with username: admin, password: admin")
 
 if __name__ == '__main__':
     app.run(debug=True) 

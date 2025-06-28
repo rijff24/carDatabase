@@ -184,6 +184,8 @@ function initMobileFeatures() {
     initMobileUtilities();
 }
 
+
+
 // Mobile device detection
 function detectMobileDevice() {
     return window.innerWidth <= 991 || 

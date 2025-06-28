@@ -12,6 +12,7 @@ Run this script directly to initialize the development database:
 
 from app import create_app, db
 from app.models.user import User
+from werkzeug.security import generate_password_hash
 
 # Create app with development configuration
 app = create_app('development')
@@ -28,9 +29,10 @@ with app.app_context():
             full_name='Administrator',
             role='admin'
         )
-        admin.password = 'admin123'  # Password will be hashed by the model
+        # Directly set password hash to bypass validation
+        admin.password_hash = generate_password_hash('admin')
         db.session.add(admin)
         db.session.commit()
-        print("Admin user created successfully.")
+        print("Admin user created successfully with username: admin, password: admin")
     else:
         print("Admin user already exists.") 

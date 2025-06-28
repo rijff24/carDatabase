@@ -11,6 +11,136 @@ The application uses the following UI technologies:
 - **Chart.js**: JavaScript library for data visualization
 - **Font Awesome**: Icon library for visual elements
 
+## Design System
+
+The application implements a comprehensive design system using CSS custom properties (variables) for consistent styling across all components.
+
+### CSS Architecture
+
+The styling is organized into multiple files for maintainability:
+
+- **variables.css**: Global CSS variables for colors, spacing, typography, and component definitions
+- **components.css**: Standardized reusable UI components  
+- **style.css**: Legacy styles and page-specific overrides
+
+### Global CSS Variables
+
+#### Color Palette
+```css
+--color-primary: #0d6efd;
+--color-secondary: #6c757d;
+--color-success: #198754;
+--color-warning: #ffc107;
+--color-danger: #dc3545;
+--color-info: #0dcaf0;
+```
+
+#### Spacing Scale
+```css
+--spacing-xs: 0.25rem;   /* 4px */
+--spacing-sm: 0.5rem;    /* 8px */
+--spacing-md: 1rem;      /* 16px */
+--spacing-lg: 1.5rem;    /* 24px */
+--spacing-xl: 2rem;      /* 32px */
+```
+
+#### Typography
+```css
+--font-size-xs: 0.75rem;
+--font-size-sm: 0.875rem;
+--font-size-base: 1rem;
+--font-size-lg: 1.125rem;
+--font-weight-normal: 400;
+--font-weight-medium: 500;
+--font-weight-semibold: 600;
+```
+
+### Standardized Components
+
+#### Page Headers
+All index pages use the standardized `.page-header` component:
+```html
+<div class="page-header">
+    <h1>Page Title</h1>
+    <div class="header-actions">
+        <a href="..." class="btn btn-standard btn-primary-standard">
+            <i class="fas fa-plus"></i> Add New Item
+        </a>
+    </div>
+</div>
+```
+
+#### Data Tables
+All data tables use the standardized `.data-table` component with mobile responsiveness:
+```html
+<div class="data-table-container">
+    <table class="data-table data-table-mobile-stack">
+        <thead>
+            <tr>
+                <th class="sortable">
+                    <a href="...">Column Name <i class="fas fa-sort-up"></i></a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td data-label="Column Name">Cell Content</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+```
+
+#### Buttons
+Standardized button classes ensure consistency:
+- **Primary Actions**: `btn btn-standard btn-primary-standard`
+- **Secondary Actions**: `btn btn-standard btn-secondary-standard`  
+- **Small Buttons**: `btn btn-standard btn-standard-sm`
+
+#### Status Badges
+Consistent status indicators across all pages:
+```html
+<span class="status-badge status-badge-purchased">Purchased</span>
+<span class="status-badge status-badge-waiting">Waiting</span>
+<span class="status-badge status-badge-repair">In Repair</span>
+<span class="status-badge status-badge-display">On Display</span>
+<span class="status-badge status-badge-sold">Sold</span>
+```
+
+#### Filter Bars
+Standardized filtering interface:
+```html
+<div class="filter-bar">
+    <form method="GET">
+        <input type="text" name="search" class="form-control form-control-standard" placeholder="Search...">
+        <select name="status" class="form-select form-control-standard">
+            <option value="">All Status</option>
+        </select>
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-standard btn-secondary-standard">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+```
+
+#### Cards
+Standardized card components for content containers:
+```html
+<div class="card-standard">
+    <div class="card-standard-header">
+        <h5>Card Title</h5>
+    </div>
+    <div class="card-standard-body">
+        Card content
+    </div>
+    <div class="card-standard-footer">
+        <button class="btn btn-standard btn-primary-standard">Action</button>
+    </div>
+</div>
+```
+
 ### Mobile-First Responsive Design
 
 The application implements a comprehensive mobile-first responsive design approach:
@@ -61,20 +191,22 @@ For mobile-friendly tables, use the `table-mobile-stack` class:
 
 ## Navigation Structure
 
-The application has a consistent navigation structure throughout:
+The application has a simple, flat navigation structure throughout:
 
 ```
 ├── Primary Navigation (Top Navbar)
 │   ├── Dashboard
-│   ├── Inventory
+│   ├── Cars
 │   ├── Repairs
-│   ├── Sales
+│   ├── Parts
+│   ├── Providers
+│   ├── Stands
+│   ├── Dealers
+│   ├── Makes & Models
 │   ├── Reports
-│   ├── Admin
-│   ├── Settings
+│   ├── Settings (admin only)
+│   ├── Bulk Import (admin only)
 │   └── User Menu
-├── Secondary Navigation (Sidebar or Tab Bars)
-│   └── Context-specific navigation based on primary selection
 └── Content Area
     └── Main content for the selected view
 ```
@@ -82,13 +214,17 @@ The application has a consistent navigation structure throughout:
 ### Main Navigation Items
 
 1. **Dashboard**: Overview of key metrics and recent activity
-2. **Inventory**: Vehicle management and stand allocation
+2. **Cars**: Vehicle management and inventory tracking
 3. **Repairs**: Repair tracking and management
-4. **Sales**: Sales recording and dealer performance
-5. **Reports**: Financial and operational reporting
-6. **Admin**: System configuration and user management
-7. **Settings**: Application configuration and preferences
-8. **User Menu**: Profile, preferences, and logout
+4. **Parts**: Parts inventory and stock management
+5. **Providers**: Repair provider management
+6. **Stands**: Sales stand management and allocation
+7. **Dealers**: Dealer management and performance
+8. **Makes & Models**: Vehicle make and model data management
+9. **Reports**: Financial and operational reporting
+10. **Settings**: Application configuration and preferences (admin only)
+11. **Bulk Import**: Data import functionality (admin only)
+12. **User Menu**: Profile, preferences, and logout
 
 ## Key Screens
 
@@ -523,6 +659,29 @@ Example implementation:
 </div>
 ```
 
+### Simplified Navigation Structure
+
+The application uses a flat, simplified navigation structure for optimal usability:
+
+#### Main Navigation Items
+- **Dashboard**: Overview of key metrics and recent activity
+- **Cars**: Vehicle management and inventory
+- **Repairs**: Repair tracking and management  
+- **Parts**: Parts inventory and management
+- **Providers**: Repair provider management
+- **Stands**: Sales stand management
+- **Dealers**: Dealer management
+- **Makes & Models**: Vehicle make and model data
+- **Reports**: Business reporting and analytics
+- **Settings**: System configuration (admin only)
+- **Bulk Import**: Data import functionality (admin only)
+
+#### Benefits of Flat Navigation
+- **Reliability**: No dropdown complications on mobile or desktop
+- **Accessibility**: Direct access to all sections with single clicks
+- **Performance**: No JavaScript complexity for navigation
+- **User Experience**: Clear, predictable navigation patterns
+
 ### Form Validation
 
 The application implements multi-layered validation:
@@ -597,30 +756,35 @@ The application supports a dark theme which can be toggled through settings:
 - **Consistent styling** across all pages
 - **User preference storage** in browser and account settings
 
-The dark mode implementation uses CSS variables and a theme class:
+The dark mode implementation uses CSS custom properties with data attribute targeting:
 
 ```css
+/* Light mode (default) */
 :root {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
   --text-primary: #212529;
   --text-secondary: #6c757d;
-  --border-color: #dee2e6;
+  --border-primary: #dee2e6;
 }
 
-.dark-theme {
+/* Dark mode overrides */
+[data-theme="dark"] {
   --bg-primary: #212529;
   --bg-secondary: #343a40;
   --text-primary: #f8f9fa;
   --text-secondary: #adb5bd;
-  --border-color: #495057;
+  --border-primary: #495057;
 }
 
+/* Components automatically inherit theme colors */
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
 ```
+
+Dark mode is activated by setting `data-theme="dark"` on the body element.
 
 ## Mobile Responsiveness
 
