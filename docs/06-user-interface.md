@@ -6,10 +6,58 @@ This document details the user interface components, screens, forms, and navigat
 
 The application uses the following UI technologies:
 - **Jinja2**: Server-side templating engine for rendering HTML
-- **Bootstrap 4**: CSS framework for responsive design
+- **Bootstrap 5**: CSS framework for responsive design
 - **jQuery**: JavaScript library for DOM manipulation
 - **Chart.js**: JavaScript library for data visualization
 - **Font Awesome**: Icon library for visual elements
+
+### Mobile-First Responsive Design
+
+The application implements a comprehensive mobile-first responsive design approach:
+
+#### Responsive Breakpoints
+- **Small Mobile**: ≤576px (Primary mobile optimization)
+- **Medium Devices (Tablets)**: 577px - 991px
+- **Large Devices (Desktop)**: ≥992px
+
+#### Mobile CSS Features
+- **Touch-Friendly Elements**: Minimum 44px height for buttons and form controls
+- **Mobile Typography**: Responsive font sizing that scales appropriately
+- **iOS Zoom Prevention**: 16px minimum font size on form elements
+- **Enhanced Navigation**: Mobile-optimized hamburger menu and navigation
+- **Mobile Tables**: Stack-based table layout for small screens using `table-mobile-stack` class
+- **Touch Gestures**: Optimized for touch devices with appropriate touch targets
+
+#### Mobile Utility Classes
+- `mobile-hide`: Hide elements on mobile devices
+- `mobile-show`: Show elements only on mobile devices  
+- `mobile-center`: Center align content on mobile
+- `mobile-stack`: Stack child elements vertically on mobile
+- `mobile-form-stack`: Stack form columns vertically on mobile
+- `tablet-grid-2`: 2-column layout on tablets
+- `tablet-form-stack`: Optimized form layouts for tablets
+
+#### Responsive Table Pattern
+For mobile-friendly tables, use the `table-mobile-stack` class:
+```html
+<div class="table-responsive">
+    <table class="table table-mobile-stack">
+        <thead>...</thead>
+        <tbody>
+            <tr>
+                <td data-label="Vehicle">Car Details</td>
+                <td data-label="Status">On Display</td>
+                <td data-label="Price">R 250,000</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+```
+
+#### Dark Mode Mobile Support
+- Mobile-specific dark mode adjustments
+- Enhanced contrast for small screens
+- Touch-friendly dark mode interactions
 
 ## Navigation Structure
 
@@ -95,6 +143,12 @@ The card includes a link to the Profitability Report for more detailed informati
 #### Top & Bottom Cars Profitability Card
 
 The Top & Bottom Cars Profitability card provides a quick overview of the best and worst performing vehicles in terms of profit:
+
+##### Mobile Optimizations
+- **Responsive Layout**: Cards stack vertically on mobile devices
+- **Touch-Friendly Tables**: Tables convert to mobile-friendly stacked layout on small screens
+- **Condensed Buttons**: Button text is shortened on mobile with responsive visibility classes
+- **Mobile Action Buttons**: Dashboard action buttons stack vertically and expand to full width on mobile
 
 1. **Top 3 Cars by Profit**: Lists the three vehicles with the highest profit margin sold in the past 60 days.
    - Shows vehicle name, profit amount (in green), ROI percentage, status, and a link to the vehicle's profit report

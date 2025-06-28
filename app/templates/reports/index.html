@@ -8,23 +8,23 @@
         <h1>Business Reports</h1>
     </div>
     
-    <div class="row">
+    <div class="row mobile-reports-grid">
         <!-- Sales Performance Report -->
         <div class="col-md-6 mb-4">
-            <div class="card shadow h-100">
+            <div class="card shadow h-100 mobile-report-card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Sales Performance</h5>
                 </div>
                 <div class="card-body">
                     <p>Analyze sales performance by different time periods (daily, weekly, monthly, yearly). View revenue, profit trends, and dealer performance metrics.</p>
-                    <div class="mt-3">
-                        <span class="badge bg-secondary me-2">Revenue Trends</span>
-                        <span class="badge bg-secondary me-2">Profit Analysis</span>
-                        <span class="badge bg-secondary">Dealer Performance</span>
+                    <div class="mt-3 mobile-badges">
+                        <span class="badge bg-secondary me-2 mb-1">Revenue Trends</span>
+                        <span class="badge bg-secondary me-2 mb-1">Profit Analysis</span>
+                        <span class="badge bg-secondary mb-1">Dealer Performance</span>
                     </div>
                 </div>
-                <div class="card-footer bg-light">
-                    <a href="{{ url_for('reports.sales_performance') }}" class="btn btn-primary">
+                <div class="card-footer bg-light text-center">
+                    <a href="{{ url_for('reports.sales_performance') }}" class="btn btn-primary mobile-report-btn">
                         <i class="fas fa-chart-line me-1"></i> View Report
                     </a>
                 </div>
@@ -33,20 +33,20 @@
         
         <!-- Repair Cost Analysis Report -->
         <div class="col-md-6 mb-4">
-            <div class="card shadow h-100">
+            <div class="card shadow h-100 mobile-report-card">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">Repair Cost Analysis</h5>
                 </div>
                 <div class="card-body">
                     <p>Analyze repair costs by type, repair provider, and time period. Track repair durations and identify cost trends over time.</p>
-                    <div class="mt-3">
-                        <span class="badge bg-secondary me-2">Cost Breakdown</span>
-                        <span class="badge bg-secondary me-2">Provider Analysis</span>
-                        <span class="badge bg-secondary">Duration Tracking</span>
+                    <div class="mt-3 mobile-badges">
+                        <span class="badge bg-secondary me-2 mb-1">Cost Breakdown</span>
+                        <span class="badge bg-secondary me-2 mb-1">Provider Analysis</span>
+                        <span class="badge bg-secondary mb-1">Duration Tracking</span>
                     </div>
                 </div>
-                <div class="card-footer bg-light">
-                    <a href="{{ url_for('reports.repair_analysis') }}" class="btn btn-success">
+                <div class="card-footer bg-light text-center">
+                    <a href="{{ url_for('reports.repair_analysis') }}" class="btn btn-success mobile-report-btn">
                         <i class="fas fa-tools me-1"></i> View Report
                     </a>
                 </div>

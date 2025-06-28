@@ -2,6 +2,27 @@
 
 This document provides guidelines for maintaining and updating the Car Repair and Sales Tracking Application.
 
+## Mobile Testing Procedures
+
+### Device Testing
+- **Primary Mobile Devices**: Test on iOS (Safari) and Android (Chrome) devices
+- **Viewport Sizes**: Test at 375px (mobile), 768px (tablet), and 1024px+ (desktop)
+- **Touch Interactions**: Verify all touch gestures and button interactions work properly
+- **Performance**: Check loading times and responsiveness on mobile networks
+
+### Mobile-Specific Checks
+- **Navigation**: Ensure hamburger menu works properly and navigation is accessible
+- **Tables**: Verify table-mobile-stack conversion works on small screens
+- **Forms**: Test form input focus and keyboard behavior on mobile devices
+- **Images and Media**: Ensure proper scaling and loading on mobile devices
+- **Touch Targets**: Verify all interactive elements meet 44px minimum touch target size
+
+### Mobile Performance Testing
+- **Loading Speed**: Test on 3G/4G connections for realistic mobile performance
+- **JavaScript Performance**: Verify mobile features don't impact performance
+- **Memory Usage**: Monitor memory usage on mobile devices
+- **Battery Impact**: Check for excessive battery drain from mobile features
+
 ## Database Maintenance
 
 ### Backup Procedures

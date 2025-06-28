@@ -5,22 +5,22 @@
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
     <h1 class="h2">Dashboard</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <div class="btn-group me-2">
-            <a href="{{ url_for('cars.create') }}" class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-plus"></i> Add New Car
+    <div class="btn-toolbar mb-2 mb-md-0 mobile-dashboard-actions">
+        <div class="btn-group me-2 mobile-stack">
+            <a href="{{ url_for('cars.create') }}" class="btn btn-sm btn-outline-primary mobile-action-btn">
+                <i class="fas fa-plus"></i> <span class="d-none d-sm-inline">Add New </span>Car
             </a>
-            <a href="{{ url_for('repairs.create') }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fas fa-tools"></i> Create Repair
+            <a href="{{ url_for('repairs.create') }}" class="btn btn-sm btn-outline-secondary mobile-action-btn">
+                <i class="fas fa-tools"></i> <span class="d-none d-sm-inline">Create </span>Repair
             </a>
         </div>
     </div>
 </div>
 
 <!-- Key Metrics -->
-<div class="row mb-4">
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card h-100 stat-card">
+<div class="row mb-4 mobile-dashboard-metrics tablet-grid-2">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-4">
+        <div class="card h-100 stat-card dashboard-card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
@@ -38,8 +38,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card h-100 stat-card">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-4">
+        <div class="card h-100 stat-card dashboard-card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
@@ -57,8 +57,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card h-100 stat-card">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-4">
+        <div class="card h-100 stat-card dashboard-card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
@@ -76,8 +76,8 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-4">
-        <div class="card h-100 stat-card">
+    <div class="col-md-3 col-sm-6 mb-3 mb-md-4">
+        <div class="card h-100 stat-card dashboard-card">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
@@ -100,16 +100,16 @@
 <!-- Profitability Card -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div class="card h-100 mobile-profitability-card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
                 <h5 class="card-title mb-0">Profitability Metrics (30 Days)</h5>
-                <a href="{{ url_for('reports.profitability') }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-chart-pie"></i> Profitability Report
+                <a href="{{ url_for('reports.profitability') }}" class="btn btn-sm btn-outline-primary mt-2 mt-md-0">
+                    <i class="fas fa-chart-pie"></i> <span class="d-none d-sm-inline">Profitability </span>Report
                 </a>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3 mb-md-0">
                         <div class="d-flex align-items-center justify-content-between p-3 border rounded">
                             <div>
                                 <h6 class="text-muted fw-normal mt-0">
@@ -144,11 +144,11 @@
 <!-- Top & Bottom Cars Profitability Card -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <div class="card h-100 mobile-profit-tables">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap">
                 <h5 class="card-title mb-0">Top & Bottom Cars Profitability</h5>
-                <a href="{{ url_for('reports.profitability') }}?timeframe=last_60_days" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-chart-line"></i> Profit Report
+                <a href="{{ url_for('reports.profitability') }}?timeframe=last_60_days" class="btn btn-sm btn-outline-primary mt-2 mt-md-0">
+                    <i class="fas fa-chart-line"></i> <span class="d-none d-sm-inline">Profit </span>Report
                 </a>
             </div>
             <div class="card-body">

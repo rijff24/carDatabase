@@ -2,6 +2,17 @@
 
 This document details the reporting system in the Car Repair and Sales Tracking Application.
 
+## Mobile Report Optimization
+
+All reports are optimized for mobile devices with:
+
+- **Responsive Card Layout**: Report cards stack vertically on mobile devices for better readability
+- **Touch-Friendly Buttons**: Full-width buttons with proper touch targets (48px minimum) on mobile
+- **Mobile Badge Layout**: Feature badges wrap and center appropriately on mobile screens
+- **Optimized Typography**: Smaller fonts and proper spacing for mobile readability
+- **Card Animations**: Touch-friendly interactions with visual feedback on mobile devices
+- **Single Column Layout**: Reports display in single column on mobile for optimal viewing
+
 ## Report Categories
 
 The application offers the following report categories:

@@ -144,11 +144,11 @@
     </nav>
 
     <!-- Flash Messages -->
-    <div class="container mt-3">
+    <div class="container mt-3 flash-messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show">
+            <div class="alert alert-{{ category }} alert-dismissible fade show mobile-alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -158,14 +158,17 @@
     </div>
 
     <!-- Main Content -->
-    <main class="container py-4">
+    <main class="container py-4 main-content">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-auto py-3 bg-light">
+    <footer class="footer mt-auto py-3 bg-light mobile-footer">
         <div class="container text-center">
             <span class="text-muted">&copy; {{ datetime.datetime.now().year }} Car Sales Tracking System</span>
+            <div class="mobile-footer-info d-block d-md-none mt-2">
+                <small class="text-muted">Tap to navigate • Swipe to access menu</small>
+            </div>
         </div>
     </footer>
 

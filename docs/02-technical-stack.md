@@ -63,6 +63,16 @@ The Car Repair and Sales Tracking Application is built using the following techn
   - Used for creating interactive charts in reports
   - Provides visualizations for analytics data
 
+### Mobile JavaScript Features
+- **Mobile Device Detection**: Automatic detection of mobile devices and touch capabilities
+- **Touch Gesture Support**: Swipe gestures for navigation (left/right swipe to open/close menu)
+- **Enhanced Mobile Navigation**: Improved hamburger menu with touch-friendly interactions
+- **Mobile Table Enhancement**: Automatic conversion to mobile-friendly stacked layout
+- **Touch Feedback**: Visual feedback for button and card interactions on touch devices
+- **Mobile Form Optimization**: Auto-scroll to focused inputs and enhanced keyboard handling
+- **Orientation Change Handling**: Automatic layout adjustments on device rotation
+- **Viewport Management**: Dynamic viewport height calculation and mobile keyboard handling
+
 ## Development and Testing Tools
 
 ### Testing Framework

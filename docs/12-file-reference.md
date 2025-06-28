@@ -123,9 +123,22 @@ The application is organized into the following directories:
 
 | File | Description |
 |------|-------------|
-| `app/templates/layout.html` | Main application layout |
+| `app/templates/base.html` | Main application layout with mobile optimization |
 | `app/templates/error.html` | Error page layout |
 | `app/templates/print.html` | Printable page layout |
+
+#### Base Template Mobile Features
+
+The `base.html` template includes comprehensive mobile optimizations:
+
+- **Responsive Viewport**: Proper viewport meta tag for mobile devices
+- **Mobile Navigation**: Enhanced hamburger menu with touch-friendly interactions
+- **Flash Messages**: Mobile-optimized alert styling with improved spacing
+- **Footer Enhancement**: Mobile-specific footer with usage hints
+- **Dark Mode Support**: Mobile-compatible dark mode with proper contrast
+- **Safe Area Support**: iOS safe area insets for proper display on devices with notches
+- **Touch Feedback**: Visual feedback for touch interactions
+- **Mobile Classes**: Automatic addition of mobile-specific CSS classes
 
 ### Auth Templates
 
